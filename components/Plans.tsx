@@ -6,7 +6,7 @@ import { POLICIES } from "@/lib/policies";
 import { PRIVATE_ROOM_RATE, effectivePriorities, eldestAge } from "@/lib/profile";
 import { headlineScenario, simulate } from "@/lib/simulate";
 import type { Excluded, Match, Priority, Profile } from "@/lib/types";
-import { ReasonRow, inrShort } from "./ui";
+import { Icon, ReasonRow, Seal, Segmented, inrShort } from "./ui";
 
 interface Props {
   profile: Profile;
@@ -31,18 +31,21 @@ export default function Plans({ profile, top, excluded, notes, onOpen, onChoose,
 
   return (
     <div className="pb-6">
-      <div className="px-5 pt-5">
-        <h1 className="font-display text-[28px] font-extrabold leading-[1.1]">Three plans that fit your family</h1>
-        <p className="mt-2 text-[14px] leading-relaxed text-ink-soft">
-          I read {POLICIES.length} policies clause by clause. Each plan below leads with what you'd actually pay, not the price tag.
-          {excluded.length > 0 && ` ${excluded.length} ${excluded.length === 1 ? "plan doesn't" : "plans don't"} accept your family.`}
+      <div className="px-6 pt-6">
+        <h1 className="font-display text-[28px] font-semibold leading-[1.1]">Three plans that fit your family</h1>
+        <p className="mt-2.5 text-[14px] leading-relaxed text-ink-soft">
+          I read {POLICIES.length} policies clause by clause and ranked them only on what you told me. Each leads with what you'd actually pay.
         </p>
-        <div className="mt-4 flex rounded-xl bg-surface p-1">
-          {(["cards", "compare"] as const).map((m) => (
-            <button key={m} onClick={() => setMode(m)} className={`flex-1 rounded-lg py-2 text-[13px] ${mode === m ? "bg-pine font-semibold text-white" : "text-ink-soft"}`}>
-              {m === "cards" ? "One at a time" : "Side by side"}
-            </button>
-          ))}
+        <div className="mt-5">
+          <Segmented
+            label="Plan view"
+            value={mode}
+            onChange={setMode}
+            options={[
+              { value: "cards", label: "One at a time" },
+              { value: "compare", label: "Side by side" },
+            ]}
+          />
         </div>
       </div>
 
@@ -53,41 +56,44 @@ export default function Plans({ profile, top, excluded, notes, onOpen, onChoose,
               const r = simulate(m.policy, m.sumInsured, profile, head.scenario, { year: head.year, room: "private" });
               const paidPct = r.bill ? (r.insurerPays / r.bill) * 100 : 0;
               return (
-                <article key={m.policy.id} className="w-full shrink-0 snap-center px-4">
-                  <div className="overflow-hidden rounded-3xl bg-surface">
-                    <div className="bg-pine px-5 pb-5 pt-4 text-white">
+                <article key={m.policy.id} className="w-full shrink-0 snap-center px-5">
+                  <div className="overflow-hidden rounded-[24px] bg-surface shadow-e2 ring-1 ring-line">
+                    <div className="bg-pine px-5 pb-5 pt-5 text-white">
                       <div className="flex items-center justify-between">
-                        <span className={`rounded-full px-2.5 py-1 text-[12px] font-semibold ${m === top[0] ? "bg-mark text-pine" : "bg-white/12 text-white"}`}>{m.label}</span>
-                        <span className="text-[12px] text-white/70">{m.fit}</span>
+                        <span className={`rounded-full px-2.5 py-1 text-[12px] font-semibold ${m === top[0] ? "bg-gold text-white" : "bg-white/12 text-white"}`}>{m.label}</span>
+                        <span className="text-[12px] text-white/60">{m.fit}{m.prioritiesTotal > 0 ? `, ${m.prioritiesMet} of ${m.prioritiesTotal} priorities` : ""}</span>
                       </div>
-                      <p className="mt-4 text-[13px] text-white/70">{m.policy.insurer}</p>
-                      <h2 className="font-display text-[26px] font-extrabold leading-tight">{m.policy.name}</h2>
+                      <p className="mt-5 text-[13px] text-white/60">{m.policy.insurer}</p>
+                      <h2 className="font-display text-[26px] font-semibold leading-tight">{m.policy.name}</h2>
 
-                      <button onClick={() => onBill(m.policy.id)} className="mt-4 w-full rounded-2xl bg-white/8 p-4 text-left ring-1 ring-white/15">
-                        <p className="text-[13px] leading-snug text-white/80">{head.sentence}, you'd pay</p>
-                        <p className={`font-display mt-1 text-[40px] font-extrabold leading-none ${r.youPay === 0 ? "text-[#7fe0b5]" : "text-[#ff9b9b]"}`}>{inrShort(r.youPay)}</p>
-                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#ff9b9b]/30">
-                          <div className="h-full rounded-full bg-[#7fe0b5]" style={{ width: `${paidPct}%` }} />
+                      <button onClick={() => onBill(m.policy.id)} className="mt-5 w-full rounded-[18px] bg-white/[0.06] p-4 text-left ring-1 ring-white/12">
+                        <p className="text-[13px] leading-snug text-white/70">{head.sentence}, you'd pay</p>
+                        <p className={`num mt-2 text-[42px] font-semibold leading-none ${r.youPay === 0 ? "text-[#8fd6b4]" : "text-[#f2a59c]"}`}>{inrShort(r.youPay)}</p>
+                        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#f2a59c]/25">
+                          <div className="h-full rounded-full bg-[#8fd6b4]" style={{ width: `${paidPct}%` }} />
                         </div>
-                        <p className="mt-2 text-[12px] text-white/70">
-                          of a {inrShort(r.bill)} bill. {r.blocked ? "Not covered yet." : "See the itemised bill."}
+                        <p className="mt-2.5 flex items-center justify-between text-[12px] text-white/60">
+                          <span>of a {inrShort(r.bill)} bill{r.blocked ? ", not covered yet" : ""}</span>
+                          <span className="flex items-center gap-1 font-medium text-white/85">
+                            Itemised bill <Icon name="arrow" size={13} />
+                          </span>
                         </p>
                       </button>
                     </div>
 
                     <div className="grid grid-cols-2 divide-x divide-line border-b border-line">
                       <div className="p-4">
-                        <p className="font-display text-[22px] font-bold">{inrShort(m.premium)}</p>
+                        <p className="num text-[22px] font-semibold">{inrShort(m.premium)}</p>
                         <p className="text-[12px] text-ink-soft">a year, estimated</p>
                       </div>
                       <div className="p-4">
-                        <p className="font-display text-[22px] font-bold">₹{m.sumInsured} lakh</p>
+                        <p className="num text-[22px] font-semibold">₹{m.sumInsured} lakh</p>
                         <p className="text-[12px] text-ink-soft">cover</p>
                       </div>
                     </div>
 
                     <div className="p-5">
-                      <h3 className="text-[15px] font-semibold">Why it fits you</h3>
+                      <h3 className="font-display text-[17px] font-semibold">Why it fits you</h3>
                       {notes[m.policy.id] ? (
                         <p className="mt-1.5 text-[14px] leading-relaxed text-ink">{notes[m.policy.id]}</p>
                       ) : (
@@ -96,16 +102,21 @@ export default function Plans({ profile, top, excluded, notes, onOpen, onChoose,
                           <div className="h-3 w-4/5 animate-pulse rounded bg-mist" />
                         </div>
                       )}
-                      <ul className="mt-5 space-y-4">
+                      <div className="mt-3">
+                        <Seal>
+                          From policy wording {m.policy.docVersion}, checked {new Date(m.policy.lastVerified).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
+                        </Seal>
+                      </div>
+                      <ul className="mt-5 space-y-5 border-t border-line pt-5">
                         {m.reasons.slice(0, 4).map((x) => (
                           <ReasonRow key={x.title} r={x} onClause={() => onOpen(m.policy.id, x.clauseId)} />
                         ))}
                       </ul>
                       <div className="mt-6 grid grid-cols-2 gap-2">
-                        <button onClick={() => onOpen(m.policy.id)} className="rounded-2xl bg-mist py-3.5 text-[14px] font-semibold">
+                        <button onClick={() => onOpen(m.policy.id)} className="rounded-[14px] py-3.5 text-[14px] font-medium text-pine ring-1 ring-line">
                           Read fine print
                         </button>
-                        <button onClick={() => onChoose(m.policy.id)} className="rounded-2xl bg-pine py-3.5 text-[14px] font-semibold text-white">
+                        <button onClick={() => onChoose(m.policy.id)} className="rounded-[14px] bg-pine py-3.5 text-[14px] font-semibold text-white shadow-e2">
                           Choose plan
                         </button>
                       </div>
@@ -121,7 +132,7 @@ export default function Plans({ profile, top, excluded, notes, onOpen, onChoose,
             ))}
           </div>
           {excluded.length > 0 && (
-            <details className="mx-5 mt-5 rounded-2xl bg-surface p-4 text-[13px]">
+            <details className="mx-5 mt-6 rounded-[20px] bg-surface p-4 text-[13px] shadow-e1 ring-1 ring-line">
               <summary className="cursor-pointer font-medium">Why some plans aren't shown</summary>
               <ul className="mt-2 space-y-1.5 text-ink-soft">
                 {excluded.map((e) => (
@@ -159,8 +170,8 @@ function Compare({ profile, top, onOpen }: { profile: Profile; top: Match[]; onO
   ];
   const matters = (r: (typeof rows)[number]) => r.matters === true || (!!r.matters && pri.has(r.matters));
   return (
-    <div className="mt-4 px-4">
-      <div className="sticky top-0 z-10 grid grid-cols-[1.1fr_repeat(3,1fr)] gap-1 rounded-t-2xl bg-pine px-3 py-3 text-white">
+    <div className="mt-5 px-5">
+      <div className="sticky top-0 z-10 grid grid-cols-[1.1fr_repeat(3,1fr)] gap-1 rounded-t-[20px] bg-pine px-3.5 py-3.5 text-white">
         <span />
         {top.map((m) => (
           <span key={m.policy.id} className="text-[12px] font-semibold leading-tight">
@@ -168,9 +179,9 @@ function Compare({ profile, top, onOpen }: { profile: Profile; top: Match[]; onO
           </span>
         ))}
       </div>
-      <div className="divide-y divide-line rounded-b-2xl bg-surface">
+      <div className="divide-y divide-line overflow-hidden rounded-b-[20px] bg-surface shadow-e1 ring-1 ring-line">
         {rows.map((r) => (
-          <div key={r.label} className={`grid grid-cols-[1.1fr_repeat(3,1fr)] gap-1 px-3 py-3 ${matters(r) ? "bg-mark/15" : ""}`}>
+          <div key={r.label} className={`grid grid-cols-[1.1fr_repeat(3,1fr)] gap-1 px-3 py-3 ${matters(r) ? "bg-mark/40" : ""}`}>
             <div>
               <p className="text-[13px] font-semibold leading-tight">{r.label}</p>
               <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">{r.why}</p>

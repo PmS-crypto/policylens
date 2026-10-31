@@ -7,12 +7,12 @@ import Decide from "@/components/Decide";
 import { FamilyBar, ProfileSheet } from "@/components/Family";
 import Plans from "@/components/Plans";
 import PolicySheet from "@/components/PolicySheet";
-import { Logo, inrShort } from "@/components/ui";
+import { Icon, Logo, Seal, inrShort } from "@/components/ui";
 import type { Lang } from "@/lib/ai";
 import { STEPS, nextStep } from "@/lib/flow";
 import { matchPolicies } from "@/lib/match";
 import { POLICIES, getPolicy } from "@/lib/policies";
-import { CITY_LABEL, CONDITION_LABEL, coverSummary, inr, isProfileComplete } from "@/lib/profile";
+import { CITY_LABEL, CONDITION_LABEL, coverSummary, inr, isProfileComplete, recommendSumInsured } from "@/lib/profile";
 import { SCENARIOS, simulate } from "@/lib/simulate";
 import type { Priority, Profile } from "@/lib/types";
 
@@ -217,15 +217,23 @@ export default function Home() {
 
   const readyCard =
     stage === "discover" && result && !busy && !typing ? (
-      <div className="rounded-3xl bg-pine p-5 text-white">
-        <p className="font-display text-[20px] font-bold leading-tight">Your profile is ready</p>
-        <p className="mt-1 text-[14px] text-white/75">{coverSummary(profile)}</p>
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <button onClick={() => setProfileOpen(true)} className="rounded-2xl bg-white/10 py-3 text-[14px] font-semibold">
-            Review it
+      <div className="msg-in rounded-[24px] bg-surface p-5 shadow-e2 ring-1 ring-line">
+        <Seal>Profile complete</Seal>
+        <p className="font-display mt-3 text-[22px] font-semibold leading-tight">Ready to compare plans for your family</p>
+        <div className="mt-4 flex items-end justify-between border-t border-line pt-4">
+          <div>
+            <p className="text-[12.5px] text-ink-soft">Suggested cover</p>
+            <p className="num text-[28px] font-semibold leading-none text-pine">₹{recommendSumInsured(profile).lakh} lakh</p>
+          </div>
+          <p className="max-w-[48%] text-right text-[12.5px] leading-snug text-ink-soft">{coverSummary(profile)}</p>
+        </div>
+        <div className="mt-5 grid grid-cols-[auto_1fr] gap-2">
+          <button onClick={() => setProfileOpen(true)} className="rounded-[14px] px-4 py-3.5 text-[14px] font-medium text-pine ring-1 ring-line">
+            Review
           </button>
-          <button onClick={showPlans} className="rounded-2xl bg-mark py-3 text-[14px] font-bold text-pine">
-            Show my plans
+          <button onClick={showPlans} className="flex items-center justify-center gap-2 rounded-[14px] bg-pine py-3.5 text-[14px] font-semibold text-white shadow-e2">
+            See my plans
+            <Icon name="arrow" size={16} />
           </button>
         </div>
       </div>
@@ -235,21 +243,21 @@ export default function Home() {
     <div className="min-h-dvh lg:flex lg:items-center lg:justify-center lg:gap-20 lg:p-6">
       <aside className="hidden max-w-xs lg:block">
         <Logo />
-        <p className="font-display mt-6 text-[34px] font-extrabold leading-[1.05]">Know what you'll pay before you buy.</p>
-        <p className="mt-4 text-[15px] leading-relaxed text-ink-soft">PolicyLens is made for your phone. Open this page on mobile and add it to your home screen.</p>
+        <p className="font-display mt-8 text-[36px] font-semibold leading-[1.08]">Health insurance, explained before you buy.</p>
+        <p className="mt-4 text-[15px] leading-relaxed text-ink-soft">PolicyLens is designed for your phone. Open this page on mobile and add it to your home screen.</p>
       </aside>
 
-      <div className="relative mx-auto flex h-dvh w-full max-w-[440px] flex-col overflow-hidden bg-sage lg:mx-0 lg:h-[880px] lg:max-h-[94vh] lg:rounded-[48px] lg:border-[12px] lg:border-[#0c2420] lg:shadow-[0_40px_80px_-30px_rgba(18,49,42,0.55)]">
+      <div className="relative mx-auto flex h-dvh w-full max-w-[440px] flex-col overflow-hidden bg-sage lg:mx-0 lg:h-[880px] lg:max-h-[94vh] lg:rounded-[48px] lg:border-[10px] lg:border-[#0a1f1a] lg:shadow-e3">
         {!started ? (
           <Landing onStart={start} lang={lang} setLang={switchLang} />
         ) : (
           <>
             <header className="shrink-0 bg-pine pt-[env(safe-area-inset-top)]">
-              <div className="flex items-center justify-between px-4 pt-3">
+              <div className="flex items-center justify-between px-5 pt-3.5">
                 <Logo light />
                 <LangToggle lang={lang} setLang={switchLang} />
               </div>
-              {view === "chat" ? <FamilyBar profile={profile} onOpen={() => setProfileOpen(true)} /> : <div className="h-3" />}
+              {view === "chat" ? <FamilyBar profile={profile} onOpen={() => setProfileOpen(true)} /> : <div className="h-3.5" />}
             </header>
 
             <main className="relative min-h-0 flex-1 overflow-y-auto">
@@ -303,9 +311,9 @@ export default function Home() {
 
 function LangToggle({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void }) {
   return (
-    <div className="flex rounded-full bg-white/10 p-0.5 text-[12px]" role="group" aria-label="Answer language">
+    <div className="flex rounded-full bg-white/8 p-0.5 text-[12px] ring-1 ring-white/12" role="group" aria-label="Answer language">
       {(["en", "hi"] as Lang[]).map((l) => (
-        <button key={l} onClick={() => setLang(l)} aria-pressed={lang === l} className={`rounded-full px-3 py-1 ${lang === l ? "bg-white font-semibold text-pine" : "text-white/80"}`}>
+        <button key={l} onClick={() => setLang(l)} aria-pressed={lang === l} className={`font-display rounded-full px-3 py-1 ${lang === l ? "bg-white font-semibold text-pine" : "text-white/75"}`}>
           {l === "en" ? "English" : "हिंदी"}
         </button>
       ))}
@@ -313,26 +321,26 @@ function LangToggle({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void 
   );
 }
 
-const TABS: { id: View; label: string; icon: React.ReactNode }[] = [
-  { id: "chat", label: "Ask", icon: <path d="M4 5h16v11H9l-5 4z" /> },
-  { id: "plans", label: "Plans", icon: <path d="M4 4h7v16H4zM13 4h7v9h-7z" /> },
-  { id: "bill", label: "Your bill", icon: <path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6" /> },
-  { id: "decide", label: "Decide", icon: <path d="M5 12l4 4 10-10" /> },
+const TABS: { id: View; label: string; icon: Parameters<typeof Icon>[0]["name"] }[] = [
+  { id: "chat", label: "Ask", icon: "chat" },
+  { id: "plans", label: "Plans", icon: "layers" },
+  { id: "bill", label: "Your bill", icon: "receipt" },
+  { id: "decide", label: "Decide", icon: "shield" },
 ];
 
 function TabBar({ view, setView }: { view: View; setView: (v: View) => void }) {
   return (
-    <nav className="grid shrink-0 grid-cols-4 border-t border-line bg-surface pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5">
-      {TABS.map((t) => (
-        <button key={t.id} onClick={() => setView(t.id)} aria-current={view === t.id ? "page" : undefined} className={`flex flex-col items-center gap-0.5 py-1 text-[11px] ${view === t.id ? "font-semibold text-pine" : "text-ink-soft"}`}>
-          <span className={`grid h-7 w-12 place-items-center rounded-full ${view === t.id ? "bg-mark" : ""}`}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              {t.icon}
-            </svg>
-          </span>
-          {t.label}
-        </button>
-      ))}
+    <nav className="grid shrink-0 grid-cols-4 border-t border-line bg-surface/95 pb-[max(env(safe-area-inset-bottom),8px)] pt-2 backdrop-blur" aria-label="Sections">
+      {TABS.map((t) => {
+        const on = view === t.id;
+        return (
+          <button key={t.id} onClick={() => setView(t.id)} aria-current={on ? "page" : undefined} className={`relative flex flex-col items-center gap-1 py-1 text-[11px] ${on ? "font-semibold text-pine" : "text-ink-faint"}`}>
+            {on && <span className="absolute -top-2 h-[3px] w-6 rounded-full bg-gold" />}
+            <Icon name={t.icon} size={21} />
+            {t.label}
+          </button>
+        );
+      })}
     </nav>
   );
 }
@@ -366,68 +374,105 @@ function Landing({ onStart, lang, setLang }: { onStart: (text?: string) => void;
     });
   }, []);
 
+  const promises: { icon: Parameters<typeof Icon>[0]["name"]; title: string; body: string }[] = [
+    { icon: "phoneOff", title: "No phone number. No sales calls.", body: "Explore every plan without signing up." },
+    { icon: "lock", title: "Your health details stay private", body: "Never shared with an insurer unless you choose a plan." },
+    { icon: "doc", title: "Every answer shows its source", body: "Each recommendation links to the exact policy clause." },
+  ];
+
   return (
-    <div className="no-scrollbar flex h-full flex-col overflow-y-auto bg-pine text-white">
-      <div className="flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),16px)]">
-        <Logo light />
-        <LangToggle lang={lang} setLang={setLang} />
-      </div>
-
-      <div className="px-5 pt-8">
-        <h1 className="font-display text-[40px] font-extrabold leading-[1.02]">Know what you'll pay before you buy.</h1>
-        <p className="mt-3 text-[15px] leading-relaxed text-white/75">
-          Two plans can both say ₹10 lakh cover. Here's what each one pays when your mother needs a knee replacement in Mumbai.
+    <div className="no-scrollbar h-full overflow-y-auto bg-sage">
+      {/* 1. Promise: one sentence, on forest */}
+      <section className="rounded-b-[32px] bg-pine px-6 pb-24 pt-[max(env(safe-area-inset-top),18px)] text-white">
+        <div className="flex items-center justify-between">
+          <Logo light />
+          <LangToggle lang={lang} setLang={setLang} />
+        </div>
+        <h1 className="font-display mt-10 text-[36px] font-semibold leading-[1.08]">Health insurance, explained before you buy.</h1>
+        <p className="mt-4 max-w-[34ch] text-[15px] leading-relaxed text-white/70">
+          Tell us about your family. We'll show what each plan would actually pay, line by line, from the policy's own wording.
         </p>
-      </div>
+      </section>
 
-      {/* Hero: the same bill, two very different outcomes */}
-      <div className="mx-5 mt-6 space-y-2">
-        {demo.map(({ pol, r }) => (
-          <div key={pol.id} className="relative overflow-hidden rounded-2xl bg-surface p-4 font-mono text-[12px] text-ink">
-            <div className="flex justify-between">
-              <span className="font-sans text-[13px] font-semibold">{pol.name}</span>
-              <span>{inrShort(r.bill)}</span>
-            </div>
-            <p className="mt-1 truncate text-ink-soft">{r.lines.length ? r.lines.map((l) => l.label.toLowerCase()).join(", ") : "no deductions"}</p>
-            <div className="mt-2 flex items-end justify-between font-sans">
-              <span className="text-[13px] font-semibold">You pay</span>
-              <span className={`font-display text-[28px] font-extrabold leading-none ${r.youPay ? "text-owe" : "text-paid"}`}>{inrShort(r.youPay)}</span>
-            </div>
-            <span className={`stamp absolute bottom-4 left-24 px-2 py-0.5 font-sans text-[11px] font-extrabold uppercase ${r.youPay ? "text-owe" : "text-paid"}`}>
-              {r.youPay ? "Capped" : "Paid in full"}
-            </span>
+      {/* 2. Proof: the same cover, two different outcomes */}
+      <section className="relative -mt-16 px-5">
+        <div className="rounded-[24px] bg-surface p-5 shadow-e2 ring-1 ring-line">
+          <p className="text-[13px] leading-snug text-ink-soft">
+            Two plans, both ₹10 lakh cover. A knee replacement for a 63-year-old in Mumbai costs <span className="num font-semibold text-ink">{inrShort(demo[0].r.bill)}</span>.
+          </p>
+          <div className="mt-4 space-y-4">
+            {demo.map(({ pol, r }) => (
+              <div key={pol.id}>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-[14px] font-medium">{pol.name}</span>
+                  <span className={`num text-[22px] font-semibold ${r.youPay ? "text-owe" : "text-paid"}`}>
+                    {r.youPay ? `You pay ${inrShort(r.youPay)}` : "You pay ₹0"}
+                  </span>
+                </div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-owe-soft">
+                  <div className="h-full rounded-full bg-paid" style={{ width: `${(r.insurerPays / r.bill) * 100}%` }} />
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+          <div className="mt-4 border-t border-line pt-3">
+            <Seal>Calculated from each policy's wording</Seal>
+          </div>
+        </div>
+      </section>
 
-      <div className="mt-auto px-5 pb-[max(env(safe-area-inset-bottom),20px)] pt-8">
+      {/* 3. Safety: what we promise */}
+      <section className="px-6 pt-8">
+        <ul className="space-y-5">
+          {promises.map((p) => (
+            <li key={p.title} className="flex gap-4">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-surface text-pine shadow-e1 ring-1 ring-line">
+                <Icon name={p.icon} size={18} />
+              </span>
+              <div>
+                <p className="text-[15px] font-medium">{p.title}</p>
+                <p className="mt-0.5 text-[13.5px] text-ink-soft">{p.body}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* 4. Action: in the thumb zone */}
+      <section className="px-5 pb-[max(env(safe-area-inset-bottom),24px)] pt-9">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             onStart(text.trim() || undefined);
           }}
-          className="rounded-3xl bg-white/10 p-2"
+          className="rounded-[24px] bg-surface p-2 shadow-e2 ring-1 ring-line"
         >
+          <label htmlFor="intro" className="block px-3 pt-2 text-[13px] font-medium text-ink-soft">
+            Describe your family in your own words, or skip
+          </label>
           <textarea
+            id="intro"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            rows={3}
-            aria-label="Describe who you want to cover"
-            placeholder="Who do you want to cover? e.g. Meri maa 60 ki hai, unko thyroid hai. Mumbai, budget 40k."
-            className="w-full resize-none bg-transparent px-3 py-2 text-[15px] text-white outline-none placeholder:text-white/45"
+            rows={2}
+            placeholder="Meri maa 60 ki hai, unko thyroid hai. Mumbai, budget 40k."
+            className="w-full resize-none bg-transparent px-3 py-2 text-[15px] outline-none placeholder:text-ink-faint"
           />
-          <button className="w-full rounded-2xl bg-mark py-3.5 text-[15px] font-bold text-pine">{text.trim() ? "Find my plans" : "Start with a few questions"}</button>
+          <button className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-pine py-4 text-[15px] font-semibold text-white shadow-e2">
+            {text.trim() ? "Find my plans" : "Get started"}
+            <Icon name="arrow" size={17} />
+          </button>
         </form>
-        <p className="mt-5 text-[13px] text-white/60">Or try a family</p>
-        <div className="no-scrollbar -mx-5 mt-2 flex gap-2 overflow-x-auto px-5">
+        <p className="mt-6 text-center text-[12.5px] text-ink-faint">Or see how it works for a sample family</p>
+        <div className="mt-3 grid grid-cols-3 gap-2">
           {PERSONAS.map((p) => (
-            <button key={p.who} onClick={() => onStart(p.text)} className="shrink-0 rounded-2xl bg-white/8 px-4 py-3 text-left ring-1 ring-white/15">
-              <span className="block text-[14px] font-semibold">{p.who}</span>
-              <span className="block text-[12px] text-white/65">{p.what}</span>
+            <button key={p.who} onClick={() => onStart(p.text)} className="rounded-[16px] bg-surface p-3 text-left shadow-e1 ring-1 ring-line">
+              <span className="block text-[13px] font-semibold">{p.who}</span>
+              <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-soft">{p.what}</span>
             </button>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

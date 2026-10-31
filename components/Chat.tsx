@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Lang } from "@/lib/ai";
 import type { Chip } from "@/lib/flow";
 import { getPolicy } from "@/lib/policies";
+import { Icon } from "./ui";
 
 export interface Citation {
   policyId: string;
@@ -88,19 +89,19 @@ export default function Chat(props: Props) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="no-scrollbar flex-1 space-y-3 overflow-y-auto px-4 pb-4 pt-4">
+      <div className="no-scrollbar flex-1 space-y-4 overflow-y-auto px-5 pb-5 pt-5">
         {messages.map((m) => (
           <Bubble key={m.id} m={m} onCitation={onCitation} />
         ))}
         {typing && (
-          <div className="flex w-fit items-center gap-1 rounded-2xl bg-surface px-4 py-3 text-ink-soft" aria-label="PolicyLens is typing">
+          <div className="flex w-fit items-center gap-1 rounded-full bg-surface px-4 py-3 text-ink-faint shadow-e1" aria-label="PolicyLens is typing">
             <span className="dot h-1.5 w-1.5 rounded-full bg-current" />
             <span className="dot h-1.5 w-1.5 rounded-full bg-current" />
             <span className="dot h-1.5 w-1.5 rounded-full bg-current" />
           </div>
         )}
         {!typing && chips.length > 0 && (
-          <div className={tiles ? "grid grid-cols-2 gap-2" : "flex flex-wrap gap-2"}>
+          <div className={`msg-in ${tiles ? "grid grid-cols-2 gap-2.5" : "flex flex-wrap gap-2"}`}>
             {chips.map((c) => {
               const on = picked.includes(c.value);
               const click = () => (multi ? toggle(c.value) : onChips([c.value], [c.label]));
@@ -109,17 +110,18 @@ export default function Chat(props: Props) {
                   key={c.value}
                   onClick={click}
                   aria-pressed={on}
-                  className={`rounded-2xl border-2 p-3 text-left transition ${on ? "border-pine bg-pine text-white" : "border-transparent bg-surface"}`}
+                  className={`relative rounded-[18px] p-4 text-left transition ${on ? "bg-pine text-white shadow-e2" : "bg-surface text-ink shadow-e1 ring-1 ring-line"}`}
                 >
-                  <span className="font-display block text-[16px] font-bold">{c.label}</span>
-                  {c.hint && <span className={`mt-0.5 block text-[12px] leading-snug ${on ? "text-white/75" : "text-ink-soft"}`}>{c.hint}</span>}
+                  <span className={`absolute right-3 top-3 grid h-5 w-5 place-items-center rounded-full ${on ? "bg-gold text-white" : "ring-1 ring-line"}`}>{on && <Icon name="check" size={12} />}</span>
+                  <span className="font-display block pr-6 text-[17px] font-semibold leading-tight">{c.label}</span>
+                  {c.hint && <span className={`mt-1 block text-[12.5px] leading-snug ${on ? "text-white/70" : "text-ink-soft"}`}>{c.hint}</span>}
                 </button>
               ) : (
                 <button
                   key={c.value}
                   onClick={click}
                   aria-pressed={multi ? on : undefined}
-                  className={`rounded-full px-4 py-2 text-[14px] transition ${on ? "bg-pine text-white" : "bg-surface text-ink active:bg-mist"}`}
+                  className={`rounded-full px-4 py-2.5 text-[14px] transition ${on ? "bg-pine text-white shadow-e2" : "bg-surface text-ink shadow-e1 ring-1 ring-line active:bg-mist"}`}
                 >
                   {c.label}
                 </button>
@@ -129,7 +131,7 @@ export default function Chat(props: Props) {
               <button
                 disabled={!picked.length}
                 onClick={() => onChips(picked, picked.map((v) => chips.find((c) => c.value === v)?.label ?? v))}
-                className={`rounded-full bg-mark px-5 py-2 text-[14px] font-semibold text-pine disabled:opacity-40 ${tiles ? "col-span-2 py-3" : ""}`}
+                className={`rounded-full bg-pine px-6 py-2.5 text-[14px] font-semibold text-white shadow-e2 disabled:bg-line disabled:text-ink-faint disabled:shadow-none ${tiles ? "col-span-2 mt-1 py-3.5" : ""}`}
               >
                 Continue
               </button>
@@ -145,14 +147,14 @@ export default function Chat(props: Props) {
           e.preventDefault();
           send(text);
         }}
-        className="flex items-center gap-2 border-t border-line bg-surface px-3 pb-[max(env(safe-area-inset-bottom),12px)] pt-3"
+        className="flex items-center gap-2 border-t border-line bg-surface/95 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-3 backdrop-blur"
       >
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={listening ? "Listening…" : placeholder}
           aria-label="Message"
-          className="min-w-0 flex-1 rounded-full bg-mist px-4 py-3 text-[15px] outline-none placeholder:text-ink-soft/70"
+          className="min-w-0 flex-1 rounded-full bg-mist px-4 py-3 text-[15px] outline-none ring-1 ring-transparent transition placeholder:text-ink-faint focus:bg-surface focus:ring-line"
         />
         {SR && !text && (
           <button
@@ -161,17 +163,12 @@ export default function Chat(props: Props) {
             aria-label={listening ? "Stop listening" : "Speak your answer"}
             className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${listening ? "recording bg-owe text-white" : "bg-pine text-white"}`}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-              <rect x="9" y="3" width="6" height="11" rx="3" />
-              <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
-            </svg>
+            <Icon name="mic" />
           </button>
         )}
         {(text || !SR) && (
           <button type="submit" aria-label="Send" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-pine text-white">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14M13 6l6 6-6 6" />
-            </svg>
+            <Icon name="arrow" />
           </button>
         )}
       </form>
@@ -182,29 +179,43 @@ export default function Chat(props: Props) {
 function Bubble({ m, onCitation }: { m: Msg; onCitation: (c: Citation) => void }) {
   if (m.role === "user")
     return (
-      <div className="flex justify-end">
-        <p className="max-w-[82%] rounded-[20px] rounded-br-md bg-pine px-4 py-2.5 text-[15px] leading-snug text-white">{m.text}</p>
+      <div className="msg-in flex justify-end">
+        <p className="max-w-[80%] rounded-[20px] rounded-br-[6px] bg-pine px-4 py-2.5 text-[15px] leading-snug text-white shadow-e1">{m.text}</p>
       </div>
     );
-  if (m.tone === "hint") return <p className="px-1 text-[12px] leading-relaxed text-ink-soft">{m.text}</p>;
+  if (m.tone === "hint")
+    return (
+      <p className="msg-in flex items-start gap-2 rounded-[14px] bg-mist px-3.5 py-2.5 text-[12.5px] leading-relaxed text-ink-soft">
+        <Icon name="lock" size={14} className="mt-0.5 shrink-0 text-pine" />
+        {m.text}
+      </p>
+    );
   if (m.tone === "insight")
     return (
-      <div className="max-w-[92%] rounded-[20px] rounded-tl-md border-l-4 border-mark bg-surface px-4 py-3 text-[14px] leading-relaxed">
-        <span className="font-semibold">Fine print, decoded. </span>
-        {m.text}
+      <div className="msg-in rounded-[18px] bg-surface p-4 shadow-e1 ring-1 ring-line">
+        <p className="flex items-center gap-1.5 text-[12.5px] font-semibold text-gold">
+          <Icon name="info" size={14} />
+          Worth knowing
+        </p>
+        <p className="mt-1.5 text-[14px] leading-relaxed text-ink">{m.text}</p>
       </div>
     );
   return (
-    <div className="max-w-[88%] rounded-[20px] rounded-tl-md bg-surface px-4 py-3 text-[15px] leading-relaxed">
+    <div className="msg-in max-w-[92%] text-[15.5px] leading-[1.55] text-ink">
       <RichText text={m.text} />
       {!!m.citations?.length && (
-        <div className="mt-2.5 flex flex-wrap gap-1.5">
+        <div className="mt-3 flex flex-wrap gap-1.5">
           {m.citations.map((c) => {
             const p = getPolicy(c.policyId);
             const cl = p?.clauses.find((x) => x.id === c.clauseId);
             if (!p || !cl) return null;
             return (
-              <button key={c.policyId + c.clauseId} onClick={() => onCitation(c)} className="mark rounded-sm text-[12px] font-medium">
+              <button
+                key={c.policyId + c.clauseId}
+                onClick={() => onCitation(c)}
+                className="inline-flex items-center gap-1 rounded-full bg-surface px-2.5 py-1 text-[12px] font-medium text-pine shadow-e1 ring-1 ring-line"
+              >
+                <Icon name="doc" size={12} />
                 {p.name} §{cl.section}
               </button>
             );

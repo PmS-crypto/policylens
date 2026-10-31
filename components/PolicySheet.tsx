@@ -54,7 +54,7 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
       title={
         <div>
           <p className="text-[13px] text-ink-soft">{p.insurer}</p>
-          <h2 className="font-display text-[26px] font-extrabold leading-tight">{p.name}</h2>
+          <h2 className="font-display text-[26px] font-semibold leading-tight">{p.name}</h2>
           <p className="mt-1 text-[12px] text-ink-soft">
             Policy wording {p.docVersion}, checked {new Date(p.lastVerified).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
           </p>

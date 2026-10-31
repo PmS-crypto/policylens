@@ -33,17 +33,17 @@ export default function Bill({ profile, top, focusId, onOpen }: Props) {
 
   return (
     <div className="pb-8">
-      <div className="px-5 pt-5">
-        <h1 className="font-display text-[28px] font-extrabold leading-[1.1]">Your bill, before it happens</h1>
-        <p className="mt-2 text-[14px] leading-relaxed text-ink-soft">Pick something that could happen. I'll run the hospital bill through each plan's rules and show you every rupee that comes back to you.</p>
+      <div className="px-6 pt-6">
+        <h1 className="font-display text-[28px] font-semibold leading-[1.1]">Your bill, before it happens</h1>
+        <p className="mt-2.5 text-[14px] leading-relaxed text-ink-soft">Pick something that could happen. I'll run the hospital bill through each plan's rules and show you every rupee that comes back to you.</p>
       </div>
 
-      <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto px-5">
+      <div className="no-scrollbar mt-5 flex gap-2 overflow-x-auto px-5 pb-1">
         {scenarios.map((x) => (
           <button
             key={x.id}
             onClick={() => setSid(x.id)}
-            className={`shrink-0 rounded-full px-4 py-2 text-[13px] ${sid === x.id ? "bg-pine font-semibold text-white" : "bg-surface"} ${x.relevant(profile) ? "" : "opacity-60"}`}
+            className={`shrink-0 rounded-full px-4 py-2.5 text-[13px] transition ${sid === x.id ? "bg-pine font-semibold text-white shadow-e2" : "bg-surface text-ink shadow-e1 ring-1 ring-line"} ${x.relevant(profile) ? "" : "opacity-55"}`}
           >
             {x.title}
           </button>
@@ -51,8 +51,8 @@ export default function Bill({ profile, top, focusId, onOpen }: Props) {
       </div>
 
       <div className="mt-4 space-y-2 px-5">
-        <Segmented value={year} onChange={setYear} options={[1, 2, 3, 4].map((y) => ({ value: y, label: YEAR_LABEL[y] }))} />
-        <Segmented value={room} onChange={setRoom} options={[{ value: "shared", label: "Shared room" }, { value: "private", label: "Private room" }, { value: "deluxe", label: "Deluxe room" }]} />
+        <Segmented label="When it happens" value={year} onChange={setYear} options={[1, 2, 3, 4].map((y) => ({ value: y, label: YEAR_LABEL[y] }))} />
+        <Segmented label="Room type" value={room} onChange={setRoom} options={[{ value: "shared", label: "Shared room" }, { value: "private", label: "Private room" }, { value: "deluxe", label: "Deluxe room" }]} />
       </div>
 
       {/* Plan switcher doubles as the summary: what you pay on each */}
@@ -61,10 +61,10 @@ export default function Bill({ profile, top, focusId, onOpen }: Props) {
           <button
             key={mm.policy.id}
             onClick={() => setPid(mm.policy.id)}
-            className={`rounded-2xl p-3 text-left transition ${mm.policy.id === m.policy.id ? "bg-pine text-white" : "bg-surface"}`}
+            className={`rounded-[16px] p-3 text-left transition ${mm.policy.id === m.policy.id ? "bg-pine text-white shadow-e2" : "bg-surface shadow-e1 ring-1 ring-line"}`}
           >
             <span className={`block truncate text-[12px] ${mm.policy.id === m.policy.id ? "text-white/70" : "text-ink-soft"}`}>{mm.policy.name}</span>
-            <span className={`font-display block text-[18px] font-extrabold ${rr.youPay === 0 ? (mm.policy.id === m.policy.id ? "text-[#7fe0b5]" : "text-paid") : mm.policy.id === m.policy.id ? "text-[#ff9b9b]" : "text-owe"}`}>
+            <span className={`num block text-[18px] font-semibold ${rr.youPay === 0 ? (mm.policy.id === m.policy.id ? "text-[#8fd6b4]" : "text-paid") : mm.policy.id === m.policy.id ? "text-[#f2a59c]" : "text-owe"}`}>
               {inrShort(rr.youPay)}
             </span>
           </button>
@@ -72,7 +72,7 @@ export default function Bill({ profile, top, focusId, onOpen }: Props) {
       </div>
 
       {/* The receipt */}
-      <div className="relative mx-5 mt-4">
+      <div className="relative mx-5 mt-4 drop-shadow-[0_12px_20px_rgba(15,43,37,0.12)]">
         <div className="receipt-edge bg-surface px-5 pb-10 pt-5 font-mono text-[12.5px] leading-relaxed text-ink">
           <div className="text-center">
             <p className="font-sans text-[15px] font-bold">Estimated hospital bill</p>
@@ -84,7 +84,7 @@ export default function Bill({ profile, top, focusId, onOpen }: Props) {
             </p>
             <div
               key={`${m.policy.id}-${sid}-${year}-${room}-${r.youPay}`}
-              className={`stamp stamp-in mx-auto mt-3 w-fit px-3 py-1 font-sans text-[15px] font-extrabold uppercase ${r.blocked ? "text-owe" : r.youPay === 0 ? "text-paid" : "text-warn"}`}
+              className={`stamp stamp-in mx-auto mt-3 w-fit px-3 py-1 font-sans text-[15px] font-semibold uppercase ${r.blocked ? "text-owe" : r.youPay === 0 ? "text-paid" : "text-warn"}`}
             >
               {r.blocked ? "Not covered yet" : r.youPay === 0 ? "Paid in full" : `${Math.round((r.insurerPays / r.bill) * 100)}% paid`}
             </div>
@@ -116,15 +116,15 @@ export default function Bill({ profile, top, focusId, onOpen }: Props) {
           <Line label="Insurer pays" amount={r.insurerPays} />
           <div className="mt-2 flex items-end justify-between font-sans">
             <span className="text-[15px] font-bold">You pay</span>
-            <span className={`font-display text-[34px] font-extrabold leading-none ${r.youPay === 0 ? "text-paid" : "text-owe"}`}>{inrShort(r.youPay)}</span>
+            <span className={`num text-[34px] font-semibold leading-none ${r.youPay === 0 ? "text-paid" : "text-owe"}`}>{inrShort(r.youPay)}</span>
           </div>
         </div>
       </div>
 
-      <div className="mx-5 mt-5 rounded-2xl bg-surface p-4">
+      <div className="mx-5 mt-5 rounded-[20px] bg-surface shadow-e1 ring-1 ring-line p-4">
         <div className="flex items-center justify-between text-[13px]">
           <span className="font-medium">Change the bill amount</span>
-          <span className="font-display font-bold">{inrShort(bill)}</span>
+          <span className="num font-semibold">{inrShort(bill)}</span>
         </div>
         <input
           type="range"
