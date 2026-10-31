@@ -5,8 +5,8 @@ export async function POST(req: Request) {
   const key = process.env.SARVAM_API_KEY;
   if (!key) return Response.json({ error: "Voice input needs a Sarvam API key." }, { status: 501 });
 
-  const form = await req.formData();
-  const audio = form.get("file");
+  const form = await req.formData().catch(() => null);
+  const audio = form?.get("file");
   if (!(audio instanceof Blob) || audio.size === 0) return Response.json({ error: "No audio received." }, { status: 400 });
 
   const body = new FormData();
