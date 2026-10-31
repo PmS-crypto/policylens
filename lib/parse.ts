@@ -23,6 +23,12 @@ export function parseFreeText(text: string, stepId?: string): Partial<Profile> {
     out.cover = { self: selfish || partner || kids || !parents, partner, kids, parents };
   }
 
+  // Name the person: "Dad is 62" lets the app say "your dad" instead of "the insured member".
+  const dad = /\b(dad|daddy|papa|father|pitaji|abbu)\b/.test(t);
+  const mum = /\b(mom|mum|mummy|mother|maa|mata|ammi)\b/.test(t);
+  // The parent named specifically (with an age or illness) is the one the copy should talk about.
+  if (dad || mum) out.parentWho = dad && mum ? "both" : dad ? "dad" : "mum";
+
   const kc = t.match(/\b(\d|one|two|three|a|an)\s+(kids?|children|sons?|daughters?|child)\b/);
   if (kc) out.kidsCount = Number(kc[1]) || WORD_NUM[kc[1]] || 1;
 

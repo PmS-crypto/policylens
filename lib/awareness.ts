@@ -1,3 +1,4 @@
+import { coverStartsAfterMonths } from "./dates";
 import { CITY_COST_FACTOR, CONDITION_LABEL } from "./profile";
 import type { Lang } from "./ai";
 import { SCENARIOS, headlineScenario, headlineSentence, scenarioTitle, simulate, type Scenario } from "./simulate";
@@ -28,10 +29,10 @@ export function riskSnapshot(p: Profile, best: Match, l: Lang = "en") {
         ? `Office ka ₹${p.employerCover}L cover help karta hai, par job badli toh gaya.`
         : `Your ₹${p.employerCover}L cover from work helps, but it's gone the day you switch jobs.`;
 
-  const conditions = (p.conditions ?? []).map((c) => CONDITION_LABEL[c].toLowerCase());
+  const conditions = (p.conditions ?? []).map((c) => CONDITION_LABEL[c].toLowerCase().replace(/\bbp\b/, "BP"));
   return {
     likely,
-    serious: serious ? { title: scenarioTitle(serious, l), bill: cost(serious) } : null,
+    serious: serious ? { title: scenarioTitle(serious, l).replace(": ", " and "), bill: cost(serious) } : null,
     employerLine,
     premiumYears: likely.bill / best.premium,
     bestPremium: best.premium,
@@ -50,12 +51,9 @@ export type CoverageCell = { kind: "covered" | "partial" | "waiting"; youPay: nu
 /** "Will this actually cover me?" for every likely event: when cover starts and what you'd still pay. */
 export function coverageMap(p: Profile, top: Match[]) {
   const scenarios = SCENARIOS.filter((s) => s.relevant(p)).slice(0, 5);
-  const fromDate = (year: number) => {
-    const d = new Date();
-    d.setDate(1); // avoid month overflow (31 Oct + 1 month must be Nov, not Dec)
-    d.setMonth(d.getMonth() + (year - 1) * 12 + (year > 1 ? 1 : 0));
-    return d.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
-  };
+  // Claims in policy year y are covered once (y - 1) years of waiting have passed.
+  const fromDate = (year: number) => coverStartsAfterMonths((year - 1) * 12);
+
   return scenarios.map((s) => ({
     scenario: s,
     cells: top.map((m): CoverageCell => {

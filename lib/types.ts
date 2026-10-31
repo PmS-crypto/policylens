@@ -21,6 +21,8 @@ export interface Profile {
   cover?: Cover;
   selfAge?: number;
   parentAge?: number;
+  /** Who the user means when they talk about their parent(s), so copy can say "your dad". */
+  parentWho?: "dad" | "mum" | "both";
   kidsCount?: number;
   planningBaby?: boolean;
   conditions?: Condition[];

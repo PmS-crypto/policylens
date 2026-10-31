@@ -1,19 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { CONDITION_LABEL, inr } from "@/lib/profile";
+import { coverStartsAfterDays, coverStartsAfterMonths } from "@/lib/dates";
+import { CONDITION_LABEL, inr, parentsShort } from "@/lib/profile";
 import type { Lang } from "@/lib/ai";
 import { t } from "@/lib/flow";
 import { headlineScenario, headlineSentence, simulate } from "@/lib/simulate";
 import type { Match, Profile } from "@/lib/types";
 import { AURA, Aura, Icon, Money, ReasonRow, SlicedOrb, inrShort } from "./ui";
 
-function addMonths(months: number) {
-  const d = new Date();
-  d.setDate(1); // avoid month overflow (31 Oct + 1 month must be Nov, not Dec)
-  d.setMonth(d.getMonth() + months);
-  return d.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
-}
+// Waits measured in days (the 30-day initial wait) vs months (everything else).
+const addMonths = (months: number) => (months === 1 ? coverStartsAfterDays(30) : coverStartsAfterMonths(months));
 
 export default function Decide({ lang, profile, match, top, onSwitch }: { lang: Lang; profile: Profile; match: Match; top: Match[]; onSwitch: (id: string) => void }) {
   const p = match.policy;
@@ -72,11 +69,20 @@ export default function Decide({ lang, profile, match, top, onSwitch }: { lang: 
       else verdict = t(lang, "Costs more and pays less on that trip. Only pick it for its other perks.", "Mehenga bhi, aur us trip pe kam bhi deta hai. Sirf baaki fayde ke liye lo.");
       return { o, dPremium, dClaim, verdict };
     });
+  // The proud moment: what the user has now secured, in their family's words.
+  const forParents = !!profile.cover?.parents;
+  const who = forParents ? parentsShort(profile) : "Your";
+  const pedDate = conds.length ? addMonths(p.pedWaitYears * 12) : null;
+  const headPay = simulate(match.policy, match.sumInsured, profile, head.scenario, { year: head.year, room: "private" });
+  const proudLine = pedDate
+    ? `${who === "Your" ? "Your" : `${who}'s`} ${conds.join(" and ").toLowerCase().replace(/\bbp\b/, "BP")} covered from ${pedDate}.`
+    : "You now understand this plan better than most people understand their own.";
+
   const [shared, setShared] = useState<string | null>(null);
   const share = async () => {
     const text = t(
       lang,
-      `Thinking of ${p.insurer} ${p.name} for us: ₹${match.sumInsured} lakh cover for about ${inr(match.premium)} a year. ${headlineSentence(profile, "en")}, we'd pay ${inr(mine)}. Compared on PolicyLens. Thoughts?`,
+      `Found a plan for ${forParents ? "Mum and Dad" : "us"}: ${p.insurer} ${p.name}, ₹${match.sumInsured} lakh cover for about ${inr(match.premium)} a year. ${pedDate ? proudLine + " " : ""}${headlineSentence(profile, "en")}, it pays ${inr(headPay.insurerPays)} of the ${inr(headPay.bill)} bill. Compared clause by clause on PolicyLens. What do you think?`,
       `${p.insurer} ${p.name} soch raha hoon apne liye: ₹${match.sumInsured} lakh cover, lagbhag ${inr(match.premium)} saal ka. ${headlineSentence(profile, "hi")}, toh hum ${inr(mine)} denge. PolicyLens pe compare kiya. Kya bolte ho?`,
     );
     try {
@@ -121,6 +127,14 @@ export default function Decide({ lang, profile, match, top, onSwitch }: { lang: 
           </div>
         )}
       </header>
+
+      <Aura colors={AURA.mint} scrim className="rise relative mx-5 mt-8 rounded-[32px] p-6 text-white shadow-e2">
+        <p className="text-[13px] font-medium opacity-85">{t(lang, "You've done the hard part", "Mushkil kaam ho gaya")}</p>
+        <p className="title mt-2 text-[24px] leading-tight">{proudLine}</p>
+        <p className="mt-3 text-[14px] leading-relaxed opacity-90">
+          {headlineSentence(profile, "en")}, {p.name} pays {inrShort(headPay.insurerPays)} of the {inrShort(headPay.bill)} bill.
+        </p>
+      </Aura>
 
       {versus.length > 0 && (
         <section className="mx-5 mt-8 rounded-[32px] bg-surface p-6 shadow-e1 ring-1 ring-line">
@@ -179,7 +193,7 @@ export default function Decide({ lang, profile, match, top, onSwitch }: { lang: 
         <div className="flex items-baseline justify-between">
           <h2 className="title text-[20px]">{t(lang, "Before you pay", "Pay karne se pehle")}</h2>
           <span className="text-[13px] text-ink-soft">
-            {doneCount}/{checklist.length} {t(lang, "done", "ho gaya")}
+            {doneCount === checklist.length ? t(lang, "All set", "Sab ready") : `${doneCount}/${checklist.length} ${t(lang, "done", "ho gaya")}`}
           </span>
         </div>
         <div className="mt-5 grid grid-cols-2 gap-3">
@@ -205,6 +219,11 @@ export default function Decide({ lang, profile, match, top, onSwitch }: { lang: 
       </section>
 
       <div className="mt-8 space-y-3 px-6">
+        {doneCount === checklist.length && (
+          <p className="rise rounded-[22px] bg-paid-soft px-5 py-4 text-center text-[15px] font-medium text-paid">
+            {forParents ? "You're ready. Go get Mum and Dad covered." : "You're ready. Go get your family covered."}
+          </p>
+        )}
         <button onClick={() => setHandoff(true)} className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-5 text-[16px] font-semibold text-on-primary shadow-e2">
           {t(lang, `Continue to ${p.insurer}`, `${p.insurer} pe chalo`)}
           <Icon name="arrow" size={18} />
@@ -220,7 +239,7 @@ export default function Decide({ lang, profile, match, top, onSwitch }: { lang: 
         )}
         <button onClick={share} className="flex w-full items-center justify-center gap-2 rounded-full py-4 text-[14.5px] font-medium ring-1 ring-line">
           <Icon name="people" size={17} />
-          {t(lang, "Run it by the family first", "Pehle family se pooch lo")}
+          {t(lang, "Tell the family", "Family ko batao")}
         </button>
         {shared && <p className="text-center text-[13px] text-ink-soft">{shared}</p>}
         <button className="flex w-full items-center justify-center gap-2 rounded-full py-4 text-[14.5px] font-medium ring-1 ring-line">

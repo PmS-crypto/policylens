@@ -1,4 +1,5 @@
 import type { Lang } from "./ai";
+import { CONDITION_LABEL, parentsShort } from "./profile";
 import type { Condition, Priority, Profile } from "./types";
 
 /*
@@ -83,12 +84,12 @@ export const STEPS: Step[] = [
       (p.parentAge ?? 0) >= 61
         ? t(
             l,
-            "Real talk: a lot of plans add a 20% co-pay after 60. That means you pay a fifth of every hospital bill, forever. I'll call out every plan that does this.",
+            `Most plans add a 20% co-pay after 60, which means you'd pay a fifth of every hospital bill for ${parentsShort(p)}. I'll call out every plan that does this.`,
             "Seedhi baat: bahut saare plans 60 ke baad 20% co-pay laga dete hain. Matlab har hospital bill ka ek-paanchva hissa aapki jeb se. Main har aise plan ko flag karunga.",
           )
         : t(
             l,
-            "They'll cross 60 soon, and some plans start a co-pay at 61. So I'll check what happens then, not just today.",
+            `${parentsShort(p) === "your parents" ? "They'll" : parentsShort(p) === "Dad" ? "He'll" : "She'll"} cross 60 soon, and some plans start a co-pay at 61. So I'll check what happens then, not just today.`,
             "Woh jaldi 60 cross karenge, aur kuch plans 61 se co-pay shuru kar dete hain. Toh main aaj ka nahi, aage ka bhi dekhunga.",
           ),
   },
@@ -151,7 +152,9 @@ export const STEPS: Step[] = [
       p.conditions?.length
         ? t(
             l,
-            "This is the big one for you. Existing conditions are only covered after a 1–4 year wait, and that gap is where plans differ the most.",
+            p.cover?.parents
+              ? `${p.conditions.map((c) => CONDITION_LABEL[c]).join(" and ")} for ${parentsShort(p)}: noted. That's exactly what I'll check every plan against, because existing conditions are only covered after a 1–4 year wait, and that's where plans differ most.`
+              : `${p.conditions.map((c) => CONDITION_LABEL[c]).join(" and ")}: noted. Existing conditions are only covered after a 1–4 year wait, and that's where plans differ most. I'll check every plan against it.`,
             "Aapke liye yahi sabse important hai. Pehle se wali bimari 1–4 saal ke wait ke baad hi cover hoti hai, aur plans mein sabse bada farak yahin hai.",
           )
         : null,
@@ -170,7 +173,7 @@ export const STEPS: Step[] = [
       p.city === "metro"
         ? t(
             l,
-            "Heads up: a private room in a metro hospital is around ₹7,000 a day. That's above the room cap on a lot of budget plans, and going over it shrinks your whole claim, not just the room bit.",
+            "A private room in a metro hospital is around ₹7,000 a day. Many budget plans cap rooms below that, and going over the cap shrinks your whole claim, not just the room charge.",
             "Dhyaan dena: metro hospital mein private room lagbhag ₹7,000 roz ka hota hai. Kaafi budget plans ki room limit isse kam hai, aur limit cross hui toh poora claim kat jaata hai, sirf room ka nahi.",
           )
         : null,

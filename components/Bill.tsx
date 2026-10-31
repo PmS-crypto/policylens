@@ -137,6 +137,13 @@ export default function Bill({ lang, profile, top, focusId, onOpen }: Props) {
               <div className={`stamp stamp-in mx-auto mt-4 w-fit px-3.5 py-1 font-sans text-[15px] font-extrabold uppercase ${r.blocked ? "text-[#d23a46]" : r.youPay === 0 ? "text-[#11845a]" : "text-[#a8640c]"}`}>
                 {r.blocked ? t(lang, "Not covered yet", "Abhi cover nahi") : r.youPay === 0 ? t(lang, "Paid in full", "Poora paid") : `${Math.round((r.insurerPays / r.bill) * 100)}% paid`}
               </div>
+              <p className="mt-3 font-sans text-[13px] font-medium text-[#1b1722]">
+                {r.blocked
+                  ? t(lang, "Still in the waiting period. Try a later year to see when it's covered.", "Waiting period abhi chal raha hai. Baad ka saal chuno, dekho kab cover hoga.")
+                  : r.youPay === 0
+                    ? t(lang, "Nothing out of your pocket.", "Jeb se ek rupaya nahi.")
+                    : t(lang, `The plan pays ${inrShort(r.insurerPays)}. You pay ${inrShort(r.youPay)}.`, `Plan dega ${inrShort(r.insurerPays)}. Aap doge ${inrShort(r.youPay)}.`)}
+              </p>
             </div>
             <div className="my-4 border-t border-dashed border-[#1b1722]/25" />
             <Line label={scenarioTitle(s, lang)} amount={r.bill} />

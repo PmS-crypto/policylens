@@ -7,6 +7,8 @@ import {
   effectivePriorities,
   eldestAge,
   inr,
+  parentNamePossessive,
+  parentsShort,
   memberCounts,
   recommendSumInsured,
   youngestAge,
@@ -70,7 +72,7 @@ function evaluate(policy: Policy, p: Profile, si: number, premium: number, cheap
     dims.push({ key: "low_oop", score: 1, reason: { kind: "good", title: "No co-payment", detail: "The insurer pays the full admissible bill, at any age.", clauseId: "copay", priority: "low_oop" } });
   } else if (copayApplies(policy, eldest)) {
     const s = policy.copay.percent >= 20 ? 0.15 : 0.45;
-    dims.push({ key: "low_oop", score: s, reason: { kind: "bad", title: `${policy.copay.percent}% co-pay on every claim`, detail: `${p.cover?.parents ? "For your parents" : "For you"}, ${policy.copay.percent}% of each admissible bill comes out of your pocket. On a ₹4L surgery that's ${inr(400000 * policy.copay.percent / 100)}.`, clauseId: "copay", priority: "low_oop" } });
+    dims.push({ key: "low_oop", score: s, reason: { kind: "bad", title: `${policy.copay.percent}% co-pay on every claim`, detail: `${p.cover?.parents ? `For ${parentsShort(p) === "your parents" ? "your parents" : parentsShort(p)}` : "For you"}, ${policy.copay.percent}% of each admissible bill comes out of your pocket. On a ₹4L surgery that's ${inr(400000 * policy.copay.percent / 100)}.`, clauseId: "copay", priority: "low_oop" } });
   } else {
     const yrs = (policy.copay.fromAge ?? 0) - eldest;
     dims.push({ key: "low_oop", score: yrs <= 6 ? 0.55 : 0.8, reason: { kind: "caveat", title: `${policy.copay.percent}% co-pay from age ${policy.copay.fromAge}`, detail: yrs <= 6 ? `Your eldest member reaches ${policy.copay.fromAge} in about ${yrs} years. After that you pay ${policy.copay.percent}% of every claim.` : `Doesn't apply to you today, only to members aged ${policy.copay.fromAge}+.`, clauseId: "copay", priority: "low_oop" } });
@@ -80,7 +82,7 @@ function evaluate(policy: Policy, p: Profile, si: number, premium: number, cheap
   if (p.conditions?.length) {
     const y = policy.pedWaitYears;
     const conds = p.conditions.map((c) => CONDITION_LABEL[c]).join(" & ");
-    const who = conditionHolder(p) === "parent" ? "your parent's" : "your";
+    const who = conditionHolder(p) === "parent" ? parentNamePossessive(p) : "your";
     const s = y <= 1 ? 1 : y === 2 ? 0.7 : y === 3 ? 0.35 : 0.1;
     dims.push({ key: "ped_fast", score: s, reason: { kind: y <= 1 ? "good" : y === 2 ? "caveat" : "bad", title: `${conds} covered after ${y} year${y > 1 ? "s" : ""}`, detail: y <= 1 ? `Treatment for ${who} ${conds.toLowerCase()} is covered from year 2, one of the shortest waits available.` : `Any hospitalisation linked to ${who} ${conds.toLowerCase()} is not paid for the first ${y} years. You'd bear that cost fully.`, clauseId: "ped", priority: "ped_fast" } });
   }

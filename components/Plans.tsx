@@ -90,18 +90,28 @@ export default function Plans({ lang, profile, top, all, excluded, notes, onOpen
                       <h2 className="display text-[30px]">{m.policy.name}</h2>
 
                       <button onClick={() => onBill(m.policy.id)} className="mt-6 block w-full text-left">
-                        <p className="max-w-[28ch] text-[13.5px] leading-snug opacity-90">{sentence}, {t(lang, "you'd pay", "toh aap doge")}</p>
-                        <Money value={r.youPay} className="mt-2 block text-[68px]" />
+                        {/* Lead with relief: what the plan pays. Your share sits right under it, never hidden. */}
+                        <p className="max-w-[30ch] text-[13.5px] leading-snug opacity-90">
+                          {sentence}, {r.blocked ? t(lang, "this plan doesn't pay yet", "yeh plan abhi nahi dega") : t(lang, "this plan pays", "yeh plan dega")}
+                        </p>
+                        {r.blocked ? (
+                          <Money value={r.youPay} className="mt-2 block text-[56px]" />
+                        ) : (
+                          <Money value={r.insurerPays} className="mt-2 block text-[64px]" />
+                        )}
+                        <p className="mt-1 text-[14px] font-medium">
+                          {r.blocked
+                            ? t(lang, "is what you'd pay. It's still in the waiting period.", "aapko dena hoga. Waiting period abhi chal raha hai.")
+                            : r.youPay === 0
+                              ? t(lang, `of the ${inrShort(r.bill)} bill. You pay nothing.`, `${inrShort(r.bill)} ke bill mein se. Aapko kuch nahi dena.`)
+                              : t(lang, `of the ${inrShort(r.bill)} bill. You pay ${inrShort(r.youPay)}.`, `${inrShort(r.bill)} ke bill mein se. Aap doge ${inrShort(r.youPay)}.`)}
+                        </p>
                         <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/25">
                           <div className="h-full rounded-full bg-white transition-all duration-700" style={{ width: `${paidPct}%` }} />
                         </div>
-                        <p className="mt-3 flex items-center justify-between text-[12.5px]">
-                          <span className="opacity-85">
-                            {t(lang, "Insurer pays", "Insurer dega")} {Math.round(paidPct)}% {t(lang, "of", "of")} {inrShort(r.bill)}
-                            {r.blocked ? t(lang, ", not covered yet", ", abhi cover nahi") : ""}
-                          </span>
+                        <p className="mt-3 flex items-center justify-end text-[12.5px]">
                           <span className="flex items-center gap-1 font-semibold">
-                            {t(lang, "See bill", "Bill dekho")} <Icon name="arrow" size={14} />
+                            {t(lang, "See the full bill", "Poora bill dekho")} <Icon name="arrow" size={14} />
                           </span>
                         </p>
                       </button>

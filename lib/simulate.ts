@@ -1,5 +1,5 @@
 import { copayApplies } from "./match";
-import { CITY_COST_FACTOR, PRIVATE_ROOM_RATE, conditionHolder, eldestAge } from "./profile";
+import { CITY_COST_FACTOR, PRIVATE_ROOM_RATE, conditionHolder, eldestAge, parentName } from "./profile";
 import type { Condition, Policy, Profile } from "./types";
 
 export type RoomType = "shared" | "private" | "deluxe";
@@ -155,7 +155,7 @@ export function headlineScenario(p: Profile): { scenario: Scenario; sentence: st
           ? "childbirth"
           : "dengue";
   const scenario = SCENARIOS.find((s) => s.id === id)!;
-  const who = id === "childbirth" ? "your partner" : scenario.who === "parent" || (scenario.who === "eldest" && p.cover?.parents) ? "your parent" : "you";
+  const who = id === "childbirth" ? "your partner" : scenario.who === "parent" || (scenario.who === "eldest" && p.cover?.parents) ? parentName(p) : "you";
   const verb = who === "you" ? PHRASE[id].replace(/^is /, "are ").replace(/^needs/, "need").replace(/^spends/, "spend").replace(/^has/, "have") : PHRASE[id];
   const year = id === "childbirth" ? 3 : 2;
   return { scenario, sentence: `If ${who} ${verb} ${YEAR_LABEL[year].toLowerCase()}`, year };

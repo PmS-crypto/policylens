@@ -283,7 +283,7 @@ function Bubble({ m, lang, onCitation }: { m: Msg; lang: Lang; onCitation: (c: C
         <div aria-hidden className="absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-60 blur-2xl" style={{ background: "radial-gradient(#ffb38a, #f49ac1 60%, transparent 70%)" }} />
         <p className="relative flex items-center gap-2 text-[13px] font-semibold text-accent">
           <Icon name="sparkle" size={15} />
-          {t(lang, "Worth knowing", "Yeh jaan lo")}
+          {t(lang, "Most people miss this", "Zyaadatar log yeh miss karte hain")}
         </p>
         <p className="relative mt-2 text-[15px] leading-relaxed">{m.text}</p>
       </div>

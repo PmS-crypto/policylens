@@ -65,6 +65,12 @@ export function coverSummary(p: Profile): string {
   return parts.join(" · ");
 }
 
+/** "your dad", "your mum" or "your parent", from what the user said. */
+export const parentName = (p: Profile) => (p.parentWho === "dad" ? "your dad" : p.parentWho === "mum" ? "your mum" : "your parent");
+export const parentNamePossessive = (p: Profile) => (p.parentWho === "dad" ? "your dad's" : p.parentWho === "mum" ? "your mum's" : "your parent's");
+/** "Dad", "Mum" or "your parents" for headlines. */
+export const parentsShort = (p: Profile) => (p.parentWho === "dad" ? "Dad" : p.parentWho === "mum" ? "Mum" : "your parents");
+
 /** Who has the declared conditions: parents if they're covered, otherwise the buyer. */
 export const conditionHolder = (p: Profile): "parent" | "self" => (p.cover?.parents ? "parent" : "self");
 

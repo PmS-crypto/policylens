@@ -98,7 +98,7 @@ export default function Home() {
       const h = s.hint?.(p, langRef.current);
       if (h) push({ role: "ai", text: h, tone: "hint" });
     } else {
-      await aiSay(t(langRef.current, "That's everything I need. I've got a clear picture of your family now.", "Bas, itna kaafi hai. Aapki family ki poori picture clear hai."));
+      await aiSay(t(langRef.current, "That's everything I need. You've already done more homework than most people do before buying.", "Bas, itna kaafi hai. Aapne already zyaadatar logon se zyada homework kar liya hai."));
     }
   }
 
@@ -249,7 +249,7 @@ export default function Home() {
           <SlicedOrb size={150} />
         </div>
         <p className="relative text-[13px] font-medium opacity-85">{t(lang, "Profile done", "Profile ready")}</p>
-        <p className="title relative mt-2 max-w-[14ch] text-[24px] leading-tight">{t(lang, "Let's find your family's plan", "Chalo, family ka plan dhoondte hain")}</p>
+        <p className="title relative mt-2 max-w-[14ch] text-[24px] leading-tight">{profile.cover?.parents && !profile.cover.self && !profile.cover.partner ? "Let's find the right cover for your parents" : t(lang, "Let's find the right cover for your family", "Chalo, family ka plan dhoondte hain")}</p>
         <div className="relative mt-8">
           <p className="text-[12.5px] opacity-80">{t(lang, "Cover we'd go for", "Itna cover sahi rahega")}</p>
           <p className="money mt-1 text-[64px]">₹{recommendSumInsured(profile).lakh}L</p>
