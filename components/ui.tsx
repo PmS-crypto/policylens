@@ -162,6 +162,7 @@ const PATHS = {
   refresh: "M20 11a8 8 0 0 0-14.7-4.3L4 8M4 4v4h4M4 13a8 8 0 0 0 14.7 4.3L20 16M20 20v-4h-4",
   pin: "M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11zM12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z",
   advisor: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c.8-4 4-6 8-6s7.2 2 8 6",
+  people: "M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3.5 19c.5-3 2.7-5 5.5-5s5 2 5.5 5M16 11a2.5 2.5 0 1 0 0-5M17.5 14c2 .5 3 2.4 3.3 5",
 } as const;
 
 export type IconName = keyof typeof PATHS;
@@ -284,7 +285,7 @@ export function LangToggle({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
     <div className="flex rounded-full bg-surface p-0.5 text-[12.5px] shadow-e1 ring-1 ring-line" role="group" aria-label="Answer language">
       {(["en", "hi"] as Lang[]).map((l) => (
         <button key={l} onClick={() => setLang(l)} aria-pressed={lang === l} className={`rounded-full px-3 py-1.5 transition-all ${lang === l ? "bg-primary font-semibold text-on-primary" : "text-ink-soft"}`}>
-          {l === "en" ? "EN" : "हिं"}
+          {l === "en" ? "EN" : "Hinglish"}
         </button>
       ))}
     </div>

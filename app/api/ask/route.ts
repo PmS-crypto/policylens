@@ -9,7 +9,7 @@ interface Citation {
   clauseId: string;
 }
 
-const SYSTEM = `You are PolicyLens, a plain-spoken health insurance explainer for Indian customers.
+const SYSTEM = `You are PolicyLens, a health insurance explainer for young Indian customers.
 Answer ONLY from the policy clauses provided. If the clauses don't answer it, say so and suggest asking the insurer.
 Relate the answer to the user's situation. Use ₹ and Indian number formatting. Be concise: at most 90 words.
 Never promise a claim will be paid; say "as per the policy wording".
@@ -30,7 +30,11 @@ export async function POST(req: Request) {
     .join("\n\n");
 
   const user = `User situation: covering ${coverSummary(profile)}; conditions: ${(profile.conditions ?? []).map((c) => CONDITION_LABEL[c]).join(", ") || "none"}; city: ${profile.cityName ?? profile.city ?? "unknown"}.\n\nClauses:\n${context}\n\nQuestion: ${question}`;
-  const ai = parseJson<{ answer: string; citations: Citation[] }>(await llm(SYSTEM + langNote(lang), user, 600));
+  const reply = lang === "hi" ? "\n\nReply in Hinglish written ONLY in Roman (English) letters, like a WhatsApp message. No Devanagari." : "\n\nReply in English.";
+  let ai = parseJson<{ answer: string; citations: Citation[] }>(await llm(SYSTEM + langNote(lang), user + reply, 600));
+  // Hinglish must stay in Roman script; retry once if the model drifts into Devanagari.
+  if (lang === "hi" && ai?.answer && /[\u0900-\u097F]/.test(ai.answer))
+    ai = parseJson<{ answer: string; citations: Citation[] }>(await llm(SYSTEM + langNote(lang), user + reply + " Your last reply used Devanagari. Use Roman letters only.", 600)) ?? ai;
   if (ai?.answer) {
     // Models sometimes cite "§4.1" or "ped" interchangeably; normalise to clause ids we can link to.
     const citations = (ai.citations ?? [])
@@ -41,7 +45,14 @@ export async function POST(req: Request) {
         return p && c ? { policyId: p.id, clauseId: c.id } : null;
       })
       .filter((c): c is Citation => !!c);
-    return Response.json({ answer: ai.answer, citations, source: "ai" });
+    // Every answer keeps its receipts: fall back to the best-matching clause per policy if the model gave none.
+    const cited = citations.length
+      ? citations
+      : policies.flatMap((pol) => {
+          const c = relevantClauses(question, pol)[0];
+          return c ? [{ policyId: pol.id, clauseId: c.id }] : [];
+        });
+    return Response.json({ answer: ai.answer, citations: cited, source: "ai" });
   }
 
   // Fallback: retrieval-only answer that quotes the most relevant clause per policy.

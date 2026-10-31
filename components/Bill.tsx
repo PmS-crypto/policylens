@@ -1,12 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { coverageMap } from "@/lib/awareness";
 import { CITY_COST_FACTOR, CITY_LABEL } from "@/lib/profile";
-import { SCENARIOS, YEAR_LABEL, headlineScenario, simulate, type RoomType } from "@/lib/simulate";
+import type { Lang } from "@/lib/ai";
+import { t } from "@/lib/flow";
+import { SCENARIOS, headlineScenario, scenarioTitle, simulate, yearLabel, type RoomType } from "@/lib/simulate";
 import type { Match, Profile } from "@/lib/types";
 import { Money, Segmented, inrShort } from "./ui";
 
 interface Props {
+  lang: Lang;
   profile: Profile;
   top: Match[];
   focusId?: string;
@@ -14,7 +18,7 @@ interface Props {
 }
 
 /** The signature screen: each plan rendered as the hospital bill you'd actually receive. */
-export default function Bill({ profile, top, focusId, onOpen }: Props) {
+export default function Bill({ lang, profile, top, focusId, onOpen }: Props) {
   const head = useMemo(() => headlineScenario(profile), [profile]);
   const scenarios = useMemo(() => [...SCENARIOS].sort((a, b) => Number(b.relevant(profile)) - Number(a.relevant(profile))), [profile]);
   const [sid, setSid] = useState(head.scenario.id);
@@ -31,30 +35,76 @@ export default function Bill({ profile, top, focusId, onOpen }: Props) {
   const { m, r } = cur;
   const today = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
   const printKey = `${m.policy.id}-${sid}-${year}-${room}`;
+  const map = useMemo(() => coverageMap(profile, top), [profile, top]);
+  const receiptRef = useRef<HTMLDivElement>(null);
+  const jump = (scenarioId: string, policyId: string, y: number) => {
+    setSid(scenarioId);
+    setPid(policyId);
+    setYear(Math.min(4, y));
+    setTimeout(() => receiptRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  };
 
   return (
     <div className="pb-12">
       <header className="px-6 pt-6">
-        <p className="text-[13px] font-medium text-accent">Reality check</p>
-        <h1 className="display mt-2 text-[38px]">Your bill, before it happens</h1>
-        <p className="mt-3 max-w-[36ch] text-[15px] leading-relaxed text-ink-soft">Pick a moment. I'll run the hospital bill through each plan's rules and show every rupee that comes back to you.</p>
+        <p className="text-[13px] font-medium text-accent">{t(lang, "Will this actually cover me?", "Kya yeh sach mein cover karega?")}</p>
+        <h1 className="display mt-2 text-[38px]">{t(lang, "Your bill, before it happens", "Bill, hone se pehle")}</h1>
+        <p className="mt-3 max-w-[36ch] text-[15px] leading-relaxed text-ink-soft">{t(lang, "Every likely hospital trip for your family, run through each plan's rules. Tap any box for the full bill.", "Aapki family ke har possible hospital trip ko har plan ke rules se check kiya. Poora bill dekhne ke liye kisi bhi box pe tap karo.")}</p>
       </header>
 
-      <div className="no-scrollbar mt-6 flex gap-2.5 overflow-x-auto px-6 pb-2">
+      {/* Coverage map: every likely event × every plan, with when cover starts */}
+      <section className="mx-5 mt-6 overflow-hidden rounded-[28px] bg-surface shadow-e1 ring-1 ring-line" aria-label="Coverage map">
+        <div className="grid grid-cols-[1.25fr_repeat(3,1fr)] gap-1 border-b border-line px-4 py-3.5">
+          <span className="text-[12px] font-medium text-ink-soft">{t(lang, "If it happens this year", "Agar is saal hua")}</span>
+          {top.map((t, i) => (
+            <span key={t.policy.id} className="text-[12px] font-semibold leading-tight">
+              <span className="money mr-1 text-accent">0{i + 1}</span>
+              {t.policy.name}
+            </span>
+          ))}
+        </div>
+        <div className="divide-y divide-line">
+          {map.map(({ scenario, cells }) => (
+            <div key={scenario.id} className="grid grid-cols-[1.25fr_repeat(3,1fr)] items-center gap-1 px-4 py-3">
+              <span className="text-[13px] font-medium leading-snug">{scenarioTitle(scenario, lang)}</span>
+              {cells.map((c, i) => (
+                <button
+                  key={top[i].policy.id}
+                  onClick={() => jump(scenario.id, top[i].policy.id, c.year)}
+                  className={`rounded-[12px] px-2 py-2 text-left text-[12px] font-semibold leading-tight transition active:scale-95 ${
+                    c.kind === "waiting" ? "bg-warn-soft text-warn" : c.kind === "partial" ? "bg-owe-soft text-owe" : "bg-paid-soft text-paid"
+                  }`}
+                >
+                  {c.kind === "waiting"
+                    ? c.from === "Not covered"
+                      ? t(lang, "Not covered", "Cover nahi")
+                      : `${t(lang, "From", "")} ${c.from}${t(lang, "", " se")}`.trim()
+                    : c.youPay === 0
+                      ? t(lang, "Covered", "Cover hai")
+                      : `${t(lang, "You pay", "Aap doge")} ${inrShort(c.youPay)}`}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <h2 ref={receiptRef} className="title mt-12 scroll-mt-4 px-6 text-[20px]">{t(lang, "The full bill", "Poora bill")}</h2>
+      <div className="no-scrollbar mt-4 flex gap-2.5 overflow-x-auto px-6 pb-2">
         {scenarios.map((x) => (
           <button
             key={x.id}
             onClick={() => setSid(x.id)}
             className={`shrink-0 rounded-full px-5 py-3 text-[14px] transition-all duration-300 ${sid === x.id ? "bg-primary font-semibold text-on-primary shadow-e2" : "bg-surface shadow-e1 ring-1 ring-line"} ${x.relevant(profile) ? "" : "opacity-50"}`}
           >
-            {x.title}
+            {scenarioTitle(x, lang)}
           </button>
         ))}
       </div>
 
       <div className="mt-4 space-y-2.5 px-6">
-        <Segmented label="When it happens" value={year} onChange={setYear} options={[1, 2, 3, 4].map((y) => ({ value: y, label: YEAR_LABEL[y] }))} />
-        <Segmented label="Room type" value={room} onChange={setRoom} options={[{ value: "shared", label: "Shared" }, { value: "private", label: "Private" }, { value: "deluxe", label: "Deluxe" }]} />
+        <Segmented label="When it happens" value={year} onChange={setYear} options={[1, 2, 3, 4].map((y) => ({ value: y, label: yearLabel(y, lang) }))} />
+        <Segmented label="Room type" value={room} onChange={setRoom} options={[{ value: "shared", label: t(lang, "Shared", "Shared") }, { value: "private", label: "Private" }, { value: "deluxe", label: "Deluxe" }]} />
       </div>
 
       {/* Switcher doubles as the summary of what you'd pay on each plan */}
@@ -77,7 +127,7 @@ export default function Bill({ profile, top, focusId, onOpen }: Props) {
         <div key={printKey} className="print relative -mt-1.5 mx-2 drop-shadow-[0_18px_24px_rgba(20,10,40,0.18)]">
           <div className="receipt-edge bg-[#fbfaf7] px-6 pb-12 pt-7 font-mono text-[12.5px] leading-relaxed text-[#1b1722]">
             <div className="text-center">
-              <p className="font-sans text-[16px] font-bold">Estimated hospital bill</p>
+              <p className="font-sans text-[16px] font-bold">{t(lang, "Estimated hospital bill", "Hospital bill (estimate)")}</p>
               <p className="text-[#6b6577]">
                 {profile.cityName ?? CITY_LABEL[city]}, {today}
               </p>
@@ -85,17 +135,17 @@ export default function Bill({ profile, top, focusId, onOpen }: Props) {
                 {m.policy.insurer} {m.policy.name}, ₹{m.sumInsured}L
               </p>
               <div className={`stamp stamp-in mx-auto mt-4 w-fit px-3.5 py-1 font-sans text-[15px] font-extrabold uppercase ${r.blocked ? "text-[#d23a46]" : r.youPay === 0 ? "text-[#11845a]" : "text-[#a8640c]"}`}>
-                {r.blocked ? "Not covered yet" : r.youPay === 0 ? "Paid in full" : `${Math.round((r.insurerPays / r.bill) * 100)}% paid`}
+                {r.blocked ? t(lang, "Not covered yet", "Abhi cover nahi") : r.youPay === 0 ? t(lang, "Paid in full", "Poora paid") : `${Math.round((r.insurerPays / r.bill) * 100)}% paid`}
               </div>
             </div>
             <div className="my-4 border-t border-dashed border-[#1b1722]/25" />
-            <Line label={s.title} amount={r.bill} />
+            <Line label={scenarioTitle(s, lang)} amount={r.bill} />
             <p className="text-[#6b6577]">
-              {s.days > 0 ? `${s.days} nights, ${room} room` : "Day-care procedure"}, {YEAR_LABEL[year].toLowerCase()}
+              {s.days > 0 ? t(lang, `${s.days} nights, ${room} room`, `${s.days} raat, ${room} room`) : t(lang, "Day-care procedure", "Day-care procedure")}, {yearLabel(year, lang).toLowerCase()}
             </p>
             <div className="my-4 border-t border-dashed border-[#1b1722]/25" />
-            <p className="mb-1 font-sans text-[12px] font-semibold text-[#6b6577]">Not paid by the insurer</p>
-            {r.lines.length === 0 && <p className="text-[#11845a]">Nothing. Every rupee is admissible.</p>}
+            <p className="mb-1 font-sans text-[12px] font-semibold text-[#6b6577]">{t(lang, "Not paid by the insurer", "Jo insurer nahi dega")}</p>
+            {r.lines.length === 0 && <p className="text-[#11845a]">{t(lang, "Nothing. Every rupee is covered.", "Kuch nahi. Har rupaya cover hai.")}</p>}
             {r.lines.map((l) => (
               <div key={l.label} className="py-1.5">
                 <Line label={l.label} amount={-l.amount} owe />
@@ -110,9 +160,9 @@ export default function Bill({ profile, top, focusId, onOpen }: Props) {
               </div>
             ))}
             <div className="my-4 border-t border-dashed border-[#1b1722]/25" />
-            <Line label="Insurer pays" amount={r.insurerPays} />
+            <Line label={t(lang, "Insurer pays", "Insurer dega")} amount={r.insurerPays} />
             <div className="mt-3 flex items-end justify-between font-sans">
-              <span className="text-[16px] font-bold">You pay</span>
+              <span className="text-[16px] font-bold">{t(lang, "You pay", "Aap doge")}</span>
               <Money value={r.youPay} className={`text-[48px] ${r.youPay === 0 ? "text-[#11845a]" : "text-[#d23a46]"}`} />
             </div>
           </div>
@@ -121,7 +171,7 @@ export default function Bill({ profile, top, focusId, onOpen }: Props) {
 
       <div className="mx-6 mt-8 rounded-[24px] bg-surface p-5 shadow-e1 ring-1 ring-line">
         <div className="flex items-baseline justify-between">
-          <span className="text-[14px] font-medium">Change the bill amount</span>
+          <span className="text-[14px] font-medium">{t(lang, "Play with the bill amount", "Bill amount badal ke dekho")}</span>
           <Money value={bill} className="text-[22px]" />
         </div>
         <input
@@ -136,7 +186,11 @@ export default function Bill({ profile, top, focusId, onOpen }: Props) {
         />
       </div>
       <p className="mt-5 px-6 text-[12.5px] leading-relaxed text-ink-soft">
-        An estimate from typical {CITY_LABEL[city].toLowerCase()} hospital costs and each plan's wording. The insurer assesses the real bill.
+        {t(
+          lang,
+          `An estimate from typical ${CITY_LABEL[city].toLowerCase()} hospital costs and each plan's wording. The insurer checks the real bill.`,
+          `Yeh ${CITY_LABEL[city].toLowerCase()} ke typical hospital costs aur har plan ki wording pe based estimate hai. Asli bill insurer check karta hai.`,
+        )}
       </p>
     </div>
   );

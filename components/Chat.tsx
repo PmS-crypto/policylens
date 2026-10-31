@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Lang } from "@/lib/ai";
 import type { Chip } from "@/lib/flow";
+import { t } from "@/lib/flow";
 import { getPolicy } from "@/lib/policies";
 import { Icon, Orb, type IconName } from "./ui";
 
@@ -92,7 +93,7 @@ export default function Chat(props: Props) {
     if (!SR) return;
     if (listening) return rec.current?.stop();
     const r = new SR();
-    r.lang = lang === "hi" ? "hi-IN" : "en-IN";
+    r.lang = "en-IN";
     r.interimResults = false;
     r.onresult = (e) => send(e.results[0][0].transcript);
     r.onend = () => setListening(false);
@@ -105,13 +106,13 @@ export default function Chat(props: Props) {
     <div className="flex h-full flex-col">
       <div className="no-scrollbar flex-1 space-y-6 overflow-y-auto px-6 pb-28 pt-6">
         {messages.map((m) => (
-          <Bubble key={m.id} m={m} onCitation={onCitation} />
+          <Bubble key={m.id} m={m} lang={lang} onCitation={onCitation} />
         ))}
 
         {typing && (
           <div className="flex items-center gap-3 text-[13px] text-ink-faint" aria-label="PolicyLens is thinking">
             <Orb size={26} thinking />
-            Reading the fine print
+            {t(lang, "Reading the fine print…", "Fine print padh raha hoon…")}
           </div>
         )}
 
@@ -157,7 +158,7 @@ export default function Chat(props: Props) {
                 onClick={() => onChips(picked, picked.map((v) => chips.find((c) => c.value === v)?.label ?? v))}
                 className={`flex items-center justify-center gap-2 rounded-full bg-accent px-7 py-3 text-[14.5px] font-semibold text-white shadow-e2 transition disabled:bg-surface-2 disabled:text-ink-faint disabled:shadow-none ${tiles ? "col-span-2 mt-1 py-4" : ""}`}
               >
-                Continue
+                {t(lang, "Continue", "Aage chalo")}
                 <Icon name="arrow" size={16} />
               </button>
             )}
@@ -178,7 +179,7 @@ export default function Chat(props: Props) {
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={listening ? "Listening…" : placeholder}
+          placeholder={listening ? t(lang, "Listening…", "Sun raha hoon…") : placeholder}
           aria-label="Message"
           className="min-w-0 flex-1 bg-transparent py-2.5 text-[15.5px] outline-none placeholder:text-ink-faint"
         />
@@ -201,7 +202,7 @@ export default function Chat(props: Props) {
   );
 }
 
-function Bubble({ m, onCitation }: { m: Msg; onCitation: (c: Citation) => void }) {
+function Bubble({ m, lang, onCitation }: { m: Msg; lang: Lang; onCitation: (c: Citation) => void }) {
   if (m.role === "user")
     return (
       <div className="rise flex justify-end">
@@ -223,7 +224,7 @@ function Bubble({ m, onCitation }: { m: Msg; onCitation: (c: Citation) => void }
         <div aria-hidden className="absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-60 blur-2xl" style={{ background: "radial-gradient(#ffb38a, #f49ac1 60%, transparent 70%)" }} />
         <p className="relative flex items-center gap-2 text-[13px] font-semibold text-accent">
           <Icon name="sparkle" size={15} />
-          Worth knowing
+          {t(lang, "Worth knowing", "Yeh jaan lo")}
         </p>
         <p className="relative mt-2 text-[15px] leading-relaxed">{m.text}</p>
       </div>

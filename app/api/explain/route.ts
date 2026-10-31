@@ -22,7 +22,8 @@ export async function POST(req: Request) {
 Policy: ${m.policy.insurer} ${m.policy.name}, ₹${m.sumInsured}L cover, est. ₹${m.premium}/yr, label "${m.label}".
 Strengths: ${good.map((r) => `${r.title} (${r.detail})`).join("; ") || "none"}.
 Trade-offs: ${bad.map((r) => `${r.title} (${r.detail})`).join("; ") || "none"}.`;
-      const ai = await llm(SYSTEM + langNote(lang), facts, 250);
+      const reply = lang === "hi" ? "\n\nWrite the note in Hinglish (Hindi in Roman letters mixed with English), like a WhatsApp message to a friend. Not English, not Devanagari." : "\n\nWrite the note in English.";
+      const ai = await llm(SYSTEM + langNote(lang), facts + reply, 250);
       return { policyId: m.policy.id, note: ai?.trim() || fallback(profile, pri, good.map((r) => r.title), bad[0]?.title), source: ai ? "ai" : "rules" };
     }),
   );

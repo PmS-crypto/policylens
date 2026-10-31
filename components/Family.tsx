@@ -1,6 +1,7 @@
 "use client";
 
-import { stepProgress } from "@/lib/flow";
+import type { Lang } from "@/lib/ai";
+import { stepProgress, t } from "@/lib/flow";
 import { CITY_LABEL, CONDITION_LABEL, PRIORITY_LABEL, conditionHolder, coverSummary, effectivePriorities, inr, recommendSumInsured } from "@/lib/profile";
 import type { Profile } from "@/lib/types";
 import { AURA, Aura, Icon, type IconName, Sheet } from "./ui";
@@ -25,7 +26,7 @@ function members(p: Profile): Member[] {
 }
 
 /** The family assembling itself as the conversation goes. Tap to review. */
-export function FamilyBar({ profile, onOpen }: { profile: Profile; onOpen: () => void }) {
+export function FamilyBar({ profile, lang, onOpen }: { profile: Profile; lang: Lang; onOpen: () => void }) {
   const ms = members(profile);
   const { done, total } = stepProgress(profile);
   return (
@@ -43,7 +44,7 @@ export function FamilyBar({ profile, onOpen }: { profile: Profile; onOpen: () =>
           </span>
         ))}
       </div>
-      <p className="min-w-0 flex-1 truncate text-[13.5px] font-medium">{profile.cover ? coverSummary(profile) : "Your family"}</p>
+      <p className="min-w-0 flex-1 truncate text-[13.5px] font-medium">{profile.cover ? coverSummary(profile) : t(lang, "Your people", "Aapki family")}</p>
       <span className="flex items-center gap-1.5" aria-label={`${done} of ${total} answered`}>
         {Array.from({ length: total }).map((_, i) => (
           <span key={i} className={`h-1.5 rounded-full transition-all duration-500 ${i < done ? "w-3 bg-accent" : "w-1.5 bg-line"}`} />
@@ -53,7 +54,7 @@ export function FamilyBar({ profile, onOpen }: { profile: Profile; onOpen: () =>
   );
 }
 
-export function ProfileSheet({ profile: p, onEdit, onClose }: { profile: Profile; onEdit: (f: keyof Profile) => void; onClose: () => void }) {
+export function ProfileSheet({ profile: p, lang, onEdit, onClose }: { profile: Profile; lang: Lang; onEdit: (f: keyof Profile) => void; onClose: () => void }) {
   const si = recommendSumInsured(p);
   const rows: { label: string; value?: string; field: keyof Profile }[] = [
     { label: "Who's covered", value: p.cover ? coverSummary(p) : undefined, field: "cover" },
@@ -65,24 +66,24 @@ export function ProfileSheet({ profile: p, onEdit, onClose }: { profile: Profile
     { label: "Yearly budget", value: p.budget === undefined ? undefined : p.budget ? `Up to ${inr(p.budget)}` : "Open", field: "budget" },
   ];
   return (
-    <Sheet onClose={onClose} title={<h2 className="display text-[30px]">Your family, as I understand it</h2>}>
+    <Sheet onClose={onClose} title={<h2 className="display text-[30px]">{t(lang, "Here's what I've got", "Maine yeh samjha")}</h2>}>
       <p className="mt-3 flex items-start gap-2.5 text-[14px] leading-relaxed text-ink-soft">
         <Icon name="lock" size={16} className="mt-0.5 shrink-0 text-accent" />
-        Tap any answer to change it. Nothing here goes to an insurer unless you choose a plan.
+        {t(lang, "Tap anything to change it. None of this goes to an insurer unless you pick a plan.", "Kuch bhi badalna ho toh tap karo. Jab tak plan nahi chunte, yeh kisi insurer ko nahi jaata.")}
       </p>
       <ul className="mt-6 divide-y divide-line">
         {rows.map((r) => (
           <li key={r.label}>
             <button disabled={!r.value} onClick={() => onEdit(r.field)} className="flex w-full items-center justify-between gap-4 py-4 text-left">
               <span className="text-[14px] text-ink-soft">{r.label}</span>
-              <span className={`text-right text-[15px] font-medium ${r.value ? "" : "text-ink-faint"}`}>{r.value ?? "Not yet"}</span>
+              <span className={`text-right text-[15px] font-medium ${r.value ? "" : "text-ink-faint"}`}>{r.value ?? t(lang, "Not yet", "Abhi nahi")}</span>
             </button>
           </li>
         ))}
       </ul>
       {p.cover && p.city && (
         <Aura colors={AURA.dusk} scrim className="relative mt-6 rounded-[28px] p-6 text-white">
-          <p className="text-[13px] opacity-80">Cover we'd suggest</p>
+          <p className="text-[13px] opacity-80">{t(lang, "Cover we'd go for", "Itna cover sahi rahega")}</p>
           <p className="money mt-2 text-[64px]">₹{si.lakh}L</p>
           <ul className="mt-4 space-y-2 text-[13.5px] leading-relaxed opacity-90">
             {si.why.map((w) => (

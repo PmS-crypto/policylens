@@ -28,6 +28,20 @@ OPENAI_API_KEY=...         # uses gpt-4o-mini (override with OPENAI_MODEL)
 | 5. **Reality Check** ⭐ | Run a real-life scenario (dengue, knee replacement, a diabetes complication, C-section…) through each policy's rules: waiting periods, room-rent proportionate deduction, co-pay, sub-limits, consumables. You see exactly what you'd pay out of pocket, line by line. | `lib/simulate.ts`, `components/RealityCheck.tsx` |
 | 6. Decide | What you're getting vs. what you're accepting, a personal coverage timeline ("Dad's diabetes covered from Oct 2027"), a pre-purchase checklist, and a hand-off to the insurer or an advisor. | `components/Decide.tsx` |
 
+## Jobs to be done: every stage answered
+
+| Stage | The user's question | Where PolicyLens answers it |
+|---|---|---|
+| Awareness | "Do I even need insurance?" | When the profile completes: the likeliest and the worst-case hospital bill for *this* family, compared with years of premium, plus why employer cover isn't enough |
+| Discovery | "Which policy should I consider?" | Conversational profile, then a shortlist of 3 ranked only on what the user said, each led by what they'd actually pay |
+| Evaluation | "How do I compare these?" | Side-by-side view of the rules that decide payouts (room rent, co-pay, waits, caps), with the user's priorities highlighted |
+| Trust | "Will this actually cover me?" | Coverage map (every likely event × every plan: covered, what you'd pay, or the month cover starts), the itemised bill, and every claim linked to its clause |
+| Purchase | "Am I making the right decision?" | The choice argued against each alternative in rupees and break-even terms, a personal coverage timeline, a numbered pre-purchase checklist, and "Run it by the family" sharing |
+
+## Language and voice
+
+English and **Hinglish** (Roman script), switchable at any point from the header. The script, answer options, tips and screen titles change, and so do the AI's answers. Switching mid-chat re-asks the open question. Voice: a smart friend who knows insurance. Young, direct, credible, no jargon.
+
 ## Design principles
 
 - **The AI never invents facts.** The LLM extracts the profile and rewrites engine output into plain language. Matching, pricing and claim simulation are deterministic and traceable to clauses.

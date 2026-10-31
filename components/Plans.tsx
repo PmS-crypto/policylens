@@ -4,11 +4,14 @@ import { useRef, useState } from "react";
 import { copayApplies } from "@/lib/match";
 import { POLICIES } from "@/lib/policies";
 import { PRIVATE_ROOM_RATE, effectivePriorities, eldestAge } from "@/lib/profile";
-import { headlineScenario, simulate } from "@/lib/simulate";
+import type { Lang } from "@/lib/ai";
+import { t } from "@/lib/flow";
+import { headlineScenario, headlineSentence, simulate } from "@/lib/simulate";
 import type { Excluded, Match, Priority, Profile } from "@/lib/types";
 import { Aura, Icon, Money, PLAN_AURAS, ReasonRow, Seal, Segmented, inrShort } from "./ui";
 
 interface Props {
+  lang: Lang;
   profile: Profile;
   top: Match[];
   excluded: Excluded[];
@@ -18,11 +21,12 @@ interface Props {
   onBill: (id: string) => void;
 }
 
-export default function Plans({ profile, top, excluded, notes, onOpen, onChoose, onBill }: Props) {
+export default function Plans({ lang, profile, top, excluded, notes, onOpen, onChoose, onBill }: Props) {
   const [active, setActive] = useState(0);
   const [mode, setMode] = useState<"cards" | "compare">("cards");
   const rail = useRef<HTMLDivElement>(null);
   const head = headlineScenario(profile);
+  const sentence = headlineSentence(profile, lang);
 
   const onScroll = () => {
     const el = rail.current;
@@ -32,17 +36,25 @@ export default function Plans({ profile, top, excluded, notes, onOpen, onChoose,
   return (
     <div className="pb-10">
       <header className="px-6 pt-6">
-        <p className="text-[13px] font-medium text-accent">{POLICIES.length} policies read, clause by clause</p>
-        <h1 className="display mt-2 text-[38px]">Your three plans</h1>
-        <p className="mt-3 max-w-[36ch] text-[15px] leading-relaxed text-ink-soft">Ranked only on what you told me. Each one leads with what you'd actually pay.</p>
+        <p className="text-[13px] font-medium text-accent">{mode === "cards" ? t(lang, "Which policy should I consider?", "Kaunsi policy dekhni chahiye?") : t(lang, "How do I compare these?", "Inhe compare kaise karun?")}</p>
+        <h1 className="display mt-2 text-[38px]">{mode === "cards" ? t(lang, "Your top 3", "Aapke top 3") : t(lang, "What's actually different", "Asli farak kya hai")}</h1>
+        <p className="mt-3 max-w-[36ch] text-[15px] leading-relaxed text-ink-soft">
+          {mode === "cards"
+            ? t(
+                lang,
+                `Went through ${POLICIES.length} policies clause by clause. Ranked only on what you told me, and each one leads with what you'd actually pay.`,
+                `${POLICIES.length} policies clause by clause padhi. Ranking sirf aapki baaton pe hai, aur har card pe pehle wahi dikhta hai jo aap asal mein doge.`,
+              )
+            : t(lang, "Not features. The rules that decide how much of a bill actually gets paid.", "Features nahi. Woh rules jo decide karte hain ki bill ka kitna paisa milega.")}
+        </p>
         <div className="mt-6">
           <Segmented
             label="Plan view"
             value={mode}
             onChange={setMode}
             options={[
-              { value: "cards", label: "One at a time" },
-              { value: "compare", label: "Side by side" },
+              { value: "cards", label: t(lang, "One at a time", "Ek-ek karke") },
+              { value: "compare", label: t(lang, "Side by side", "Saath mein") },
             ]}
           />
         </div>
@@ -61,7 +73,7 @@ export default function Plans({ profile, top, excluded, notes, onOpen, onChoose,
                       <div className="flex items-center justify-between">
                         <span className="flex items-center gap-2">
                           <span className="money text-[22px] opacity-90">0{i + 1}</span>
-                          <span className="rounded-full bg-white/20 px-3 py-1 text-[12px] font-semibold backdrop-blur">{m.label}</span>
+                          <span className="rounded-full bg-white/20 px-3 py-1 text-[12px] font-semibold backdrop-blur">{lang === "hi" ? LABEL_HI[m.label ?? ""] ?? m.label : m.label}</span>
                         </span>
                         <span className="text-[12px] opacity-80">
                           {m.prioritiesTotal > 0 ? `${m.prioritiesMet}/${m.prioritiesTotal} priorities` : m.fit}
@@ -71,18 +83,18 @@ export default function Plans({ profile, top, excluded, notes, onOpen, onChoose,
                       <h2 className="display text-[30px]">{m.policy.name}</h2>
 
                       <button onClick={() => onBill(m.policy.id)} className="mt-6 block w-full text-left">
-                        <p className="max-w-[28ch] text-[13.5px] leading-snug opacity-90">{head.sentence}, you'd pay</p>
+                        <p className="max-w-[28ch] text-[13.5px] leading-snug opacity-90">{sentence}, {t(lang, "you'd pay", "toh aap doge")}</p>
                         <Money value={r.youPay} className="mt-2 block text-[68px]" />
                         <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/25">
                           <div className="h-full rounded-full bg-white transition-all duration-700" style={{ width: `${paidPct}%` }} />
                         </div>
                         <p className="mt-3 flex items-center justify-between text-[12.5px]">
                           <span className="opacity-85">
-                            Insurer pays {Math.round(paidPct)}% of {inrShort(r.bill)}
-                            {r.blocked ? ", not covered yet" : ""}
+                            {t(lang, "Insurer pays", "Insurer dega")} {Math.round(paidPct)}% {t(lang, "of", "of")} {inrShort(r.bill)}
+                            {r.blocked ? t(lang, ", not covered yet", ", abhi cover nahi") : ""}
                           </span>
                           <span className="flex items-center gap-1 font-semibold">
-                            See bill <Icon name="arrow" size={14} />
+                            {t(lang, "See bill", "Bill dekho")} <Icon name="arrow" size={14} />
                           </span>
                         </p>
                       </button>
@@ -91,16 +103,16 @@ export default function Plans({ profile, top, excluded, notes, onOpen, onChoose,
                     <div className="grid grid-cols-2 divide-x divide-line border-b border-line">
                       <div className="px-6 py-5">
                         <Money value={m.premium} className="text-[30px]" />
-                        <p className="mt-1.5 text-[12.5px] text-ink-soft">a year, estimated</p>
+                        <p className="mt-1.5 text-[12.5px] text-ink-soft">{t(lang, "a year, roughly", "saal ka, lagbhag")}</p>
                       </div>
                       <div className="px-6 py-5">
                         <span className="money text-[30px]">₹{m.sumInsured}L</span>
-                        <p className="mt-1.5 text-[12.5px] text-ink-soft">cover</p>
+                        <p className="mt-1.5 text-[12.5px] text-ink-soft">{t(lang, "cover", "cover")}</p>
                       </div>
                     </div>
 
                     <div className="px-6 pb-6 pt-6">
-                      <h3 className="title text-[19px]">Why it fits you</h3>
+                      <h3 className="title text-[19px]">{t(lang, "Why it fits you", "Yeh aapke liye kyun")}</h3>
                       {notes[m.policy.id] ? (
                         <p className="rise mt-2.5 text-[15px] leading-relaxed">{notes[m.policy.id]}</p>
                       ) : (
@@ -111,7 +123,7 @@ export default function Plans({ profile, top, excluded, notes, onOpen, onChoose,
                       )}
                       <div className="mt-4">
                         <Seal>
-                          Policy wording {m.policy.docVersion}, checked {new Date(m.policy.lastVerified).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
+                          {t(lang, "Policy wording", "Policy wording")} {m.policy.docVersion}, {t(lang, "checked", "checked")} {new Date(m.policy.lastVerified).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
                         </Seal>
                       </div>
                       <ul className="mt-6 space-y-6 border-t border-line pt-6">
@@ -121,10 +133,10 @@ export default function Plans({ profile, top, excluded, notes, onOpen, onChoose,
                       </ul>
                       <div className="mt-8 grid grid-cols-2 gap-2.5">
                         <button onClick={() => onOpen(m.policy.id)} className="rounded-full py-4 text-[14.5px] font-semibold ring-1 ring-line">
-                          Fine print
+                          {t(lang, "Fine print", "Fine print")}
                         </button>
                         <button onClick={() => onChoose(m.policy.id)} className="rounded-full bg-primary py-4 text-[14.5px] font-semibold text-on-primary shadow-e2">
-                          Choose plan
+                          {t(lang, "Pick this one", "Yahi lunga")}
                         </button>
                       </div>
                     </div>
@@ -140,7 +152,7 @@ export default function Plans({ profile, top, excluded, notes, onOpen, onChoose,
           </div>
           {excluded.length > 0 && (
             <details className="mx-6 mt-8 rounded-[24px] bg-surface p-5 text-[14px] shadow-e1 ring-1 ring-line">
-              <summary className="cursor-pointer font-semibold">Why some plans aren't shown</summary>
+              <summary className="cursor-pointer font-semibold">{t(lang, "Why some plans didn't make the cut", "Kuch plans kyun nahi dikhe")}</summary>
               <ul className="mt-3 space-y-2 text-ink-soft">
                 {excluded.map((e) => (
                   <li key={e.policy.id}>
@@ -152,16 +164,23 @@ export default function Plans({ profile, top, excluded, notes, onOpen, onChoose,
           )}
         </>
       ) : (
-        <Compare profile={profile} top={top} onOpen={onOpen} />
+        <Compare lang={lang} profile={profile} top={top} onOpen={onOpen} />
       )}
     </div>
   );
 }
 
+const LABEL_HI: Record<string, string> = {
+  "Best fit for you": "Aapke liye best",
+  "Budget pick": "Budget wala",
+  "Maximum protection": "Full protection",
+  "Strong alternative": "Solid option",
+};
+
 type Tone = "good" | "caveat" | "bad" | "neutral";
 const TONE: Record<Tone, string> = { good: "text-paid", caveat: "text-warn", bad: "text-owe", neutral: "text-ink" };
 
-function Compare({ profile, top, onOpen }: { profile: Profile; top: Match[]; onOpen: (id: string, clause?: string) => void }) {
+function Compare({ lang, profile, top, onOpen }: { lang: Lang; profile: Profile; top: Match[]; onOpen: (id: string, clause?: string) => void }) {
   const pri = new Set(effectivePriorities(profile));
   const age = eldestAge(profile);
   const rate = PRIVATE_ROOM_RATE[profile.city ?? "tier2"];
@@ -207,7 +226,7 @@ function Compare({ profile, top, onOpen }: { profile: Profile; top: Match[]; onO
           ))}
         </div>
       </div>
-      <p className="mt-4 px-1 text-[12.5px] text-ink-soft">Highlighted rows are the ones you said matter. Tap any value to read the clause.</p>
+      <p className="mt-4 px-1 text-[12.5px] text-ink-soft">{t(lang, "Highlighted rows are the ones you said matter. Tap any value to read the clause.", "Highlighted rows woh hain jo aapne important bataye. Clause padhne ke liye kisi bhi value pe tap karo.")}</p>
     </div>
   );
 }

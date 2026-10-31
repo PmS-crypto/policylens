@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Lang } from "@/lib/ai";
+import { t } from "@/lib/flow";
 import { redFlags } from "@/lib/match";
 import type { Match, Profile } from "@/lib/types";
 import { RichText } from "./Chat";
@@ -42,9 +43,11 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
   };
 
   const suggestions = [
-    profile.conditions?.length ? `When is ${profile.conditions[0] === "bp" ? "BP" : profile.conditions[0]} covered?` : "What isn't covered?",
-    "What if I pick a bigger room?",
-    profile.cover?.parents ? "Is knee replacement covered?" : "Any hidden limits?",
+    profile.conditions?.length
+      ? t(lang, `When does ${profile.conditions[0] === "bp" ? "BP" : profile.conditions[0]} get covered?`, `${profile.conditions[0] === "bp" ? "BP" : profile.conditions[0]} kab se cover hoga?`)
+      : t(lang, "What's not covered?", "Kya cover nahi hota?"),
+    t(lang, "What if I pick a bigger room?", "Bada room liya toh kya hoga?"),
+    profile.cover?.parents ? t(lang, "Is knee replacement covered?", "Knee replacement cover hai?") : t(lang, "Any hidden limits?", "Koi chhupi limit hai?"),
   ];
   const flags = redFlags(p);
 
@@ -73,11 +76,11 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Ask this policy anything"
+          placeholder={t(lang, "Ask this policy anything", "Is policy se kuch bhi poocho")}
           aria-label="Ask this policy"
           className="min-w-0 flex-1 bg-transparent py-2 text-[15px] outline-none placeholder:text-ink-faint"
         />
-        <button className="rounded-full bg-accent px-5 text-[14px] font-semibold text-white">Ask</button>
+        <button className="rounded-full bg-accent px-5 text-[14px] font-semibold text-white">{t(lang, "Ask", "Poocho")}</button>
       </form>
       <div className="no-scrollbar -mx-7 mt-3 flex gap-2 overflow-x-auto px-7">
         {suggestions.map((s) => (
@@ -86,7 +89,7 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
           </button>
         ))}
       </div>
-      {loading && <p className="mt-3 text-[14px] text-ink-soft">Reading the policy wording…</p>}
+      {loading && <p className="mt-3 text-[14px] text-ink-soft">{t(lang, "Reading the fine print…", "Fine print padh raha hoon…")}</p>}
       {answer && !loading && (
         <div className="rise mt-4 rounded-[24px] bg-accent-soft p-5 text-[15px] leading-relaxed">
           <p className="mb-1.5 text-[12px] text-ink-soft">{answer.q}</p>
@@ -103,7 +106,7 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
         </div>
       )}
 
-      <h3 className="title mt-10 text-[20px]">For your family</h3>
+      <h3 className="title mt-10 text-[20px]">{t(lang, "For your family", "Aapki family ke liye")}</h3>
       <ul className="mt-5 space-y-6">
         {match.reasons.map((r) => (
           <ReasonRow key={r.title} r={r} onClause={() => jump(r.clauseId)} />
@@ -112,7 +115,7 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
 
       {flags.length > 0 && (
         <div className="mt-10 rounded-[24px] bg-owe-soft p-5">
-          <h3 className="title text-[17px] text-owe">Catches in the fine print</h3>
+          <h3 className="title text-[17px] text-owe">{t(lang, "Catches in the fine print", "Fine print ke catch")}</h3>
           <ul className="mt-3 list-disc space-y-1.5 pl-5 text-[14px]">
             {flags.map((f) => (
               <li key={f}>{f}</li>
@@ -121,7 +124,7 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
         </div>
       )}
 
-      <h3 className="title mt-10 text-[20px]">The policy wording</h3>
+      <h3 className="title mt-10 text-[20px]">{t(lang, "The actual policy wording", "Asli policy wording")}</h3>
       <div className="mt-4 space-y-2.5">
         {p.clauses.map((c) => (
           <div
@@ -141,7 +144,7 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
       </div>
 
       <button onClick={onChoose} className="sticky bottom-0 mt-8 w-full rounded-full bg-primary py-4 text-[15px] font-semibold text-on-primary shadow-e2">
-        Choose {p.name}
+        {t(lang, `Pick ${p.name}`, `${p.name} lunga`)}
       </button>
     </Sheet>
   );

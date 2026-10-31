@@ -88,10 +88,11 @@ export function parseJson<T>(raw: string | null): T | null {
   }
 }
 
-export type Lang = "en" | "hi";
+export type Lang = "en" | "hi"; // "hi" = Hinglish (Roman script)
 
-/** Appended to system prompts so answers come back in the user's chosen language. */
+/** Voice + language instructions appended to every system prompt. */
 export const langNote = (lang?: Lang) =>
-  lang === "hi"
-    ? "\n\nWrite all user-facing text in simple, everyday Hindi (Devanagari script). Keep policy names, ₹ amounts, § numbers and JSON keys unchanged."
-    : "";
+  "\n\nVoice: a smart, warm friend in their late twenties who happens to know insurance inside out. Conversational and direct, short sentences, zero corporate jargon. A light young touch is fine (\"real talk\", \"honestly\", \"heads up\") but stay credible: no slang overload, no emojis, never flippant about health or money." +
+  (lang === "hi"
+    ? "\nLanguage: Hinglish, the way young urban Indians text. Hindi written in Roman (Latin) script, naturally mixed with English words (policy, cover, claim, premium, hospital stay in English). NEVER use Devanagari script. Example tone: \"Seedhi baat: yeh plan 1 saal baad hi diabetes cover karega.\" Keep policy names, ₹ amounts, § numbers and JSON keys unchanged."
+    : "\nLanguage: English.");

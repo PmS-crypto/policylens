@@ -160,3 +160,37 @@ export function headlineScenario(p: Profile): { scenario: Scenario; sentence: st
   const year = id === "childbirth" ? 3 : 2;
   return { scenario, sentence: `If ${who} ${verb} ${YEAR_LABEL[year].toLowerCase()}`, year };
 }
+
+/* Hinglish copy for scenarios, years and the headline sentence */
+
+export const TITLE_HI: Record<string, string> = {
+  dengue: "Dengue, 4 raat hospital",
+  cardiac: "Heart attack: angioplasty",
+  knee: "Knee replacement",
+  cataract: "Cataract surgery (ek aankh)",
+  diabetes: "Sugar ki complication",
+  childbirth: "C-section delivery",
+};
+
+export const YEAR_LABEL_HI: Record<number, string> = { 1: "Is saal", 2: "Agle saal", 3: "2 saal baad", 4: "3 saal baad" };
+
+const PHRASE_HI: Record<string, string> = {
+  dengue: "dengue se 4 raat hospital mein rahe",
+  cardiac: "heart attack ke baad angioplasty karwani pade",
+  knee: "knee replacement karwana pade",
+  cataract: "cataract surgery karwani pade",
+  diabetes: "sugar ki complication se admit ho",
+  childbirth: "C-section delivery ho",
+};
+
+export const scenarioTitle = (s: Scenario, l: "en" | "hi") => (l === "hi" ? TITLE_HI[s.id] ?? s.title : s.title);
+export const yearLabel = (y: number, l: "en" | "hi") => (l === "hi" ? YEAR_LABEL_HI[y] : YEAR_LABEL[y]);
+
+/** The headline sentence in the user's language, e.g. "Agar papa/mummy sugar ki complication se admit ho agle saal". */
+export function headlineSentence(p: Profile, l: "en" | "hi") {
+  const h = headlineScenario(p);
+  if (l === "en") return h.sentence;
+  const id = h.scenario.id;
+  const who = id === "childbirth" ? "partner ki" : h.scenario.who === "parent" || (h.scenario.who === "eldest" && p.cover?.parents) ? "mummy/papa" : "aap";
+  return `Agar ${YEAR_LABEL_HI[h.year].toLowerCase()} ${who} ${PHRASE_HI[id]}`;
+}
