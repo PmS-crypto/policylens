@@ -7,10 +7,11 @@ import type { Lang } from "@/lib/ai";
 import { t } from "@/lib/flow";
 import { SCENARIOS, headlineScenario, scenarioTitle, simulate, yearLabel, type RoomType } from "@/lib/simulate";
 import type { Match, Profile } from "@/lib/types";
-import { Money, Segmented, inrShort } from "./ui";
+import { Icon, Money, Segmented, inrShort } from "./ui";
 
 interface Props {
   lang: Lang;
+  onChoose: (id: string) => void;
   profile: Profile;
   top: Match[];
   focusId?: string;
@@ -18,7 +19,7 @@ interface Props {
 }
 
 /** The signature screen: each plan rendered as the hospital bill you'd actually receive. */
-export default function Bill({ lang, profile, top, focusId, onOpen }: Props) {
+export default function Bill({ lang, profile, top, focusId, onOpen, onChoose }: Props) {
   const head = useMemo(() => headlineScenario(profile), [profile]);
   const scenarios = useMemo(() => [...SCENARIOS].sort((a, b) => Number(b.relevant(profile)) - Number(a.relevant(profile))), [profile]);
   const [sid, setSid] = useState(head.scenario.id);
@@ -199,6 +200,14 @@ export default function Bill({ lang, profile, top, focusId, onOpen }: Props) {
           `Yeh ${CITY_LABEL[city].toLowerCase()} ke typical hospital costs aur har plan ki wording pe based estimate hai. Asli bill insurer check karta hai.`,
         )}
       </p>
+      {/* Next step in the journey: pick a plan */}
+      <div className="mx-6 mt-8 space-y-3">
+        <p className="text-[13px] text-ink-soft">{t(lang, "Seen enough?", "Samajh aa gaya?")}</p>
+        <button onClick={() => onChoose(m.policy.id)} className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-[18px] text-[16px] font-semibold text-on-primary shadow-e2">
+          {t(lang, `Go with ${m.policy.name}`, `${m.policy.name} lo`)}
+          <Icon name="arrow" size={18} />
+        </button>
+      </div>
     </div>
   );
 }

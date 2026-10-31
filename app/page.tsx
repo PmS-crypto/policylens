@@ -273,7 +273,7 @@ export default function Home() {
       <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 hidden h-[900px] w-[900px] -translate-x-1/4 -translate-y-1/2 rounded-full opacity-40 blur-3xl lg:block breathe" style={{ background: "radial-gradient(circle at 40% 40%, #b7a6ff, #f49ac1 40%, #ffc6a8 60%, transparent 70%)" }} />
       <aside className="relative hidden max-w-sm lg:block">
         <Logo />
-        <p className="display mt-10 text-[56px]">See what you'd pay. Before you buy.</p>
+        <p className="display mt-10 text-[56px]">Health insurance that actually pays.</p>
         <p className="mt-6 max-w-[34ch] text-[16px] leading-relaxed text-ink-soft">PolicyLens is designed for your phone. Open this page on mobile and add it to your home screen.</p>
       </aside>
 
@@ -334,7 +334,7 @@ export default function Home() {
                   }}
                 />
               )}
-              {view === "bill" && <Bill key={billFocus} lang={lang} profile={profile} top={top} focusId={billFocus} onOpen={(id, clause) => setSheet({ id, clause })} />}
+              {view === "bill" && <Bill key={billFocus} lang={lang} profile={profile} top={top} focusId={billFocus} onOpen={(id, clause) => setSheet({ id, clause })} onChoose={choose} />}
               {view === "decide" && chosenMatch && <Decide lang={lang} profile={profile} match={chosenMatch} top={top} onSwitch={setChosen} />}
             </main>
 
@@ -434,9 +434,13 @@ function Landing({ onStart, lang }: { onStart: (text?: string) => void; lang: La
         <div className="relative mt-2 flex justify-center text-ink">
           <SlicedOrb size={150} />
         </div>
-        <h1 className="display relative mt-3 text-[40px]">{t(lang, "See what you'd pay. Before you buy.", "Pehle dekho kitna doge. Phir lo.")}</h1>
+        <h1 className="display relative mt-3 text-[40px]">{t(lang, "Health insurance that actually pays.", "Health insurance jo sach mein pay kare.")}</h1>
         <p className="relative mt-3 max-w-[30ch] text-[17px] leading-relaxed text-ink-soft">
-          {t(lang, "Tell us who you're covering. We'll show what each plan really pays.", "Batao kisko cover karna hai. Hum dikhayenge har plan asal mein kitna deta hai.")}
+          {t(
+            lang,
+            "Answer a few questions. Get 3 plans that suit your family, and see how much each one pays if someone goes to hospital.",
+            "Kuch sawaalon ke jawaab do. Apni family ke liye 3 plans pao, aur dekho hospital jaane par har plan kitna deta hai.",
+          )}
         </p>
       </section>
 

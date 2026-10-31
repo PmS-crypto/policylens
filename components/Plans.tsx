@@ -150,7 +150,7 @@ export default function Plans({ lang, profile, top, all, excluded, notes, onOpen
                       </ul>
                       <div className="mt-8 grid grid-cols-2 gap-2.5">
                         <button onClick={() => onOpen(m.policy.id)} className="rounded-full py-4 text-[14.5px] font-semibold ring-1 ring-line">
-                          {t(lang, "Fine print", "Fine print")}
+                          {t(lang, "What's covered?", "Kya cover hai?")}
                         </button>
                         <button onClick={() => onChoose(m.policy.id)} className="rounded-full bg-primary py-4 text-[14.5px] font-semibold text-on-primary shadow-e2">
                           {t(lang, "Pick this one", "Yahi lunga")}
@@ -167,6 +167,18 @@ export default function Plans({ lang, profile, top, all, excluded, notes, onOpen
               <span key={m.policy.id} className={`h-1.5 rounded-full transition-all duration-500 ${i === active ? "w-8 bg-accent" : "w-1.5 bg-line"}`} />
             ))}
           </div>
+          {/* Next step in the journey: check the shortlist against real hospital bills before picking */}
+          <button onClick={() => onBill(top[active]?.policy.id ?? top[0].policy.id)} className="mx-5 mt-8 flex w-[calc(100%-2.5rem)] items-center justify-between gap-4 rounded-[28px] bg-primary p-5 text-left text-on-primary shadow-e2">
+            <span>
+              <span className="block text-[12.5px] opacity-70">{t(lang, "Next step", "Agla step")}</span>
+              <span className="title mt-1 block text-[18px] leading-tight">{t(lang, "Will these plans actually cover you?", "Kya yeh plans sach mein cover karenge?")}</span>
+              <span className="mt-1 block text-[13px] opacity-75">{t(lang, "See real hospital bills for your family, plan by plan.", "Apni family ke asli hospital bills dekho, har plan ke saath.")}</span>
+            </span>
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent text-white">
+              <Icon name="arrow" size={18} />
+            </span>
+          </button>
+
           {fit && profile.budget && fit.levers.length > 0 && (
             <BudgetFix over={fit.over} budget={profile.budget} levers={fit.levers} bestName={top[0].policy.name} sentence={head.sentence} />
           )}

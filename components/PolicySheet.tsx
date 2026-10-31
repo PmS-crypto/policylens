@@ -76,15 +76,15 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder={t(lang, "Ask this policy anything", "Is policy se kuch bhi poocho")}
+          placeholder={t(lang, "Ask anything about this plan", "Is plan ke baare mein kuch bhi poocho")}
           aria-label="Ask this policy"
           className="min-w-0 flex-1 bg-transparent py-2 text-[15px] outline-none placeholder:text-ink-faint"
         />
         <button className="rounded-full bg-accent px-5 text-[14px] font-semibold text-white">{t(lang, "Ask", "Poocho")}</button>
       </form>
-      <div className="no-scrollbar -mx-7 mt-3 flex gap-2 overflow-x-auto px-7">
+      <div className="no-scrollbar -mx-7 mt-2 flex items-center gap-2 overflow-x-auto px-7 py-1.5">
         {suggestions.map((s) => (
-          <button key={s} onClick={() => ask(s)} className="shrink-0 rounded-full px-4 py-2 text-[13px] ring-1 ring-line">
+          <button key={s} onClick={() => ask(s)} className="shrink-0 whitespace-nowrap rounded-full bg-surface px-4 py-2.5 text-[13px] leading-none ring-1 ring-inset ring-line">
             {s}
           </button>
         ))}
@@ -106,7 +106,7 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
         </div>
       )}
 
-      <h3 className="title mt-10 text-[20px]">{t(lang, "For your family", "Aapki family ke liye")}</h3>
+      <h3 className="title mt-10 text-[20px]">{t(lang, "What this means for your family", "Aapki family ke liye iska matlab")}</h3>
       <ul className="mt-5 space-y-6">
         {match.reasons.map((r) => (
           <ReasonRow key={r.title} r={r} onClause={() => jump(r.clauseId)} />
@@ -115,7 +115,7 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
 
       {flags.length > 0 && (
         <div className="mt-10 rounded-[24px] bg-owe-soft p-5">
-          <h3 className="title text-[17px] text-owe">{t(lang, "Catches in the fine print", "Fine print ke catch")}</h3>
+          <h3 className="title text-[17px] text-owe">{t(lang, "Watch out for", "Dhyaan dena")}</h3>
           <ul className="mt-3 list-disc space-y-1.5 pl-5 text-[14px]">
             {flags.map((f) => (
               <li key={f}>{f}</li>
@@ -124,7 +124,7 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
         </div>
       )}
 
-      <h3 className="title mt-10 text-[20px]">{t(lang, "The actual policy wording", "Asli policy wording")}</h3>
+      <h3 className="title mt-10 text-[20px]">{t(lang, "The exact words in the policy", "Policy ke exact shabd")}</h3>
       <div className="mt-4 space-y-2.5">
         {p.clauses.map((c) => (
           <div
