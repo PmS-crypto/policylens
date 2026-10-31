@@ -77,12 +77,12 @@ export default function Plans({ lang, profile, top, all, excluded, notes, onOpen
                 <article key={m.policy.id} className="w-[88%] shrink-0 snap-start">
                   <div className="overflow-hidden rounded-[32px] bg-surface shadow-e2 ring-1 ring-line">
                     <Aura colors={PLAN_AURAS[i % 3]} scrim className="relative px-6 pb-6 pt-5 text-white">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                         <span className="flex items-center gap-2">
                           <span className="money text-[22px] opacity-90">0{i + 1}</span>
-                          <span className="rounded-full bg-white/20 px-3 py-1 text-[12px] font-semibold backdrop-blur">{lang === "hi" ? LABEL_HI[m.label ?? ""] ?? m.label : m.label}</span>
+                          <span className="whitespace-nowrap rounded-full bg-white/20 px-3 py-1 text-[12px] font-semibold backdrop-blur">{lang === "hi" ? LABEL_HI[m.label ?? ""] ?? m.label : m.label}</span>
                         </span>
-                        <span className="text-[12px] opacity-80">
+                        <span className="whitespace-nowrap text-[12px] opacity-80">
                           {m.prioritiesTotal > 0 ? `${m.prioritiesMet}/${m.prioritiesTotal} priorities` : m.fit}
                         </span>
                       </div>
@@ -232,7 +232,7 @@ function Compare({ lang, profile, top, onOpen }: { lang: Lang; profile: Profile;
   return (
     <div className="mt-6 px-5">
       <div className="overflow-hidden rounded-[28px] bg-surface shadow-e1 ring-1 ring-line">
-        <div className="grid grid-cols-[1.1fr_repeat(3,1fr)] gap-1 border-b border-line px-4 py-4">
+        <div className="grid grid-cols-[minmax(0,1.1fr)_repeat(3,minmax(0,1fr))] gap-1 border-b border-line px-4 py-4">
           <span />
           {top.map((m, i) => (
             <span key={m.policy.id} className="text-[12.5px] font-semibold leading-tight">
@@ -243,7 +243,7 @@ function Compare({ lang, profile, top, onOpen }: { lang: Lang; profile: Profile;
         </div>
         <div className="divide-y divide-line">
           {rows.map((r) => (
-            <div key={r.label} className={`grid grid-cols-[1.1fr_repeat(3,1fr)] gap-1 px-4 py-4 ${matters(r) ? "bg-accent-soft/60" : ""}`}>
+            <div key={r.label} className={`grid grid-cols-[minmax(0,1.1fr)_repeat(3,minmax(0,1fr))] gap-1 px-4 py-4 ${matters(r) ? "bg-accent-soft/60" : ""}`}>
               <div>
                 <p className="text-[13.5px] font-semibold leading-tight">{r.label}</p>
                 <p className="mt-1 text-[11.5px] leading-snug text-ink-soft">{r.why}</p>

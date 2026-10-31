@@ -148,17 +148,11 @@ export default function Decide({ lang, profile, match, top, onSwitch }: { lang: 
                 <p className="text-[13px] text-ink-soft">{t(lang, "vs", "vs")} {o.policy.name}</p>
                 <div className="mt-2 grid grid-cols-2 gap-3">
                   <div>
-                    <span className={`money text-[24px] ${dPremium > 0 ? "text-owe" : "text-paid"}`}>
-                      {dPremium > 0 ? "+" : "−"}
-                      {inrShort(Math.abs(dPremium))}
-                    </span>
+                    <Money value={Math.abs(dPremium)} text={`${dPremium > 0 ? "+" : "−"}${inrShort(Math.abs(dPremium))}`} className={`block text-[24px] ${dPremium > 0 ? "text-owe" : "text-paid"}`} />
                     <p className="text-[12px] text-ink-soft">{dPremium > 0 ? t(lang, "more a year", "saal ka zyada") : t(lang, "less a year", "saal ka kam")}</p>
                   </div>
                   <div>
-                    <span className={`money text-[24px] ${dClaim >= 0 ? "text-paid" : "text-owe"}`}>
-                      {dClaim >= 0 ? "−" : "+"}
-                      {inrShort(Math.abs(dClaim))}
-                    </span>
+                    <Money value={Math.abs(dClaim)} text={`${dClaim >= 0 ? "−" : "+"}${inrShort(Math.abs(dClaim))}`} className={`block text-[24px] ${dClaim >= 0 ? "text-paid" : "text-owe"}`} />
                     <p className="text-[12px] text-ink-soft">{dClaim >= 0 ? t(lang, "less on that hospital trip", "us hospital trip pe kam") : t(lang, "more on that hospital trip", "us hospital trip pe zyada")}</p>
                   </div>
                 </div>
@@ -180,7 +174,7 @@ export default function Decide({ lang, profile, match, top, onSwitch }: { lang: 
         <h2 className="title text-[20px]">{t(lang, "If you buy today", "Agar aaj lete ho")}</h2>
         <ol className="mt-6 space-y-5">
           {timeline.map((t, i) => (
-            <li key={i} className="grid grid-cols-[96px_1fr] items-baseline gap-3">
+            <li key={i} className="grid grid-cols-[96px_minmax(0,1fr)] items-baseline gap-3">
               <span className="money text-[22px]">{t.when}</span>
               <span className="text-[14px] leading-snug opacity-90">{t.what}</span>
             </li>

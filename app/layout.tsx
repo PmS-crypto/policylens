@@ -15,17 +15,14 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3f1f6" },
-    { media: "(prefers-color-scheme: dark)", color: "#0d0b12" },
-  ],
+  themeColor: "#f3f1f6",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
 };
 
-// Set the theme before paint so there's no flash between light and dark.
-const themeScript = `try{var t=localStorage.getItem('pl-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){}`;
+// Light by default; dark only if the user switched to it. Set before paint so there's no flash.
+const themeScript = `try{document.documentElement.dataset.theme=localStorage.getItem('pl-theme')==='dark'?'dark':'light'}catch(e){document.documentElement.dataset.theme='light'}`;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (

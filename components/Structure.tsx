@@ -73,7 +73,7 @@ export function StructureAdvice({ structures }: { structures: Structure[] }) {
                     </div>
                     <div className="rounded-[20px] bg-surface-2 p-4">
                       <p className="text-[12px] text-ink-soft">{s.compare.label}</p>
-                      <span className="money mt-1 block text-[26px]">{inrShort(s.compare.premium)}</span>
+                      <Money value={s.compare.premium} className="mt-1 block text-[26px]" />
                       <p className="mt-1 text-[12px] text-ink-soft">₹{s.compare.cover}L cover</p>
                     </div>
                   </div>
@@ -148,9 +148,7 @@ export function BudgetFix({ over, budget, levers, bestName, sentence }: { over: 
                 <p className="mt-1 text-[12px] text-ink-soft">a year, saves {inrShort(Math.max(0, l.saving))}</p>
               </div>
               <div>
-                <span className={`money block text-[26px] ${l.extraYouPay > 0 ? "text-owe" : "text-paid"}`}>
-                  {l.extraYouPay > 0 ? `+${inrShort(l.extraYouPay)}` : "No change"}
-                </span>
+                <Money value={l.extraYouPay} text={l.extraYouPay > 0 ? `+${inrShort(l.extraYouPay)}` : "No change"} className={`block text-[26px] ${l.extraYouPay > 0 ? "text-owe" : "text-paid"}`} />
                 <p className="mt-1 text-[12px] leading-snug text-ink-soft">out of pocket {sentence.replace(/^If /, "if ")}</p>
               </div>
             </div>

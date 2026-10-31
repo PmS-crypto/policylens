@@ -23,7 +23,7 @@ export default function Awareness({ profile, best, lang }: { profile: Profile; b
       {r.serious && (
         <div className="mt-3 flex items-baseline justify-between rounded-[20px] bg-surface-2 px-5 py-4">
           <span className="text-[13.5px] text-ink-soft">{t(lang, "Worst case:", "Sabse serious:")} {r.serious.title.toLowerCase()}</span>
-          <span className="money text-[24px]">{inrShort(r.serious.bill)}</span>
+          <Money value={r.serious.bill} className="text-[24px]" />
         </div>
       )}
 

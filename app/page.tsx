@@ -434,7 +434,7 @@ function Landing({ onStart, lang }: { onStart: (text?: string) => void; lang: La
         <div className="relative mt-2 flex justify-center text-ink">
           <SlicedOrb size={150} />
         </div>
-        <h1 className="display relative mt-3 text-[40px]">{t(lang, "Health insurance that actually pays.", "Health insurance jo sach mein pay kare.")}</h1>
+        <h1 className="display relative mt-3 text-[clamp(32px,10.4vw,40px)]">{t(lang, "Health insurance that actually pays.", "Health insurance jo sach mein pay kare.")}</h1>
         <p className="relative mt-3 max-w-[30ch] text-[17px] leading-relaxed text-ink-soft">
           {t(
             lang,

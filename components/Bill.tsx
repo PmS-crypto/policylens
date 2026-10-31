@@ -53,38 +53,43 @@ export default function Bill({ lang, profile, top, focusId, onOpen, onChoose }: 
         <p className="mt-3 max-w-[36ch] text-[15px] leading-relaxed text-ink-soft">{t(lang, "Every likely hospital trip for your family, run through each plan's rules. Tap any box for the full bill.", "Aapki family ke har possible hospital trip ko har plan ke rules se check kiya. Poora bill dekhne ke liye kisi bhi box pe tap karo.")}</p>
       </header>
 
-      {/* Coverage map: every likely event × every plan, with when cover starts */}
+      {/* Coverage map: every likely event × every plan. On a phone, the event name gets its own line
+          and the three plan boxes share the full width below it, so nothing has to break mid-word. */}
       <section className="mx-5 mt-6 overflow-hidden rounded-[28px] bg-surface shadow-e1 ring-1 ring-line" aria-label="Coverage map">
-        <div className="grid grid-cols-[1.25fr_repeat(3,1fr)] gap-1 border-b border-line px-4 py-3.5">
-          <span className="text-[12px] font-medium text-ink-soft">{t(lang, "If it happens this year", "Agar is saal hua")}</span>
-          {top.map((t, i) => (
-            <span key={t.policy.id} className="text-[12px] font-semibold leading-tight">
-              <span className="money mr-1 text-accent">0{i + 1}</span>
-              {t.policy.name}
-            </span>
-          ))}
+        <div className="border-b border-line px-4 pb-3 pt-3.5">
+          <p className="text-[12px] font-medium text-ink-soft">{t(lang, "If it happens this year", "Agar is saal hua")}</p>
+          <div className="mt-2 grid grid-cols-3 gap-1.5">
+            {top.map((t, i) => (
+              <span key={t.policy.id} className="min-w-0 text-[12px] font-semibold leading-tight">
+                <span className="money mr-1 text-accent">0{i + 1}</span>
+                {t.policy.name}
+              </span>
+            ))}
+          </div>
         </div>
         <div className="divide-y divide-line">
           {map.map(({ scenario, cells }) => (
-            <div key={scenario.id} className="grid grid-cols-[1.25fr_repeat(3,1fr)] items-center gap-1 px-4 py-3">
-              <span className="text-[13px] font-medium leading-snug">{scenarioTitle(scenario, lang)}</span>
-              {cells.map((c, i) => (
-                <button
-                  key={top[i].policy.id}
-                  onClick={() => jump(scenario.id, top[i].policy.id, c.year)}
-                  className={`rounded-[12px] px-2 py-2 text-left text-[12px] font-semibold leading-tight transition active:scale-95 ${
-                    c.kind === "waiting" ? "bg-warn-soft text-warn" : c.kind === "partial" ? "bg-owe-soft text-owe" : "bg-paid-soft text-paid"
-                  }`}
-                >
-                  {c.kind === "waiting"
-                    ? c.from === "Not covered"
-                      ? t(lang, "Not covered", "Cover nahi")
-                      : `${t(lang, "From", "")} ${c.from}${t(lang, "", " se")}`.trim()
-                    : c.youPay === 0
-                      ? t(lang, "Covered", "Cover hai")
-                      : `${t(lang, "You pay", "Aap doge")} ${inrShort(c.youPay)}`}
-                </button>
-              ))}
+            <div key={scenario.id} className="px-4 py-3.5">
+              <p className="text-[13.5px] font-medium leading-snug">{scenarioTitle(scenario, lang)}</p>
+              <div className="mt-2 grid grid-cols-3 gap-1.5">
+                {cells.map((c, i) => (
+                  <button
+                    key={top[i].policy.id}
+                    onClick={() => jump(scenario.id, top[i].policy.id, c.year)}
+                    aria-label={`${top[i].policy.name}: ${c.kind === "waiting" ? `covered from ${c.from}` : c.youPay === 0 ? "covered" : `you pay ${inrShort(c.youPay)}`}`}
+                    className={`min-w-0 rounded-[12px] px-2.5 py-2 text-left leading-tight transition active:scale-95 ${
+                      c.kind === "waiting" ? "bg-warn-soft text-warn" : c.kind === "partial" ? "bg-owe-soft text-owe" : "bg-paid-soft text-paid"
+                    }`}
+                  >
+                    <span className="block text-[10.5px] font-medium opacity-75">
+                      {c.kind === "waiting" ? (c.from === "Not covered" ? t(lang, "Never", "Kabhi nahi") : t(lang, "From", "Se")) : c.youPay === 0 ? t(lang, "Fully", "Poora") : t(lang, "You pay", "Aap doge")}
+                    </span>
+                    <span className="block whitespace-nowrap text-[12.5px] font-semibold">
+                      {c.kind === "waiting" ? (c.from === "Not covered" ? t(lang, "Not covered", "Cover nahi") : c.from) : c.youPay === 0 ? t(lang, "Covered", "Cover hai") : inrShort(c.youPay)}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
           ))}
         </div>

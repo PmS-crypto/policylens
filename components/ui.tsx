@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { Lang } from "@/lib/ai";
 import type { Reason } from "@/lib/types";
 
@@ -129,9 +129,50 @@ export function useCountUp(value: number, ms = 700) {
   return shown;
 }
 
-export function Money({ value, className = "" }: { value: number; className?: string }) {
+/**
+ * A rupee amount that counts up and never overflows: it keeps its designed size when there's room,
+ * and scales down just enough to fit narrow cards (e.g. ₹1,62,000 on a 320px phone).
+ */
+export function Money({ value, className = "", text }: { value: number; className?: string; text?: string }) {
   const v = useCountUp(value);
-  return <span className={`money ${className}`}>{inrShort(v)}</span>;
+  const ref = useRef<HTMLSpanElement>(null);
+  const [size, setSize] = useState<number | null>(null);
+  const finalText = text ?? inrShort(value);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const parent = el?.parentElement;
+    if (!el || !parent) return;
+    const fit = () => {
+      const pcs = getComputedStyle(parent);
+      let avail = parent.clientWidth - parseFloat(pcs.paddingLeft) - parseFloat(pcs.paddingRight);
+      // In a row, siblings (labels, signs) take space too
+      if (pcs.display.includes("flex") && !pcs.flexDirection.startsWith("column")) {
+        for (const sib of Array.from(parent.children)) if (sib !== el) avail -= sib.getBoundingClientRect().width;
+        avail -= (parseFloat(pcs.columnGap) || 0) * (parent.children.length - 1);
+      }
+      // Measure the final value at its designed size, without the current inline override
+      const probe = el.cloneNode(false) as HTMLSpanElement;
+      probe.removeAttribute("style");
+      probe.textContent = finalText;
+      probe.style.cssText = "position:absolute;visibility:hidden;white-space:nowrap;display:inline-block;width:auto;max-width:none;";
+      parent.appendChild(probe);
+      const natural = probe.getBoundingClientRect().width;
+      const base = parseFloat(getComputedStyle(probe).fontSize);
+      probe.remove();
+      setSize(avail > 0 && natural > avail ? Math.floor((base * avail) / natural) : null);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(parent);
+    return () => ro.disconnect();
+  }, [finalText, className]);
+
+  return (
+    <span ref={ref} className={`money whitespace-nowrap ${className}`} style={size ? { fontSize: size } : undefined}>
+      {text ?? inrShort(v)}
+    </span>
+  );
 }
 
 /* ───────────── Icons ───────────── */
