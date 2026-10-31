@@ -7,6 +7,7 @@ import {
   effectivePriorities,
   eldestAge,
   inr,
+  PLANNED_LABEL,
   parentNamePossessive,
   parentsShort,
   memberCounts,
@@ -24,7 +25,8 @@ export function premiumFor(policy: Policy, p: Profile, si: number): number {
   const { adults, kids } = memberCounts(p);
   const ageFactor = Math.max(0.8, policy.ageSlope ** (age - 30));
   const memberFactor = 1 + 0.6 * (adults - 1) + 0.25 * kids;
-  const raw = policy.basePremium * ageFactor * memberFactor * (SI_FACTOR[si] ?? 1) * CITY_PREMIUM[p.city ?? "tier2"];
+  const tobacco = p.tobacco ? 1.15 : 1; // illustrative loading; insurers typically charge tobacco users more
+  const raw = policy.basePremium * ageFactor * memberFactor * (SI_FACTOR[si] ?? 1) * CITY_PREMIUM[p.city ?? "tier2"] * tobacco;
   return Math.round(raw / 100) * 100;
 }
 
@@ -38,7 +40,7 @@ export function copayApplies(policy: Policy, age: number) {
 }
 
 interface Dim {
-  key: Priority | "sublimits" | "headline";
+  key: Priority | "sublimits" | "headline" | "planned";
   score: number;
   reason?: Reason;
 }
@@ -109,6 +111,29 @@ function evaluate(policy: Policy, p: Profile, si: number, premium: number, cheap
   // Network
   dims.push({ key: "network", score: Math.min(1, policy.network / 11000), reason: pri.has("network") ? { kind: policy.network >= 9500 ? "good" : "caveat", title: `${policy.network.toLocaleString("en-IN")} cashless hospitals`, detail: policy.network >= 9500 ? "A large network means cashless treatment is more likely near you." : "Smaller network: check your preferred hospital is listed before buying." , priority: "network" } : undefined });
 
+  // Treatment the family expects soon: the plan that covers it soonest, without a cap, should win
+  for (const care of p.upcoming ?? []) {
+    const cap = care === "cataract" ? policy.sublimits.cataract : care === "joint" ? policy.sublimits.knee : policy.sublimits.cardiac;
+    const wait = care === "heart" ? (p.conditions?.some((c) => c === "heart" || c === "bp" || c === "diabetes") ? policy.pedWaitYears : 0) : policy.specificWaitYears;
+    const label = PLANNED_LABEL[care];
+    const score = (wait <= 1 ? 1 : wait === 2 ? 0.55 : 0.25) * (cap ? 0.4 : 1);
+    const when = wait === 0 ? "covered after the first 30 days" : `covered after ${wait} year${wait > 1 ? "s" : ""}`;
+    dims.push({
+      key: "planned",
+      score,
+      reason: {
+        kind: score >= 0.9 ? "good" : cap ? "bad" : "caveat",
+        title: `${label} ${when}${cap ? `, capped at ${inr(cap)}` : ""}`,
+        detail: cap
+          ? `You mentioned this may be needed soon. This plan pays at most ${inr(cap)} for it, whatever your cover.`
+          : wait <= 1
+            ? "You mentioned this may be needed soon. This is one of the shortest waits available."
+            : `You mentioned this may be needed soon. If it happens within ${wait} years of buying, you'd pay for it yourself.`,
+        clauseId: cap ? "sublimits" : care === "heart" ? "ped" : "specific",
+      },
+    });
+  }
+
   // Sub-limits
   const subs = Object.entries(policy.sublimits);
   if (subs.length) {
@@ -159,7 +184,7 @@ export function matchPolicies(p: Profile): { matches: Match[]; excluded: Exclude
     let num = 0;
     let den = 0;
     for (const d of dims) {
-      const w = d.key === "headline" ? 4 : explicit.has(d.key as Priority) ? 3 : d.key === "sublimits" ? 1.5 : 1;
+      const w = d.key === "headline" ? 4 : d.key === "planned" ? 3 : explicit.has(d.key as Priority) ? 3 : d.key === "sublimits" ? 1.5 : 1;
       num += w * d.score;
       den += w;
     }

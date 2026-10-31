@@ -13,7 +13,7 @@ import type { Lang } from "@/lib/ai";
 import { STEPS, nextStep, t } from "@/lib/flow";
 import { matchPolicies } from "@/lib/match";
 import { POLICIES, getPolicy } from "@/lib/policies";
-import { CITY_LABEL, CONDITION_LABEL, coverSummary, inr, isProfileComplete, recommendSumInsured } from "@/lib/profile";
+import { CITY_LABEL, CONDITION_LABEL, PLANNED_LABEL, coverSummary, inr, isProfileComplete, recommendSumInsured } from "@/lib/profile";
 import { SCENARIOS, simulate } from "@/lib/simulate";
 import type { Priority, Profile } from "@/lib/types";
 
@@ -241,7 +241,7 @@ export default function Home() {
   const chosenMatch = top.find((m) => m.policy.id === chosen) ?? top[0];
 
   const readyCard =
-    stage === "discover" && result && !busy && !typing ? (
+    stage === "discover" && result && !nextStep(profile) && !busy && !typing ? (
       <div className="space-y-5">
       {top[0] && <Awareness profile={profile} best={top[0]} lang={lang} />}
       <Aura colors={AURA.dusk} scrim className="rise relative rounded-[32px] p-6 text-white shadow-e2">
@@ -393,6 +393,10 @@ function summarize(p: Profile, fresh: string[], l: Lang) {
     if (id === "kids") bits.push(hi ? `${p.kidsCount} bachche` : `${p.kidsCount} kid${p.kidsCount === 1 ? "" : "s"}`);
     if (id === "baby") bits.push(p.planningBaby ? (hi ? "baby plan hai" : "a baby is on the cards") : hi ? "abhi baby plan nahi" : "no baby plans");
     if (id === "conditions") bits.push(p.conditions?.length ? p.conditions.map((c) => CONDITION_LABEL[c]).join(" & ") : hi ? "koi purani bimari nahi" : "no existing conditions");
+    if (id === "partnerAge") bits.push(hi ? `partner ${p.partnerAge} ke` : `your partner is ${p.partnerAge}`);
+    if (id === "upcoming") bits.push(p.upcoming?.length ? (hi ? "surgery planned hai" : `${p.upcoming.map((u) => PLANNED_LABEL[u].toLowerCase()).join(" and ")} may be needed soon`) : hi ? "koi surgery planned nahi" : "nothing planned");
+    if (id === "existingCover") bits.push(p.existingCover ? (hi ? `apni ₹${p.existingCover}L policy` : `a ₹${p.existingCover}L policy already`) : hi ? "apni policy nahi" : "no policy of your own yet");
+    if (id === "tobacco") bits.push(p.tobacco ? (hi ? "tobacco hai" : "tobacco use") : hi ? "tobacco nahi" : "no tobacco");
     if (id === "city") bits.push(p.cityName ?? CITY_LABEL[p.city!].toLowerCase());
     if (id === "employer") bits.push(p.employerCover ? (hi ? `office se ₹${p.employerCover}L cover` : `₹${p.employerCover}L from work`) : hi ? "office cover nahi" : "no cover from work");
     if (id === "budget") bits.push(p.budget ? (hi ? `budget ${inr(p.budget)} tak` : `budget up to ${inr(p.budget)} a year`) : hi ? "budget open hai" : "budget's open");

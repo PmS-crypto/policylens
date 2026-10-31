@@ -32,8 +32,12 @@ export default function Decide({ lang, profile, match, top, onSwitch }: { lang: 
   const checklist = [
     {
       title: t(lang, "Be honest on the form", "Form pe sach batao"),
-      body: conds.length
-        ? t(lang, `Mention ${conds.join(", ")}. Hiding it is a top reason claims get rejected.`, `${conds.join(", ")} zaroor likho. Chhupane se claims reject hote hain.`)
+      body: conds.length || profile.tobacco
+        ? t(
+            lang,
+            `Mention ${[...conds, ...(profile.tobacco ? ["tobacco use"] : [])].join(", ")}. Hiding it is a top reason claims get rejected.`,
+            `${[...conds, ...(profile.tobacco ? ["tobacco"] : [])].join(", ")} zaroor likho. Chhupane se claims reject hote hain.`,
+          )
         : t(lang, "Answer every health question, even the small ones.", "Har health sawaal ka jawaab do, chhote wale bhi."),
     },
     {
@@ -75,7 +79,7 @@ export default function Decide({ lang, profile, match, top, onSwitch }: { lang: 
   const pedDate = conds.length ? addMonths(p.pedWaitYears * 12) : null;
   const headPay = simulate(match.policy, match.sumInsured, profile, head.scenario, { year: head.year, room: "private" });
   const proudLine = pedDate
-    ? `${who === "Your" ? "Your" : `${who}'s`} ${conds.join(" and ").toLowerCase().replace(/\bbp\b/, "BP")} covered from ${pedDate}.`
+    ? `${who === "Your" ? "Your" : who === "your parents" ? "Your parents'" : `${who}'s`} ${conds.join(" and ").toLowerCase().replace(/\bbp\b/, "BP")} covered from ${pedDate}.`
     : "You now understand this plan better than most people understand their own.";
 
   const [shared, setShared] = useState<string | null>(null);

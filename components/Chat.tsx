@@ -272,7 +272,7 @@ function Bubble({ m, lang, onCitation }: { m: Msg; lang: Lang; onCitation: (c: C
     return (
       <p className="rise flex items-start gap-2.5 text-[13px] leading-relaxed text-ink-soft">
         <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
-          <Icon name="lock" size={13} />
+          <Icon name={m.text.startsWith("Why I'm asking") || m.text.startsWith("Kyun pooch") ? "info" : "lock"} size={13} />
         </span>
         {m.text}
       </p>

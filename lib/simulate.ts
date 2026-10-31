@@ -21,8 +21,8 @@ export interface Scenario {
 export const SCENARIOS: Scenario[] = [
   { id: "dengue", title: "Dengue, 4 nights in hospital", icon: "🦟", blurb: "The most common monsoon claim in India", bill: 115000, days: 4, category: "general", who: "eldest", relevant: () => true },
   { id: "cardiac", title: "Heart attack: angioplasty", icon: "🫀", blurb: "Emergency procedure with one stent", bill: 450000, days: 5, category: "cardiac", who: "eldest", ped: ["heart", "bp", "diabetes"], relevant: () => true },
-  { id: "knee", title: "Knee replacement", icon: "🦵", blurb: "Very common after 55", bill: 380000, days: 5, category: "knee", who: "parent", relevant: (p) => !!p.cover?.parents || eldestAge(p) >= 50 },
-  { id: "cataract", title: "Cataract surgery (one eye)", icon: "👁️", blurb: "A day-care procedure", bill: 75000, days: 0, category: "cataract", who: "parent", relevant: (p) => !!p.cover?.parents || eldestAge(p) >= 50 },
+  { id: "knee", title: "Knee replacement", icon: "🦵", blurb: "Very common after 55", bill: 380000, days: 5, category: "knee", who: "parent", relevant: (p) => !!p.cover?.parents || eldestAge(p) >= 50 || !!p.upcoming?.includes("joint") },
+  { id: "cataract", title: "Cataract surgery (one eye)", icon: "👁️", blurb: "A day-care procedure", bill: 75000, days: 0, category: "cataract", who: "parent", relevant: (p) => !!p.cover?.parents || eldestAge(p) >= 50 || !!p.upcoming?.includes("cataract") },
   { id: "diabetes", title: "Diabetes complication", icon: "🩸", blurb: "Kidney infection needing admission", bill: 180000, days: 5, category: "general", who: "eldest", ped: ["diabetes"], relevant: (p) => !!p.conditions?.includes("diabetes") },
   { id: "childbirth", title: "C-section delivery", icon: "👶", blurb: "Including newborn care", bill: 165000, days: 4, category: "maternity", who: "partner", relevant: (p) => !!p.cover?.partner && (p.planningBaby ?? (p.selfAge ?? 40) < 38) },
 ];
@@ -145,7 +145,11 @@ const PHRASE: Record<string, string> = {
 
 /** The single most likely costly event for this family, used to headline each plan. */
 export function headlineScenario(p: Profile): { scenario: Scenario; sentence: string; year: number } {
-  const id = p.conditions?.includes("diabetes")
+  // Expected treatment beats statistics: if the family told us what's coming, that's the bill to show.
+  const planned = p.upcoming?.includes("joint") ? "knee" : p.upcoming?.includes("heart") ? "cardiac" : p.upcoming?.includes("cataract") ? "cataract" : null;
+  const id = planned
+    ? planned
+    : p.conditions?.includes("diabetes")
     ? "diabetes"
     : p.conditions?.some((c) => c === "heart" || c === "bp")
       ? "cardiac"
@@ -155,7 +159,7 @@ export function headlineScenario(p: Profile): { scenario: Scenario; sentence: st
           ? "childbirth"
           : "dengue";
   const scenario = SCENARIOS.find((s) => s.id === id)!;
-  const who = id === "childbirth" ? "your partner" : scenario.who === "parent" || (scenario.who === "eldest" && p.cover?.parents) ? parentName(p) : "you";
+  const who = id === "childbirth" ? "your partner" : (scenario.who === "parent" || scenario.who === "eldest") && p.cover?.parents && conditionHolder(p) === "parent" ? parentName(p) : (scenario.who === "parent" && p.cover?.parents) ? parentName(p) : "you";
   const verb = who === "you" ? PHRASE[id].replace(/^is /, "are ").replace(/^needs/, "need").replace(/^spends/, "spend").replace(/^has/, "have") : PHRASE[id];
   const year = id === "childbirth" ? 3 : 2;
   return { scenario, sentence: `If ${who} ${verb} ${YEAR_LABEL[year].toLowerCase()}`, year };

@@ -1,4 +1,5 @@
 export type Condition = "diabetes" | "bp" | "thyroid" | "heart" | "asthma";
+export type PlannedCare = "cataract" | "joint" | "heart";
 export type CityTier = "metro" | "tier2" | "tier3";
 export type Priority =
   | "private_room"
@@ -23,6 +24,18 @@ export interface Profile {
   parentAge?: number;
   /** Who the user means when they talk about their parent(s), so copy can say "your dad". */
   parentWho?: "dad" | "mum" | "both";
+  /** Asked separately so premiums and eligibility aren't based on the user's own age. */
+  partnerAge?: number;
+  /** Who has the declared conditions, when more than one generation is covered. */
+  conditionWho?: "self" | "partner" | "parent";
+  /** Treatment expected in the next 2 years ([] = none). */
+  upcoming?: PlannedCare[];
+  /** A personal (non-employer) policy already held, in lakh (0 = none). */
+  existingCover?: number;
+  /** Could savings absorb a ₹5L bill tomorrow? */
+  savings?: "covered" | "partly" | "no";
+  /** Anyone covered smokes or uses tobacco. */
+  tobacco?: boolean;
   kidsCount?: number;
   planningBaby?: boolean;
   conditions?: Condition[];

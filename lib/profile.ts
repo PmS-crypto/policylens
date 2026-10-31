@@ -38,7 +38,7 @@ export function coveredAges(p: Profile): number[] {
   const c = p.cover;
   if (!c) return ages;
   if (c.self && p.selfAge) ages.push(p.selfAge);
-  if (c.partner && p.selfAge) ages.push(p.selfAge);
+  if (c.partner && (p.partnerAge ?? p.selfAge)) ages.push((p.partnerAge ?? p.selfAge)!);
   if (c.kids) ages.push(6);
   if (c.parents && p.parentAge) ages.push(p.parentAge);
   return ages;
@@ -59,7 +59,7 @@ export function coverSummary(p: Profile): string {
   if (!c) return "—";
   const parts: string[] = [];
   if (c.self) parts.push(p.selfAge ? `You (${p.selfAge})` : "You");
-  if (c.partner) parts.push("Partner");
+  if (c.partner) parts.push(p.partnerAge ? `Partner (${p.partnerAge})` : "Partner");
   if (c.kids) parts.push(`${p.kidsCount ?? 1} kid${(p.kidsCount ?? 1) > 1 ? "s" : ""}`);
   if (c.parents) parts.push(p.parentAge ? `Parents (${p.parentAge})` : "Parents");
   return parts.join(" · ");
@@ -71,8 +71,15 @@ export const parentNamePossessive = (p: Profile) => (p.parentWho === "dad" ? "yo
 /** "Dad", "Mum" or "your parents" for headlines. */
 export const parentsShort = (p: Profile) => (p.parentWho === "dad" ? "Dad" : p.parentWho === "mum" ? "Mum" : "your parents");
 
-/** Who has the declared conditions: parents if they're covered, otherwise the buyer. */
-export const conditionHolder = (p: Profile): "parent" | "self" => (p.cover?.parents ? "parent" : "self");
+/** Who has the declared conditions: what the user told us, else parents if they're covered, else the buyer. */
+export const conditionHolder = (p: Profile): "parent" | "self" =>
+  p.conditionWho ? (p.conditionWho === "parent" ? "parent" : "self") : p.cover?.parents ? "parent" : "self";
+
+export const PLANNED_LABEL: Record<"cataract" | "joint" | "heart", string> = {
+  cataract: "Cataract surgery",
+  joint: "Knee or hip replacement",
+  heart: "Heart procedure",
+};
 
 export function effectivePriorities(p: Profile): Priority[] {
   const set = new Set<Priority>(p.priorities ?? []);
@@ -101,6 +108,13 @@ export function recommendSumInsured(p: Profile): { lakh: number; why: string[] }
   if (p.conditions?.length && !p.cover?.parents) {
     si += 5;
     why.push("Existing conditions raise the odds of a large claim");
+  }
+  if (p.savings === "no") {
+    si += 5;
+    why.push("A big bill would hit your savings hard, so we've added headroom");
+  }
+  if (p.existingCover && p.existingCover > 0) {
+    why.push(`Your ₹${p.existingCover}L personal policy can stay as the first layer; see the top-up option`);
   }
   if (p.employerCover && p.employerCover > 0) {
     why.push(`Your ${lakh(p.employerCover)} employer cover ends if you change jobs, so we don't count on it`);

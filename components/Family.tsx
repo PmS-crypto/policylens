@@ -2,7 +2,7 @@
 
 import type { Lang } from "@/lib/ai";
 import { stepProgress, t } from "@/lib/flow";
-import { CITY_LABEL, CONDITION_LABEL, PRIORITY_LABEL, conditionHolder, coverSummary, effectivePriorities, inr, recommendSumInsured } from "@/lib/profile";
+import { CITY_LABEL, CONDITION_LABEL, PLANNED_LABEL, PRIORITY_LABEL, conditionHolder, coverSummary, effectivePriorities, inr, recommendSumInsured } from "@/lib/profile";
 import type { Profile } from "@/lib/types";
 import { AURA, Aura, Icon, type IconName, Sheet } from "./ui";
 
@@ -45,10 +45,13 @@ export function FamilyBar({ profile, lang, onOpen }: { profile: Profile; lang: L
         ))}
       </div>
       <p className="min-w-0 flex-1 truncate text-[13.5px] font-medium">{profile.cover ? coverSummary(profile) : t(lang, "Your people", "Aapki family")}</p>
-      <span className="flex items-center gap-1.5" aria-label={`${done} of ${total} answered`}>
-        {Array.from({ length: total }).map((_, i) => (
-          <span key={i} className={`h-1.5 rounded-full transition-all duration-500 ${i < done ? "w-3 bg-accent" : "w-1.5 bg-line"}`} />
-        ))}
+      <span className="flex shrink-0 items-center gap-2" aria-label={`${done} of ${total} answered`}>
+        <span className="h-1.5 w-12 overflow-hidden rounded-full bg-line">
+          <span className="block h-full rounded-full bg-accent transition-all duration-500" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
+        </span>
+        <span className="text-[11.5px] tabular-nums text-ink-soft">
+          {done}/{total}
+        </span>
       </span>
     </button>
   );
@@ -59,9 +62,14 @@ export function ProfileSheet({ profile: p, lang, onEdit, onClose }: { profile: P
   const rows: { label: string; value?: string; field: keyof Profile }[] = [
     { label: "Who's covered", value: p.cover ? coverSummary(p) : undefined, field: "cover" },
     { label: "Existing conditions", value: p.conditions ? (p.conditions.length ? p.conditions.map((c) => CONDITION_LABEL[c]).join(", ") : "None") : undefined, field: "conditions" },
+    ...(p.conditions?.length && p.conditionWho ? [{ label: "Who has the condition", value: p.conditionWho === "parent" ? "Parent" : p.conditionWho === "partner" ? "Partner" : "You", field: "conditionWho" as const }] : []),
+    { label: "Treatment expected soon", value: p.upcoming === undefined ? undefined : p.upcoming.length ? p.upcoming.map((u) => PLANNED_LABEL[u]).join(", ") : "None", field: "upcoming" },
     { label: "Where you'd get treated", value: p.city ? (p.cityName ?? CITY_LABEL[p.city]) : undefined, field: "city" },
     ...(p.cover?.self ? [{ label: "Employer cover", value: p.employerCover === undefined ? undefined : p.employerCover ? `₹${p.employerCover} lakh` : "None", field: "employerCover" as const }] : []),
     ...(p.planningBaby !== undefined ? [{ label: "Planning a baby", value: p.planningBaby ? "Within 3 years" : "No", field: "planningBaby" as const }] : []),
+    { label: "Existing personal policy", value: p.existingCover === undefined ? undefined : p.existingCover ? `₹${p.existingCover} lakh` : "None", field: "existingCover" },
+    { label: "Savings for a ₹5L bill", value: p.savings === undefined ? undefined : p.savings === "covered" ? "Yes" : p.savings === "partly" ? "Partly" : "Not really", field: "savings" },
+    { label: "Tobacco", value: p.tobacco === undefined ? undefined : p.tobacco ? "Yes" : "No", field: "tobacco" },
     { label: "What matters most", value: p.priorities ? effectivePriorities(p).map((x) => PRIORITY_LABEL[x]).join(", ") || "Balanced" : undefined, field: "priorities" },
     { label: "Yearly budget", value: p.budget === undefined ? undefined : p.budget ? `Up to ${inr(p.budget)}` : "Open", field: "budget" },
   ];

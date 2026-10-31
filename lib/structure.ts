@@ -1,5 +1,5 @@
 import { matchPolicies, pickSumInsured, premiumFor } from "./match";
-import { eldestAge, memberCounts, recommendSumInsured } from "./profile";
+import { conditionHolder, eldestAge, memberCounts, recommendSumInsured } from "./profile";
 import { SCENARIOS, headlineScenario, simulate } from "./simulate";
 import type { Match, Policy, Profile } from "./types";
 
@@ -27,7 +27,7 @@ export function topupPremium(p: Profile, deductible: number, cover: number) {
   const { adults, kids } = memberCounts(p);
   const ageFactor = Math.max(0.8, TOPUP_SLOPE ** (eldestAge(p) - 30));
   const memberFactor = 1 + 0.6 * (adults - 1) + 0.25 * kids;
-  const raw = TOPUP_BASE * ageFactor * memberFactor * (DEDUCTIBLE_FACTOR[deductible] ?? 1) * (COVER_FACTOR[cover] ?? 1) * CITY[p.city ?? "tier2"];
+  const raw = TOPUP_BASE * ageFactor * memberFactor * (DEDUCTIBLE_FACTOR[deductible] ?? 1) * (COVER_FACTOR[cover] ?? 1) * CITY[p.city ?? "tier2"] * (p.tobacco ? 1.15 : 1);
   return Math.round(raw / 100) * 100;
 }
 
@@ -41,7 +41,7 @@ export interface Layer {
 }
 
 export interface Structure {
-  id: "topup" | "split" | "work";
+  id: "topup" | "split" | "work" | "own";
   title: string;
   summary: string;
   layers: Layer[];
@@ -95,8 +95,9 @@ export function coverageStructures(p: Profile, top: Match[]): Structure[] {
   // 2. Separate cover for parents: their age stops inflating everyone's premium, and their claims can't drain the family's cover.
   const c = p.cover;
   if (c?.parents && (c.self || c.partner || c.kids)) {
-    const young: Profile = { ...p, cover: { ...c, parents: false }, conditions: [] };
-    const elders: Profile = { ...p, cover: { self: false, partner: false, kids: false, parents: true } };
+    const parentsSick = conditionHolder(p) === "parent";
+    const young: Profile = { ...p, cover: { ...c, parents: false }, conditions: parentsSick ? [] : p.conditions };
+    const elders: Profile = { ...p, cover: { self: false, partner: false, kids: false, parents: true }, conditions: parentsSick ? p.conditions : [] };
     const ym = matchPolicies(young).matches[0];
     const em = matchPolicies(elders).matches[0];
     if (ym && em) {
@@ -119,15 +120,39 @@ export function coverageStructures(p: Profile, top: Match[]): Structure[] {
           "A floater is priced on its eldest member, so your parents' age pushes up the premium for everyone.",
           `A big claim for your parents can't use up the ₹${ym.sumInsured} lakh meant for your family.`,
           `${em.policy.name} is designed for people over 55, with shorter waits for existing illnesses.`,
+          ...(p.upcoming?.some((u) => u === "joint" || u === "cataract") && em.policy.specificWaitYears < best.policy.specificWaitYears
+            ? [`The surgery you're expecting is covered after ${em.policy.specificWaitYears} year${em.policy.specificWaitYears > 1 ? "s" : ""} on ${em.policy.name}, versus ${best.policy.specificWaitYears} on ${best.policy.name}.`]
+            : []),
         ],
         cons: [em.policy.copay.percent ? `${em.policy.name} has a ${em.policy.copay.percent}% co-pay on parents' claims.` : "Two renewals a year instead of one."],
       });
     }
   }
 
-  // 3. Top up your work cover: cheap, large protection on top of what your employer already pays for.
+  // 3. Top up a policy you already own: keeps the waiting periods you've served, adds big cover cheaply.
+  const own = p.existingCover ?? 0;
+  if (own > 0) {
+    const ded = nearestDeductible(own);
+    const prem = topupPremium(p, ded, 20);
+    out.push({
+      id: "own",
+      title: `Top up your existing ₹${own}L policy`,
+      summary: `Keep your current policy and add ₹20 lakh on top for ${fmt(prem)} a year, instead of starting over.`,
+      layers: [
+        { label: "Your current policy", lakh: own, premium: 0, kind: "work" },
+        { label: TOPUP.name, lakh: 20, premium: prem, kind: "topup" },
+      ],
+      totalCover: own + 20,
+      totalPremium: prem,
+      compare: { label: `${best.policy.name}, ₹${best.sumInsured}L as a new policy`, premium: best.premium, cover: best.sumInsured },
+      pros: ["You keep the waiting periods you've already served on your current policy.", "Far cheaper than replacing it with a bigger plan."],
+      cons: ["Your current policy's own limits (room rent, co-pay) still apply to the first layer."],
+    });
+  }
+
+  // 4. Top up your work cover: cheap, large protection on top of what your employer already pays for.
   const work = p.employerCover ?? 0;
-  if (work > 0 && c?.self && !c.parents) {
+  if (work > 0 && own === 0 && c?.self && !c.parents) {
     const ded = nearestDeductible(work);
     const prem = topupPremium(p, ded, 20);
     out.push({
@@ -212,8 +237,9 @@ export function budgetLevers(p: Profile, top: Match[], all: Match[]): { over: nu
   // 3. Separate parents' policy: often the biggest saving for mixed-age families
   const c = p.cover;
   if (c?.parents && (c.self || c.partner || c.kids)) {
-    const young: Profile = { ...p, cover: { ...c, parents: false }, conditions: [] };
-    const elders: Profile = { ...p, cover: { self: false, partner: false, kids: false, parents: true } };
+    const parentsSick = conditionHolder(p) === "parent";
+    const young: Profile = { ...p, cover: { ...c, parents: false }, conditions: parentsSick ? [] : p.conditions };
+    const elders: Profile = { ...p, cover: { self: false, partner: false, kids: false, parents: true }, conditions: parentsSick ? p.conditions : [] };
     const ym = matchPolicies(young).matches[0];
     const em = matchPolicies(elders).matches[0];
     if (ym && em) {

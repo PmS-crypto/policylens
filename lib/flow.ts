@@ -1,6 +1,6 @@
 import type { Lang } from "./ai";
 import { CONDITION_LABEL, parentsShort } from "./profile";
-import type { Condition, Priority, Profile } from "./types";
+import type { Condition, PlannedCare, Priority, Profile } from "./types";
 
 /*
   The conversation script. Voice: a smart friend who happens to know insurance.
@@ -50,10 +50,7 @@ export const STEPS: Step[] = [
   },
   {
     id: "selfAge",
-    ask: (p, l) =>
-      p.cover?.partner
-        ? t(l, "How old are you? I'll assume your partner's around the same age.", "Aapki age kya hai? Partner ki bhi lagbhag same maan leta hoon.")
-        : t(l, "How old are you?", "Aapki age kya hai?"),
+    ask: (_, l) => t(l, "How old are you?", "Aapki age kya hai?"),
     chips: (_, l) => [
       { label: t(l, "Under 25", "25 se kam"), value: "23" },
       { label: "25–30", value: "28" },
@@ -65,6 +62,22 @@ export const STEPS: Step[] = [
     skip: (p) => !p.cover?.self && !p.cover?.partner,
     done: (p) => p.selfAge !== undefined,
     apply: (p, [v]) => ({ ...p, selfAge: Number(v) }),
+  },
+  {
+    id: "partnerAge",
+    ask: (_, l) => t(l, "And your partner's age?", "Aur partner ki age?"),
+    hint: (_, l) => t(l, "Why I'm asking: premiums and eligibility follow the eldest person on the policy.", "Kyun pooch raha hoon: premium aur eligibility sabse bade member ki age se tay hote hain."),
+    chips: (_, l) => [
+      { label: t(l, "Under 25", "25 se kam"), value: "23" },
+      { label: "25–30", value: "28" },
+      { label: "31–35", value: "33" },
+      { label: "36–40", value: "38" },
+      { label: "41–50", value: "45" },
+      { label: "51–60", value: "55" },
+    ],
+    skip: (p) => !p.cover?.partner,
+    done: (p) => p.partnerAge !== undefined,
+    apply: (p, [v]) => ({ ...p, partnerAge: Number(v) }),
   },
   {
     id: "parentAge",
@@ -160,6 +173,44 @@ export const STEPS: Step[] = [
         : null,
   },
   {
+    id: "conditionWho",
+    ask: (p, l) => t(l, `Who has ${p.conditions?.length === 1 ? "it" : "them"}?`, "Yeh kisko hai?"),
+    hint: (_, l) => t(l, "Why I'm asking: the waiting period applies to that person, and it changes whether separate policies make sense.", "Kyun pooch raha hoon: waiting period usi par lagta hai, aur isse alag policy ka faisla badalta hai."),
+    chips: (p, l) =>
+      [
+        p.cover?.self ? { label: t(l, "Me", "Mujhe"), value: "self" } : null,
+        p.cover?.partner ? { label: "Partner", value: "partner" } : null,
+        p.cover?.parents ? { label: t(l, "My parent", "Mummy/Papa"), value: "parent" } : null,
+      ].filter((c): c is Chip => !!c),
+    // Only worth asking when more than one generation is covered
+    skip: (p) => !p.conditions?.length || [p.cover?.self || p.cover?.partner, p.cover?.parents].filter(Boolean).length < 2,
+    done: (p) => p.conditionWho !== undefined,
+    apply: (p, [v]) => ({ ...p, conditionWho: v as Profile["conditionWho"] }),
+  },
+  {
+    id: "upcoming",
+    ask: (_, l) =>
+      t(l, "A few quick ones so I get this exactly right. Is any treatment or surgery likely in the next 2 years?", "Kuch chhote sawaal, taaki sab sahi ho. Agle 2 saal mein koi treatment ya surgery hone ki sambhavna hai?"),
+    hint: (_, l) => t(l, "Why I'm asking: planned surgeries have their own waiting periods and payout caps, and plans differ a lot here.", "Kyun pooch raha hoon: planned surgery ke alag waiting period aur limits hote hain, aur plans mein yahan bahut farak hai."),
+    chips: (_, l) => [
+      { label: t(l, "Nothing planned", "Kuch nahi"), value: "none" },
+      { label: t(l, "Cataract", "Cataract (motiyabind)"), value: "cataract" },
+      { label: t(l, "Knee or hip replacement", "Knee ya hip replacement"), value: "joint" },
+      { label: t(l, "Heart procedure", "Heart procedure"), value: "heart" },
+    ],
+    multi: true,
+    done: (p) => p.upcoming !== undefined,
+    apply: (p, vals) => ({ ...p, upcoming: vals.filter((v) => v !== "none") as PlannedCare[] }),
+    insight: (p, l) =>
+      p.upcoming?.length
+        ? t(
+            l,
+            "Good to know now, not later. Planned surgeries usually come with a 1–2 year wait, and some plans cap what they'll pay. I'll put the plans that cover it soonest, without caps, at the top.",
+            "Achha hua abhi bata diya. Planned surgery par aksar 1–2 saal ka wait hota hai, aur kuch plans limit laga dete hain. Jo plan sabse jaldi aur bina limit cover kare, woh upar dikhaunga.",
+          )
+        : null,
+  },
+  {
     id: "city",
     ask: (_, l) => t(l, "Where would you usually get treated?", "Treatment usually kahan karwaoge?"),
     chips: (_, l) => [
@@ -197,6 +248,62 @@ export const STEPS: Step[] = [
             "Nice, but it disappears the day you switch jobs. And waiting periods on your own policy only start once you buy, so starting early is the move.",
             "Badhiya, par job badli toh yeh cover bhi gaya. Aur apni policy ka waiting period tabhi shuru hota hai jab aap lete ho, toh jaldi lena hi smart move hai.",
           )
+        : null,
+  },
+  {
+    id: "existingCover",
+    ask: (p, l) =>
+      p.cover?.parents && !p.cover.self
+        ? t(l, "Do your parents already have a health policy of their own?", "Kya Mummy-Papa ki pehle se koi apni health policy hai?")
+        : t(l, "Do you already have a health policy of your own, apart from work?", "Office ke alawa, kya aapki pehle se koi apni health policy hai?"),
+    hint: (_, l) => t(l, "Why I'm asking: topping up a policy you have keeps the waiting periods you've already served.", "Kyun pooch raha hoon: purani policy ko top up karne se jo waiting period poora ho chuka hai, woh bacha rehta hai."),
+    chips: (_, l) => [
+      { label: t(l, "No", "Nahi"), value: "0" },
+      { label: t(l, "Yes, up to ₹5L", "Haan, ₹5L tak"), value: "5" },
+      { label: t(l, "Yes, ₹5–10L", "Haan, ₹5–10L"), value: "10" },
+      { label: t(l, "Yes, more than ₹10L", "Haan, ₹10L se zyada"), value: "15" },
+    ],
+    done: (p) => p.existingCover !== undefined,
+    apply: (p, [v]) => ({ ...p, existingCover: Number(v) }),
+    insight: (p, l) =>
+      (p.existingCover ?? 0) > 0
+        ? t(
+            l,
+            "Nice. I'll look at topping it up rather than replacing it. That's usually the cheapest way to more cover, and you keep the waiting periods you've already served.",
+            "Badhiya. Main ise replace karne ke bajaye top up karne ka option dekhunga. Yeh aksar sabse sasta hai, aur poore hue waiting period bache rehte hain.",
+          )
+        : null,
+  },
+  {
+    id: "savings",
+    ask: (_, l) => t(l, "If a ₹5 lakh hospital bill came tomorrow, could your savings handle it?", "Agar kal ₹5 lakh ka hospital bill aa jaaye, kya savings se ho jaayega?"),
+    hint: (_, l) => t(l, "Why I'm asking: it decides how much cover you need on top, and whether a cheaper top-up plan suits you.", "Kyun pooch raha hoon: isse tay hota hai kitna cover chahiye, aur sasta top-up plan aapke liye theek hai ya nahi."),
+    chips: (_, l) => [
+      { label: t(l, "Yes, comfortably", "Haan, aaram se"), value: "covered" },
+      { label: t(l, "Partly", "Thoda bahut"), value: "partly" },
+      { label: t(l, "Not really", "Nahi"), value: "no" },
+    ],
+    done: (p) => p.savings !== undefined,
+    apply: (p, [v]) => ({ ...p, savings: v as Profile["savings"] }),
+    insight: (p, l) =>
+      p.savings === "no"
+        ? t(l, "Then the right cover matters even more. I've added headroom so one big bill doesn't land on your savings.", "Tab sahi cover aur bhi zaroori hai. Maine extra cover joda hai taaki ek bada bill savings par na pade.")
+        : null,
+  },
+  {
+    id: "tobacco",
+    ask: (_, l) => t(l, "Does anyone you're covering smoke or use tobacco?", "Jinhe cover kar rahe ho, unme koi smoke ya tobacco leta hai?"),
+    hint: (_, l) =>
+      t(l, "Why I'm asking: insurers usually charge a little more for tobacco. Always declare it, because hiding it is a top reason claims get rejected.", "Kyun pooch raha hoon: tobacco par premium thoda zyada hota hai. Hamesha batao, chhupane se claims reject hote hain."),
+    chips: (_, l) => [
+      { label: t(l, "No", "Nahi"), value: "no" },
+      { label: t(l, "Yes", "Haan"), value: "yes" },
+    ],
+    done: (p) => p.tobacco !== undefined,
+    apply: (p, [v]) => ({ ...p, tobacco: v === "yes" }),
+    insight: (p, l) =>
+      p.tobacco
+        ? t(l, "Thanks for being upfront. I've priced every plan with that in mind, so there are no surprises later.", "Sach batane ke liye shukriya. Maine har plan ka premium isi hisaab se lagaya hai, taaki baad mein koi surprise na ho.")
         : null,
   },
   {
