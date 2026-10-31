@@ -111,25 +111,28 @@ export function StructureAdvice({ structures }: { structures: Structure[] }) {
 }
 
 /** Compact flag under the plans header that jumps to the levers. */
-export function OverBudgetFlag({ over, budget, onSee }: { over: number; budget: number; onSee: () => void }) {
+const budgetPhrase = (budget: number, source?: "you" | "income" | null) =>
+  source === "income" ? `the ${inrShort(budget)} a year your income can comfortably keep renewing` : `your ${inrShort(budget)} budget`;
+
+export function OverBudgetFlag({ over, budget, source, onSee }: { over: number; budget: number; source?: "you" | "income" | null; onSee: () => void }) {
   return (
     <button onClick={onSee} className="mt-5 flex w-full items-center justify-between gap-3 rounded-[20px] bg-warn-soft px-4 py-3.5 text-left">
       <span className="text-[14px] leading-snug">
-        <span className="font-semibold text-warn">{inrShort(over)} over your {inrShort(budget)} budget.</span> <span className="text-ink-soft">See ways to make it fit.</span>
+        <span className="font-semibold text-warn">{inrShort(over)} over {budgetPhrase(budget, source)}.</span> <span className="text-ink-soft">See ways to make it fit.</span>
       </span>
       <Icon name="arrow" size={16} className="shrink-0 rotate-90 text-warn" />
     </button>
   );
 }
 
-export function BudgetFix({ over, budget, levers, bestName, sentence }: { over: number; budget: number; levers: Lever[]; bestName: string; sentence: string }) {
+export function BudgetFix({ over, budget, source, levers, bestName, sentence }: { over: number; budget: number; source?: "you" | "income" | null; levers: Lever[]; bestName: string; sentence: string }) {
   const anyFits = levers.some((l) => l.fits && !l.risky);
   return (
     <section id="fit" className="mx-5 mt-10 scroll-mt-4" aria-labelledby="fit-title">
       <p className="text-[13px] font-medium text-accent">Can I afford good cover?</p>
       <h2 id="fit-title" className="display mt-2 text-[30px]">Make it fit your budget</h2>
       <p className="mt-3 max-w-[36ch] text-[15px] leading-relaxed text-ink-soft">
-        {bestName} is {inrShort(over)} over your {inrShort(budget)} budget.{" "}
+        {bestName} is {inrShort(over)} over {budgetPhrase(budget, source)}.{" "}
         {anyFits ? "These options get you under it. Each one shows exactly what you'd give up." : "Nothing gets fully under it without big gaps, so here are the closest options and what each costs you."}
       </p>
       <ol className="mt-6 space-y-3">

@@ -113,6 +113,14 @@ export function parseFreeText(text: string, stepId?: string): Partial<Profile> {
     else if (/\b(me|myself|i have|mujhe)\b/.test(t)) out.conditionWho = "self";
   }
 
+  // Household income: "I earn 12 lakh", "income 8L", "salary 60k a month"
+  const inc = t.match(/(?:earn|income|salary|ctc|package)[^.\d]{0,20}(\d+(?:\.\d+)?)\s*(lakh|lac|l|k|thousand)?\s*(a month|per month|monthly|pm)?/);
+  if (inc) {
+    let v = parseFloat(inc[1]) * (/^l/.test(inc[2] ?? "") ? 1e5 : /^(k|thousand)/.test(inc[2] ?? "") ? 1e3 : 1);
+    if (inc[3]) v *= 12;
+    if (v >= 50000) out.income = v;
+  } else if (stepId === "income" && /prefer not|rather not|skip|nahi batana/.test(t)) out.income = null;
+
   // Step-aware fallbacks for bare answers like "32" or "2"
   const bare = t.trim().match(/^(\d{1,2})$/);
   if (bare) {

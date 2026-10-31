@@ -19,6 +19,7 @@ Return ONLY a JSON object: {"patch": {...}, "reply": "..."}.
 - existingCover: number in lakh for a personal policy they already hold (0 if none; NOT employer cover)
 - savings: "covered"|"partly"|"no" (could savings absorb a ₹5 lakh bill)
 - tobacco: bool (anyone covered smokes or uses tobacco)
+- income: number, household income per YEAR in rupees (convert monthly to yearly; null if they decline)
 "reply" is ONE warm, plain-language sentence (max 25 words) acknowledging what they shared. No jargon, no recommendations, no questions.`;
 
 export async function POST(req: Request) {
@@ -46,6 +47,7 @@ export async function POST(req: Request) {
   if (patch.upcoming?.length === 0 && !said(/surgery|treatment|operation|nothing planned|no surgery/, "upcoming")) delete patch.upcoming;
   if (patch.tobacco === false && !said(/smok|tobacco|cigarette/, "tobacco")) delete patch.tobacco;
   if (patch.existingCover === 0 && !said(/policy|insurance|cover/, "existingCover")) delete patch.existingCover;
+  if (patch.income === null && !said(/income|earn|salary|prefer not/, "income")) delete patch.income;
   if (patch.savings && !said(/saving|afford|pay|bill/, "savings")) delete patch.savings;
   if (patch.conditionWho && !said(/mom|mum|mother|dad|father|parent|wife|husband|partner|i have|me/, "conditionWho")) delete patch.conditionWho;
 

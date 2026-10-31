@@ -317,6 +317,26 @@ export const STEPS: Step[] = [
     apply: (p, vals) => ({ ...p, priorities: vals as Priority[] }),
   },
   {
+    id: "income",
+    ask: (_, l) => t(l, "Roughly what does your household earn in a year?", "Ghar ki saal ki kamai lagbhag kitni hai?"),
+    hint: (_, l) =>
+      t(
+        l,
+        "Why I'm asking: a plan only protects you if you can keep renewing it as premiums rise with age. This stays private and is never shared.",
+        "Kyun pooch raha hoon: plan tabhi kaam aata hai jab aap har saal renew kar sako. Yeh private rehta hai, kisi ke saath share nahi hota.",
+      ),
+    chips: (_, l) => [
+      { label: t(l, "Under ₹5L", "₹5L se kam"), value: "400000" },
+      { label: "₹5–10L", value: "750000" },
+      { label: "₹10–20L", value: "1500000" },
+      { label: "₹20–40L", value: "3000000" },
+      { label: t(l, "₹40L+", "₹40L se zyada"), value: "5000000" },
+      { label: t(l, "Prefer not to say", "Nahi batana"), value: "null" },
+    ],
+    done: (p) => p.income !== undefined,
+    apply: (p, [v]) => ({ ...p, income: v === "null" ? null : Number(v) }),
+  },
+  {
     id: "budget",
     ask: (_, l) => t(l, "Last one, promise. What yearly premium feels okay?", "Bas last sawaal. Saal ka kitna premium theek lagega?"),
     chips: (_, l) => [

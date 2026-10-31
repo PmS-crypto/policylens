@@ -7,6 +7,7 @@ import { PRIVATE_ROOM_RATE, effectivePriorities, eldestAge } from "@/lib/profile
 import type { Lang } from "@/lib/ai";
 import { t } from "@/lib/flow";
 import { headlineScenario, headlineSentence, simulate } from "@/lib/simulate";
+import type { Inference } from "@/lib/infer";
 import { budgetLevers, coverageStructures } from "@/lib/structure";
 import { BudgetFix, OverBudgetFlag, StructureAdvice } from "./Structure";
 import type { Excluded, Match, Priority, Profile } from "@/lib/types";
@@ -23,9 +24,14 @@ interface Props {
   onChoose: (id: string) => void;
   onBill: (id: string) => void;
   onExplain: () => void;
+  budgetSource: "you" | "income" | null;
+  /** What the engine inferred from the answers, worth keeping visible next to the plans. */
+  worked: Inference[];
+  /** Planning one group at a time when no single policy fits everyone. */
+  split: { current: "family" | "parents" | null; onSwitch: (g: "family" | "parents") => void };
 }
 
-export default function Plans({ lang, profile, top, all, excluded, notes, onOpen, onChoose, onBill, onExplain }: Props) {
+export default function Plans({ lang, profile, top, all, excluded, notes, onOpen, onChoose, onBill, onExplain, budgetSource, worked, split }: Props) {
   const [active, setActive] = useState(0);
   const [mode, setMode] = useState<"cards" | "compare">("cards");
   const rail = useRef<HTMLDivElement>(null);
@@ -43,6 +49,14 @@ export default function Plans({ lang, profile, top, all, excluded, notes, onOpen
   return (
     <div className="pb-10">
       <header className="px-6 pt-6">
+        {top.length === 0 ? (
+          <>
+            <p className="text-[13px] font-medium text-accent">What type of cover do I need?</p>
+            <h1 className="display mt-2 text-[38px]">Two policies will work better</h1>
+            <p className="mt-3 max-w-[36ch] text-[15px] leading-relaxed text-ink-soft">No single plan accepts everyone together. Here's why, and what to do instead.</p>
+          </>
+        ) : (
+        <>
         <p className="text-[13px] font-medium text-accent">{mode === "cards" ? t(lang, "Which policy should I consider?", "Kaunsi policy dekhni chahiye?") : t(lang, "How do I compare these?", "Inhe compare kaise karun?")}</p>
         <h1 className="display mt-2 text-[38px]">{mode === "cards" ? t(lang, "Your top 3", "Aapke top 3") : t(lang, "What's actually different", "Asli farak kya hai")}</h1>
         <p className="mt-3 max-w-[36ch] text-[15px] leading-relaxed text-ink-soft">
@@ -58,6 +72,24 @@ export default function Plans({ lang, profile, top, all, excluded, notes, onOpen
           <Icon name="info" size={15} />
           {t(lang, "How we ranked these", "Ranking kaise ki")}
         </button>
+        </>
+        )}
+        {split.current && (
+          <div className="mt-5 flex rounded-full bg-surface-2 p-1" role="group" aria-label="Whose cover">
+            {(["family", "parents"] as const).map((g) => (
+              <button
+                key={g}
+                onClick={() => g !== split.current && split.onSwitch(g)}
+                aria-pressed={split.current === g}
+                className={`flex-1 rounded-full py-2 text-[13px] transition ${split.current === g ? "bg-surface font-semibold shadow-e1" : "text-ink-soft"}`}
+              >
+                {g === "family" ? "Your family" : "Your parents"}
+              </button>
+            ))}
+          </div>
+        )}
+        {worked.length > 0 && <WorkedOut items={worked} />}
+        {top.length > 0 && (
         <div className="mt-6">
           <Segmented
             label="Plan view"
@@ -69,10 +101,35 @@ export default function Plans({ lang, profile, top, all, excluded, notes, onOpen
             ]}
           />
         </div>
-        {mode === "cards" && fit && profile.budget && <OverBudgetFlag over={fit.over} budget={profile.budget} onSee={seeFit} />}
+        )}
+        {mode === "cards" && fit && profile.budget && <OverBudgetFlag over={fit.over} budget={profile.budget} source={budgetSource} onSee={seeFit} />}
       </header>
 
-      {mode === "cards" ? (
+      {top.length === 0 ? (
+        <section className="mx-5 mt-6 rounded-[28px] bg-surface p-6 shadow-e1 ring-1 ring-line">
+          <h2 className="title text-[20px] leading-tight">No single policy covers everyone together</h2>
+          <ul className="mt-3 space-y-1.5 text-[13.5px] leading-relaxed text-ink-soft">
+            {excluded.slice(0, 3).map((e) => (
+              <li key={e.policy.id}>
+                <span className="font-medium text-ink">{e.policy.name}:</span> {e.why}
+              </li>
+            ))}
+          </ul>
+          {profile.cover?.parents && (profile.cover.self || profile.cover.partner || profile.cover.kids) && (
+            <>
+              <p className="mt-5 text-[14.5px] leading-relaxed">That's common when parents are much older. Two policies usually work out better anyway: their claims can't use up your cover.</p>
+              <div className="mt-5 grid grid-cols-2 gap-2.5">
+                <button onClick={() => split.onSwitch("family")} className="rounded-full py-3.5 text-[14px] font-semibold ring-1 ring-line">
+                  Your family
+                </button>
+                <button onClick={() => split.onSwitch("parents")} className="rounded-full bg-primary py-3.5 text-[14px] font-semibold text-on-primary shadow-e2">
+                  Your parents
+                </button>
+              </div>
+            </>
+          )}
+        </section>
+      ) : mode === "cards" ? (
         <>
           <div ref={rail} onScroll={onScroll} className="no-scrollbar mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-6 px-6 pb-4">
             {top.map((m, i) => {
@@ -185,7 +242,7 @@ export default function Plans({ lang, profile, top, all, excluded, notes, onOpen
           </button>
 
           {fit && profile.budget && fit.levers.length > 0 && (
-            <BudgetFix over={fit.over} budget={profile.budget} levers={fit.levers} bestName={top[0].policy.name} sentence={head.sentence} />
+            <BudgetFix over={fit.over} budget={profile.budget} source={budgetSource} levers={fit.levers} bestName={top[0].policy.name} sentence={head.sentence} />
           )}
           <StructureAdvice structures={structures} />
           {excluded.length > 0 && (
@@ -267,5 +324,31 @@ function Compare({ lang, profile, top, onOpen }: { lang: Lang; profile: Profile;
       </div>
       <p className="mt-4 px-1 text-[12.5px] text-ink-soft">{t(lang, "Highlighted rows are the ones you said matter. Tap any value to read the clause.", "Highlighted rows woh hain jo aapne important bataye. Clause padhne ke liye kisi bhi value pe tap karo.")}</p>
     </div>
+  );
+}
+
+/** What PolicyLens inferred from the answers, kept beside the plans so the reasoning stays visible. */
+function WorkedOut({ items }: { items: Inference[] }) {
+  const [open, setOpen] = useState(false);
+  const list = open ? items : items.slice(0, 2);
+  return (
+    <section className="mt-5 rounded-[24px] bg-accent-soft p-5" aria-labelledby="worked-title">
+      <h2 id="worked-title" className="flex items-center gap-2 text-[14px] font-semibold text-accent">
+        <Icon name="sparkle" size={15} />
+        What I worked out from your answers
+      </h2>
+      <ul className="mt-3 space-y-3">
+        {list.map((i) => (
+          <li key={i.noticed} className="text-[14px] leading-relaxed">
+            <span className="font-medium">{i.noticed}</span> <span className="text-ink-soft">{i.did}</span>
+          </li>
+        ))}
+      </ul>
+      {items.length > 2 && (
+        <button onClick={() => setOpen(!open)} className="mt-3 text-[13px] font-semibold text-accent">
+          {open ? "Show less" : `Show all ${items.length}`}
+        </button>
+      )}
+    </section>
   );
 }

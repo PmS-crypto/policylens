@@ -6,12 +6,15 @@ import Bill from "@/components/Bill";
 import Chat, { type Citation, type Msg } from "@/components/Chat";
 import Decide from "@/components/Decide";
 import HowWeRank from "@/components/HowWeRank";
+import Thinking from "@/components/Thinking";
 import { FamilyBar, ProfileSheet } from "@/components/Family";
 import Plans from "@/components/Plans";
 import PolicySheet from "@/components/PolicySheet";
 import { AURA, Aura, Icon, type IconName, Logo, Money, Orb, SlicedOrb, ThemeToggle, inrShort } from "@/components/ui";
 import type { Lang } from "@/lib/ai";
 import { STEPS, nextStep, t } from "@/lib/flow";
+import { effectiveBudget, planningProfile } from "@/lib/afford";
+import { inferences, type Inference } from "@/lib/infer";
 import { matchPolicies } from "@/lib/match";
 import { POLICIES, getPolicy } from "@/lib/policies";
 import { CITY_LABEL, CONDITION_LABEL, PLANNED_LABEL, coverSummary, inr, isProfileComplete, recommendSumInsured } from "@/lib/profile";
@@ -52,6 +55,9 @@ export default function Home() {
   const [sheet, setSheet] = useState<{ id: string; clause?: string } | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [explain, setExplain] = useState<"rank" | "numbers" | null>(null);
+  const [thinking, setThinking] = useState<Inference[] | null>(null);
+  // When no single policy fits everyone, we plan one group at a time and remember the full family.
+  const [splitBase, setSplitBase] = useState<Profile | null>(null);
   const [chosen, setChosen] = useState<string | null>(null);
   const [billFocus, setBillFocus] = useState<string | undefined>();
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -62,7 +68,9 @@ export default function Home() {
     if ("serviceWorker" in navigator && location.hostname !== "localhost") navigator.serviceWorker.register("/sw.js").catch(() => {});
   }, []);
 
-  const result = useMemo(() => (isProfileComplete(profile) ? matchPolicies(profile) : null), [profile]);
+  // The engine plans with a sustainable budget (the user's, capped by what their income can keep renewing).
+  const plan = useMemo(() => planningProfile(profile), [profile]);
+  const result = useMemo(() => (isProfileComplete(profile) ? matchPolicies(plan) : null), [profile, plan]);
   const top = result?.matches.slice(0, 3) ?? [];
   const resultsReady = stage === "qa" && top.length > 0;
 
@@ -194,11 +202,17 @@ export default function Home() {
     }
   }
 
-  async function showPlans() {
+  // Show the working-out first; plans appear when it finishes. Notes load in parallel so they're ready.
+  function showPlans() {
     if (!result) return;
+    loadNotes(profile, langRef.current);
+    setThinking(inferences(profile, plan, result.matches.slice(0, 3), result.excluded));
+  }
+
+  function revealPlans() {
+    setThinking(null);
     setStage("qa");
     setView("plans");
-    loadNotes(profile, langRef.current);
     push({
       role: "ai",
       text: t(
@@ -207,6 +221,19 @@ export default function Home() {
         `${POLICIES.length} policies padh li, taaki aapko na padhni pade. Yeh rahe aapke 3 best plans. Kuch bhi poochna ho toh yahin poocho.`,
       ),
     });
+  }
+
+  function planSeparately(group: "family" | "parents") {
+    const base = splitBase ?? profileRef.current;
+    const parentsSick = (base.conditionWho ?? (base.cover?.parents ? "parent" : "self")) === "parent";
+    const next: Profile =
+      group === "parents"
+        ? { ...base, cover: { self: false, partner: false, kids: false, parents: true }, conditions: parentsSick ? base.conditions : [] }
+        : { ...base, cover: { ...base.cover!, parents: false }, conditions: parentsSick ? [] : base.conditions };
+    setSplitBase(base);
+    update(next);
+    loadNotes(next, langRef.current);
+    push({ role: "ai", text: group === "parents" ? "Here's cover for your parents on their own." : "Here's cover for your family, without your parents." });
   }
 
   function onEdit(field: keyof Profile) {
@@ -245,7 +272,7 @@ export default function Home() {
   const readyCard =
     stage === "discover" && result && !nextStep(profile) && !busy && !typing ? (
       <div className="space-y-5">
-      {top[0] && <Awareness profile={profile} best={top[0]} lang={lang} />}
+      {top[0] && <Awareness profile={plan} best={top[0]} lang={lang} />}
       <Aura colors={AURA.dusk} scrim className="rise relative rounded-[32px] p-6 text-white shadow-e2">
         <div className="absolute -right-20 -top-16 text-white opacity-70" aria-hidden>
           <SlicedOrb size={150} />
@@ -323,7 +350,10 @@ export default function Home() {
               {view === "plans" && result && (
                 <Plans
                   lang={lang}
-                  profile={profile}
+                  profile={plan}
+                  budgetSource={effectiveBudget(profile).source}
+                  worked={inferences(profile, plan, top, result.excluded).filter((i) => i.keep)}
+                  split={splitBase ? { current: profile.cover?.parents ? "parents" : "family", onSwitch: planSeparately } : { current: null, onSwitch: planSeparately }}
                   top={top}
                   all={result.matches}
                   excluded={result.excluded}
@@ -337,16 +367,17 @@ export default function Home() {
                   }}
                 />
               )}
-              {view === "bill" && <Bill key={billFocus} lang={lang} profile={profile} top={top} focusId={billFocus} onOpen={(id, clause) => setSheet({ id, clause })} onChoose={choose} onExplain={() => setExplain("numbers")} />}
-              {view === "decide" && chosenMatch && <Decide lang={lang} profile={profile} match={chosenMatch} top={top} onSwitch={setChosen} />}
+              {view === "bill" && top.length > 0 && <Bill key={billFocus} lang={lang} profile={plan} top={top} focusId={billFocus} onOpen={(id, clause) => setSheet({ id, clause })} onChoose={choose} onExplain={() => setExplain("numbers")} />}
+              {view === "decide" && chosenMatch && <Decide lang={lang} profile={plan} match={chosenMatch} top={top} onSwitch={setChosen} />}
             </main>
 
             {resultsReady && <TabBar view={view} setView={setView} lang={lang} />}
 
-            {explain && <HowWeRank profile={profile} top={top} section={explain} onClose={() => setExplain(null)} />}
+            {thinking && <Thinking steps={thinking} onDone={revealPlans} />}
+            {explain && <HowWeRank profile={plan} top={top} section={explain} onClose={() => setExplain(null)} />}
             {profileOpen && <ProfileSheet profile={profile} lang={lang} onEdit={onEdit} onClose={() => setProfileOpen(false)} />}
             {sheetMatch && (
-              <PolicySheet match={sheetMatch} focusClause={sheet?.clause} profile={profile} lang={lang} onClose={() => setSheet(null)} onChoose={() => choose(sheetMatch.policy.id)} />
+              <PolicySheet match={sheetMatch} focusClause={sheet?.clause} profile={plan} lang={lang} onClose={() => setSheet(null)} onChoose={() => choose(sheetMatch.policy.id)} />
             )}
           </>
         )}

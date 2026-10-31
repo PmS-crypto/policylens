@@ -34,6 +34,8 @@ export interface Profile {
   existingCover?: number;
   /** Could savings absorb a ₹5L bill tomorrow? */
   savings?: "covered" | "partly" | "no";
+  /** Household income per year in ₹ (null = prefer not to say). Used only to keep premiums sustainable. */
+  income?: number | null;
   /** Anyone covered smokes or uses tobacco. */
   tobacco?: boolean;
   kidsCount?: number;

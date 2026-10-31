@@ -1,5 +1,6 @@
 import { langNote, llm, type Lang } from "@/lib/ai";
 import { verifyNumbers } from "@/lib/verify";
+import { planningProfile } from "@/lib/afford";
 import { matchPolicies } from "@/lib/match";
 import { CONDITION_LABEL, PRIORITY_LABEL, coverSummary, effectivePriorities } from "@/lib/profile";
 import type { Profile } from "@/lib/types";
@@ -11,7 +12,7 @@ No hype, no guarantees, no markdown.`;
 
 export async function POST(req: Request) {
   const { profile, lang } = (await req.json()) as { profile: Profile; lang?: Lang };
-  const { matches } = matchPolicies(profile);
+  const { matches } = matchPolicies(planningProfile(profile));
   const top = matches.slice(0, 3);
   const pri = effectivePriorities(profile).map((p) => PRIORITY_LABEL[p]);
 
