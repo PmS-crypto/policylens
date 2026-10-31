@@ -25,9 +25,9 @@ const doneIds = (p: Profile) => STEPS.filter((s) => s.done(p)).map((s) => s.id);
 
 const PERSONAS: Record<Lang, { who: string; what: string; text: string }[]> = {
   en: [
-    { who: "Riya, 29", what: "Covering her diabetic dad", text: "I'm 29 and live in Bengaluru. I want to cover my parents. Dad is 62 and has diabetes and BP. Budget around 45k a year." },
-    { who: "Arjun, 32", what: "Married, baby on the way", text: "I'm 32, want cover for me and my wife in Pune. We're planning a baby next year, no health issues. I'd like a private room. My company gives 3 lakh cover." },
-    { who: "Kabir, 24", what: "First job, first policy", text: "I'm 24, just started my first job in Indore. Just me. Want something cheap but decent." },
+    { who: "Riya, 29", what: "Buying for her dad", text: "I'm 29 and live in Bengaluru. I want to cover my parents. Dad is 62 and has diabetes and BP. Budget around 45k a year." },
+    { who: "Arjun, 32", what: "Baby on the way", text: "I'm 32, want cover for me and my wife in Pune. We're planning a baby next year, no health issues. I'd like a private room. My company gives 3 lakh cover." },
+    { who: "Kabir, 24", what: "First job", text: "I'm 24, just started my first job in Indore. Just me. Want something cheap but decent." },
   ],
   hi: [
     { who: "Riya, 29", what: "Papa ke liye, unko sugar hai", text: "Main 29 ki hoon, Bengaluru mein rehti hoon. Mummy-papa ko cover karna hai. Papa 62 ke hain, unko sugar aur BP hai. Budget 45k saal ka." },
@@ -415,58 +415,40 @@ function Landing({ onStart, lang }: { onStart: (text?: string) => void; lang: La
     });
   }, []);
 
-  const promises: { icon: IconName; title: string; body: string }[] = [
-    {
-      icon: "phoneOff",
-      title: t(lang, "No phone number. No spam calls.", "Na phone number, na spam calls."),
-      body: t(lang, "Look around all you want, no sign-up.", "Bina sign-up ke jitna marzi dekho."),
-    },
-    {
-      icon: "lock",
-      title: t(lang, "Your health stuff stays private", "Health details private rehti hain"),
-      body: t(lang, "Never shared with an insurer unless you pick a plan.", "Jab tak aap plan nahi chunte, kisi insurer ko nahi jaati."),
-    },
-    {
-      icon: "doc",
-      title: t(lang, "Receipts for every answer", "Har jawaab ka proof"),
-      body: t(lang, "Every recommendation links to the exact clause.", "Har suggestion exact clause se linked hai."),
-    },
+  // Three short reassurances, shown right under the button where people hesitate.
+  const promises: { icon: IconName; label: string }[] = [
+    { icon: "phoneOff", label: t(lang, "No phone number", "Phone number nahi") },
+    { icon: "lock", label: t(lang, "Private by default", "Poori tarah private") },
+    { icon: "doc", label: t(lang, "Every answer sourced", "Har jawaab ka proof") },
   ];
 
   return (
     <div className="no-scrollbar relative h-full overflow-y-auto overflow-x-hidden">
-      {/* 1. Hero: the layers of your cover, breathing */}
-      <section className="relative px-6 pb-4 pt-[max(env(safe-area-inset-top),18px)]">
+      {/* 1. Promise */}
+      <section className="relative px-6 pb-2 pt-[max(env(safe-area-inset-top),18px)]">
         <div aria-hidden className="pointer-events-none absolute -right-24 -top-20 h-96 w-96 rounded-full opacity-50 blur-3xl breathe" style={{ background: "radial-gradient(circle, #f49ac1, #ffc6a8 45%, transparent 70%)" }} />
         <div className="relative flex items-center justify-between">
           <Logo />
           <ThemeToggle />
         </div>
-        <div className="relative mt-6 flex justify-center text-ink">
-          <SlicedOrb size={250} />
+        <div className="relative mt-2 flex justify-center text-ink">
+          <SlicedOrb size={150} />
         </div>
-        <h1 className="display relative mt-4 text-[46px]">{t(lang, "See what you'd pay. Before you buy.", "Pehle dekho kitna doge. Phir lo.")}</h1>
-        <p className="relative mt-5 max-w-[34ch] text-[16px] leading-relaxed text-ink-soft">
-          {t(
-            lang,
-            "Tell us about your family. We run real hospital bills through every plan's fine print and show you the difference. No jargon.",
-            "Apni family ke baare mein batao. Hum asli hospital bills ko har plan ke fine print se guzaarte hain aur farak dikhate hain. Bina jargon ke.",
-          )}
+        <h1 className="display relative mt-3 text-[40px]">{t(lang, "See what you'd pay. Before you buy.", "Pehle dekho kitna doge. Phir lo.")}</h1>
+        <p className="relative mt-3 max-w-[30ch] text-[17px] leading-relaxed text-ink-soft">
+          {t(lang, "Tell us who you're covering. We'll show what each plan really pays.", "Batao kisko cover karna hai. Hum dikhayenge har plan asal mein kitna deta hai.")}
         </p>
       </section>
 
-      {/* 2. Proof: the same cover, two outcomes */}
-      <section className="px-5 pt-8">
-        <div className="rounded-[32px] bg-surface p-6 shadow-e2 ring-1 ring-line">
-          <p className="text-[13.5px] leading-relaxed text-ink-soft">
-            {t(lang, "Mum's knee replacement in Mumbai. Bill:", "Mumbai mein mummy ka knee replacement. Bill:")} <span className="font-semibold text-ink">{inrShort(demo[0].r.bill)}</span>.{" "}
-            {t(lang, "Both plans say ₹10 lakh cover.", "Dono plans ₹10 lakh cover bolte hain.")}
-          </p>
-          <div className="mt-6 grid grid-cols-2 gap-3">
+      {/* 2. Proof: same cover, very different payout */}
+      <section className="px-5 pt-6">
+        <div className="rounded-[32px] bg-surface p-5 shadow-e2 ring-1 ring-line">
+          <p className="text-[14px] font-medium">{t(lang, "Same ₹10 lakh cover. Same knee surgery.", "Same ₹10 lakh cover. Same knee surgery.")}</p>
+          <div className="mt-3 grid grid-cols-2 gap-3">
             {demo.map(({ pol, r }) => (
               <div key={pol.id} className={`rounded-[22px] p-4 ${r.youPay ? "bg-owe-soft" : "bg-paid-soft"}`}>
-                <p className="text-[12.5px] font-medium">{pol.name}</p>
-                <p className="mt-4 text-[11.5px] text-ink-soft">{t(lang, "You pay", "Aap doge")}</p>
+                <p className="text-[12.5px] text-ink-soft">{pol.name}</p>
+                <p className="mt-2 text-[12px] font-medium">{t(lang, "You pay", "Aap doge")}</p>
                 <Money value={r.youPay} className={`mt-1 block text-[30px] ${r.youPay ? "text-owe" : "text-paid"}`} />
               </div>
             ))}
@@ -474,25 +456,8 @@ function Landing({ onStart, lang }: { onStart: (text?: string) => void; lang: La
         </div>
       </section>
 
-      {/* 3. Safety */}
-      <section className="px-6 pt-10">
-        <ul className="space-y-6">
-          {promises.map((p) => (
-            <li key={p.title} className="flex gap-4">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
-                <Icon name={p.icon} size={19} />
-              </span>
-              <div>
-                <p className="text-[15.5px] font-semibold">{p.title}</p>
-                <p className="mt-1 text-[14px] text-ink-soft">{p.body}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {/* 4. Action */}
-      <section className="px-5 pb-[max(env(safe-area-inset-bottom),28px)] pt-12">
+      {/* 3. Action, with reassurance right where people hesitate */}
+      <section className="px-5 pb-[max(env(safe-area-inset-bottom),28px)] pt-5">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -500,23 +465,32 @@ function Landing({ onStart, lang }: { onStart: (text?: string) => void; lang: La
           }}
           className="rounded-[32px] bg-surface p-2.5 shadow-e2 ring-1 ring-line"
         >
-          <label htmlFor="intro" className="block px-4 pt-3 text-[13px] font-medium text-ink-soft">
-            {t(lang, "Describe your family your way, or skip", "Apne words mein family ke baare mein batao, ya skip karo")}
+          <label htmlFor="intro" className="sr-only">
+            {t(lang, "Who are you covering?", "Kisko cover karna hai?")}
           </label>
           <textarea
             id="intro"
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={2}
-            placeholder={t(lang, "My mom's 60, has thyroid. Mumbai, budget 40k.", "Meri maa 60 ki hai, unko thyroid hai. Mumbai, budget 40k.")}
-            className="w-full resize-none bg-transparent px-4 py-2 text-[16px] outline-none placeholder:text-ink-faint"
+            placeholder={t(lang, "Who are you covering? e.g. My parents, 62 and 58, in Pune", "Kisko cover karna hai? jaise: Mummy-papa, 62 aur 58, Pune")}
+            className="w-full resize-none bg-transparent px-4 py-3 text-[16px] outline-none placeholder:text-ink-faint"
           />
           <button className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-[18px] text-[16px] font-semibold text-on-primary shadow-e2">
-            {text.trim() ? t(lang, "Find my plans", "Mere plans dhoondo") : t(lang, "Let's go", "Chalo shuru karein")}
+            {text.trim() ? t(lang, "Find my plans", "Mere plans dhoondo") : t(lang, "Get started", "Shuru karo")}
             <Icon name="arrow" size={18} />
           </button>
         </form>
-        <p className="mt-8 text-center text-[13px] text-ink-faint">{t(lang, "Or try it with a sample family", "Ya kisi sample family ke saath try karo")}</p>
+        <ul className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-2 text-[12.5px] text-ink-soft">
+          {promises.map((p) => (
+            <li key={p.label} className="flex items-center gap-1.5">
+              <Icon name={p.icon} size={14} className="text-accent" />
+              {p.label}
+            </li>
+          ))}
+        </ul>
+
+        <p className="mt-10 text-[13px] font-medium text-ink-soft">{t(lang, "Or try a sample family", "Ya sample family try karo")}</p>
         <div className="no-scrollbar -mx-5 mt-3 flex gap-2.5 overflow-x-auto px-5">
           {PERSONAS[lang].map((p) => (
             <button key={p.who} onClick={() => onStart(p.text)} className="shrink-0 rounded-[22px] bg-surface px-4 py-3.5 text-left shadow-e1 ring-1 ring-line">
