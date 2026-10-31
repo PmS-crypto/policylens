@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PolicyLens: insurance that understands you
 
-## Getting Started
+An AI health-insurance advisor that starts with the person, not the product. It finds policies that fit, explains why using the actual clauses, and shows what you would really pay when something goes wrong.
 
-First, run the development server:
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**AI keys are optional.** Without a key, a deterministic rules engine handles extraction, Q&A and explanations, so the demo never breaks on stage. To turn on the LLM layer, create `.env.local` with either key:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+SARVAM_API_KEY=...         # Sarvam AI, Indian LLM; uses sarvam-105b-conversations for speed (set SARVAM_MODEL=sarvam-105b for deeper reasoning)
+ANTHROPIC_API_KEY=...      # uses claude-sonnet-5-5 (override with ANTHROPIC_MODEL)
+OPENAI_API_KEY=...         # uses gpt-4o-mini (override with OPENAI_MODEL)
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## The journey
 
-## Learn More
+| Step | What happens | Where |
+|---|---|---|
+| 1. Discover | You describe your situation in plain words, or tap through adaptive questions. The AI pulls out every fact it can and skips questions already answered. Short "Worth knowing" explainers appear right when they're relevant. | `app/page.tsx`, `lib/flow.ts`, `/api/extract` |
+| 2. Profile | A live, editable profile plus a recommended sum insured, with the reasons for it. | `components/ProfilePanel.tsx` |
+| 3. Match | 6 policies go through eligibility checks, then get scored against your priorities. You get a shortlist of 3 (best fit, budget pick, max protection). Every reason links to its source clause, and there's no made-up universal score. | `lib/match.ts`, `components/Matches.tsx` |
+| 4. Understand | A clause-level comparison, a fine-print radar, and "Ask this policy" Q&A that cites clause numbers. | `components/Compare.tsx`, `PolicyDrawer.tsx`, `/api/ask` |
+| 5. **Reality Check** ⭐ | Run a real-life scenario (dengue, knee replacement, a diabetes complication, C-section…) through each policy's rules: waiting periods, room-rent proportionate deduction, co-pay, sub-limits, consumables. You see exactly what you'd pay out of pocket, line by line. | `lib/simulate.ts`, `components/RealityCheck.tsx` |
+| 6. Decide | What you're getting vs. what you're accepting, a personal coverage timeline ("Dad's diabetes covered from Oct 2027"), a pre-purchase checklist, and a hand-off to the insurer or an advisor. | `components/Decide.tsx` |
 
-To learn more about Next.js, take a look at the following resources:
+## Design principles
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **The AI never invents facts.** The LLM extracts the profile and rewrites engine output into plain language. Matching, pricing and claim simulation are deterministic and traceable to clauses.
+- **Headline cover ≠ usable protection.** Reality Check makes that visible in rupees.
+- **Trust is a feature.** Every claim shows its source (§ section, document version, verified date).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Mobile app (PWA)
 
-## Deploy on Vercel
+PolicyLens is a mobile-first progressive web app. On a phone, open the URL and choose **Add to Home Screen** to install it. On a laptop it renders inside a phone frame for demos.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Design language:** taken from the two documents families struggle with, the hospital bill and the policy fine print. Pine and sage colours, a highlighter yellow for clauses, and Bricolage Grotesque for rupee amounts.
+- **Your bill (signature screen):** every plan rendered as an itemised hospital bill. Deductions are struck through and tagged with their clause, and each bill ends in a stamp: "Paid in full", "90% paid" or "Not covered yet".
+- **Plans lead with what you'd pay**, not with the premium. The ranking includes that headline outcome.
+- **People first:** the chat starts with family tiles, and you can speak your answers (voice input in Chrome/Android).
+- **English / हिंदी toggle:** Sarvam answers, explanations and acknowledgements in Hindi.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 3-minute demo script
+
+1. Landing page: two bills, same ₹10L cover, ₹0 vs ₹2,90,000. That's the problem in one glance.
+2. Tap **Riya, 29**. One sentence fills the profile, and "Fine print, decoded" warnings appear at the right moment.
+3. Pick priorities, then **Show my plans**. Swipe the cards. Each leads with "If your parent is admitted for a diabetes complication next year, you'd pay ₹18,000".
+4. Open **Your bill**. Switch plans and years and watch the stamp flip to "Not covered yet". Tap a highlighted § to read the clause.
+5. Switch to **हिंदी** and ask "papa ki diabetes kab cover hogi?" in Ask.
+6. **Decide**: coverage timeline, then the checklist.
+
+## Prototype caveats
+
+The insurers, clauses and premiums are fictional, modelled on typical Indian retail health policy wording. In production they would be replaced by parsed, versioned insurer documents. Nothing here is underwriting advice or a guarantee that a claim will be paid.
