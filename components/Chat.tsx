@@ -50,14 +50,14 @@ const TILE_ICON: Record<string, IconName> = {
   network: "pin",
 };
 
-type Rec = { start: () => void; stop: () => void; lang: string; interimResults: boolean; onresult: (e: { results: { 0: { transcript: string } }[] }) => void; onend: () => void };
-
 export default function Chat(props: Props) {
   const { messages, typing, chips, multi, max, tiles, preselected, placeholder, lang, footer, onChips, onText, onCitation } = props;
   const [text, setText] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
-  const [listening, setListening] = useState(false);
-  const rec = useRef<Rec | null>(null);
+  const [voice, setVoice] = useState<"idle" | "recording" | "transcribing">("idle");
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const recorder = useRef<MediaRecorder | null>(null);
+  const stopTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const end = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -83,23 +83,57 @@ export default function Chat(props: Props) {
     setText("");
   };
 
-  // Voice input where supported (Chrome / Android); resolved after mount to avoid a hydration mismatch.
-  const [SR, setSR] = useState<(new () => Rec) | undefined>();
-  useEffect(() => {
-    const w = window as unknown as Record<string, unknown>;
-    setSR(() => (w.SpeechRecognition ?? w.webkitSpeechRecognition) as (new () => Rec) | undefined);
-  }, []);
-  const mic = () => {
-    if (!SR) return;
-    if (listening) return rec.current?.stop();
-    const r = new SR();
-    r.lang = "en-IN";
-    r.interimResults = false;
-    r.onresult = (e) => send(e.results[0][0].transcript);
-    r.onend = () => setListening(false);
-    rec.current = r;
-    setListening(true);
-    r.start();
+  // Voice input: record in the browser, transcribe with Sarvam. Works in Chrome, Safari and iOS.
+  // Needs a secure context (https or localhost); the mic button hides where recording isn't possible.
+  const [canRecord, setCanRecord] = useState(false);
+  useEffect(() => setCanRecord(typeof MediaRecorder !== "undefined" && !!navigator.mediaDevices?.getUserMedia), []);
+
+  const stopRecording = () => {
+    if (stopTimer.current) clearTimeout(stopTimer.current);
+    if (recorder.current?.state === "recording") recorder.current.stop();
+  };
+
+  const mic = async () => {
+    if (voice === "recording") return stopRecording();
+    if (voice === "transcribing") return;
+    setVoiceError(null);
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      setVoiceError("Mic access is blocked. Allow it in your browser settings, or just type instead.");
+      return;
+    }
+    const type = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"].find((t) => MediaRecorder.isTypeSupported(t));
+    const rec = new MediaRecorder(stream, type ? { mimeType: type } : undefined);
+    const chunks: Blob[] = [];
+    rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+    rec.onstop = async () => {
+      stream.getTracks().forEach((t) => t.stop());
+      const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
+      if (blob.size < 1200) {
+        setVoice("idle");
+        setVoiceError("Didn't catch any audio. Tap the mic and try again.");
+        return;
+      }
+      setVoice("transcribing");
+      try {
+        const body = new FormData();
+        body.append("file", blob, blob.type.includes("mp4") ? "voice.m4a" : "voice.webm");
+        const res = await fetch("/api/transcribe", { method: "POST", body });
+        const data = await res.json();
+        if (!res.ok || !data.text) throw new Error(data.error);
+        send(data.text);
+      } catch (e) {
+        setVoiceError((e as Error).message || "Couldn't transcribe that. Try again, or type it.");
+      } finally {
+        setVoice("idle");
+      }
+    };
+    recorder.current = rec;
+    rec.start();
+    setVoice("recording");
+    stopTimer.current = setTimeout(stopRecording, 20000); // Sarvam's sync limit is 30s
   };
 
   return (
@@ -169,35 +203,60 @@ export default function Chat(props: Props) {
       </div>
 
       {/* Floating input */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          send(text);
-        }}
-        className="absolute inset-x-4 bottom-[max(env(safe-area-inset-bottom),14px)] z-20 flex items-center gap-2 rounded-full bg-glass p-1.5 pl-5 shadow-e2 ring-1 ring-line backdrop-blur-xl"
-      >
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder={listening ? t(lang, "Listening…", "Sun raha hoon…") : placeholder}
-          aria-label="Message"
-          className="min-w-0 flex-1 bg-transparent py-2.5 text-[15.5px] outline-none placeholder:text-ink-faint"
-        />
-        {SR && !text ? (
-          <button
-            type="button"
-            onClick={mic}
-            aria-label={listening ? "Stop listening" : "Speak your answer"}
-            className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${listening ? "recording bg-owe text-white" : "bg-primary text-on-primary"}`}
-          >
-            <Icon name="mic" size={18} />
-          </button>
-        ) : (
-          <button type="submit" aria-label="Send" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent text-white">
-            <Icon name="arrow" size={18} />
-          </button>
+      <div className="absolute inset-x-4 bottom-[max(env(safe-area-inset-bottom),14px)] z-20">
+        {voiceError && (
+          <p role="alert" className="rise mb-2 rounded-[18px] bg-surface px-4 py-2.5 text-[13px] leading-snug text-owe shadow-e1 ring-1 ring-line">
+            {voiceError}
+          </p>
         )}
-      </form>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            send(text);
+          }}
+          className={`flex items-center gap-2 rounded-full p-1.5 pl-5 shadow-e2 ring-1 backdrop-blur-xl transition-colors ${voice === "recording" ? "bg-owe-soft ring-owe/40" : "bg-glass ring-line"}`}
+        >
+          {voice === "idle" ? (
+            <input
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={placeholder}
+              aria-label="Message"
+              enterKeyHint="send"
+              className="min-w-0 flex-1 bg-transparent py-2.5 text-[16px] outline-none placeholder:text-ink-faint"
+            />
+          ) : (
+            <p className="flex min-w-0 flex-1 items-center gap-2.5 py-2.5 text-[15px]" aria-live="polite">
+              {voice === "recording" ? (
+                <>
+                  <span className="recording h-2.5 w-2.5 shrink-0 rounded-full bg-owe" />
+                  <span className="font-medium text-owe">{t(lang, "Listening… tap to stop", "Sun raha hoon… rokne ke liye tap karo")}</span>
+                </>
+              ) : (
+                <>
+                  <Orb size={20} thinking />
+                  <span className="text-ink-soft">{t(lang, "Turning that into text…", "Text bana raha hoon…")}</span>
+                </>
+              )}
+            </p>
+          )}
+          {text.trim() || !canRecord ? (
+            <button type="submit" aria-label="Send" disabled={!text.trim()} className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent text-white transition disabled:opacity-40">
+              <Icon name="arrow" size={18} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={mic}
+              disabled={voice === "transcribing"}
+              aria-label={voice === "recording" ? "Stop recording" : "Speak your answer"}
+              className={`grid h-11 w-11 shrink-0 place-items-center rounded-full transition ${voice === "recording" ? "recording bg-owe text-white" : "bg-primary text-on-primary"} disabled:opacity-50`}
+            >
+              {voice === "recording" ? <span className="h-3.5 w-3.5 rounded-[3px] bg-white" /> : <Icon name="mic" size={18} />}
+            </button>
+          )}
+        </form>
+      </div>
     </div>
   );
 }

@@ -8,7 +8,7 @@ import Decide from "@/components/Decide";
 import { FamilyBar, ProfileSheet } from "@/components/Family";
 import Plans from "@/components/Plans";
 import PolicySheet from "@/components/PolicySheet";
-import { AURA, Aura, Icon, type IconName, LangToggle, Logo, Money, Orb, SlicedOrb, ThemeToggle, inrShort } from "@/components/ui";
+import { AURA, Aura, Icon, type IconName, Logo, Money, Orb, SlicedOrb, ThemeToggle, inrShort } from "@/components/ui";
 import type { Lang } from "@/lib/ai";
 import { STEPS, nextStep, t } from "@/lib/flow";
 import { matchPolicies } from "@/lib/match";
@@ -38,8 +38,9 @@ const PERSONAS: Record<Lang, { who: string; what: string; text: string }[]> = {
 
 export default function Home() {
   const [started, setStarted] = useState(false);
-  const [lang, setLang] = useState<Lang>("en");
-  const langRef = useRef<Lang>("en");
+  // English only for now. The Hinglish copy is kept in place; set this to "hi" (and restore LangToggle) to bring it back.
+  const lang: Lang = "en";
+  const langRef = useRef<Lang>(lang);
   const [profile, setProfile] = useState<Profile>({});
   const profileRef = useRef<Profile>({});
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -80,21 +81,6 @@ export default function Home() {
     fetch("/api/explain", { method: "POST", body: JSON.stringify({ profile: p, lang: l }) })
       .then((r) => r.json())
       .then((d) => setNotes(Object.fromEntries(d.notes.map((n: { policyId: string; note: string }) => [n.policyId, n.note]))));
-  };
-
-  const switchLang = (l: Lang) => {
-    if (l === langRef.current) return;
-    setLang(l);
-    langRef.current = l;
-    if (!started) return;
-    if (stage === "qa") {
-      loadNotes(profileRef.current, l);
-      push({ role: "ai", text: t(l, "Switched to English. Ask me anything about your plans.", "Done, ab Hinglish mein baat karte hain. Plans ke baare mein kuch bhi poocho.") });
-      return;
-    }
-    // Re-ask the open question in the new language so the switch is felt immediately.
-    const s = nextStep(profileRef.current);
-    if (s && !busy) push({ role: "ai", text: s.ask(profileRef.current, l) });
   };
 
   async function advance(p: Profile, fresh: string[]) {
@@ -155,7 +141,17 @@ export default function Home() {
     const before = new Set(doneIds(p));
     const fresh = doneIds(p2).filter((id) => !before.has(id));
     if (!fresh.length) {
-      await aiSay(t(langRef.current, "Hmm, didn't quite get that. Say it another way, or just tap an option.", "Hmm, samajh nahi aaya. Thoda alag tareeke se bolo, ya koi option tap kar do."));
+      // Not an answer: probably a question or a side comment. Answer it, then come back to the question.
+      setTyping(true);
+      const help = await fetch("/api/ask", {
+        method: "POST",
+        body: JSON.stringify({ question: text, policyIds: [], profile: p, lang: langRef.current, pending: step?.ask(p, langRef.current) }),
+      })
+        .then((r) => r.json())
+        .catch(() => null);
+      setTyping(false);
+      push({ role: "ai", text: help?.answer ?? t(langRef.current, "Hmm, didn't quite get that. Say it another way, or just tap an option.", "Hmm, samajh nahi aaya. Thoda alag tareeke se bolo, ya koi option tap kar do.") });
+      if (step) await aiSay(t(langRef.current, `Back to you: ${step.ask(p, langRef.current)}`, `Ab aap batao: ${step.ask(p, langRef.current)}`));
       return setBusy(false);
     }
     await aiSay(res.reply ?? summarize(p2, fresh, langRef.current));
@@ -283,7 +279,7 @@ export default function Home() {
 
       <div className="relative mx-auto flex h-dvh w-full max-w-[440px] flex-col overflow-hidden bg-canvas lg:mx-0 lg:h-[900px] lg:max-h-[94vh] lg:rounded-[56px] lg:shadow-e3 lg:ring-[10px] lg:ring-[#15121c]">
         {!started ? (
-          <Landing onStart={start} lang={lang} setLang={switchLang} />
+          <Landing onStart={start} lang={lang} />
         ) : (
           <>
             <header className="shrink-0 pb-3 pt-[max(env(safe-area-inset-top),14px)]">
@@ -295,10 +291,7 @@ export default function Home() {
                     <p className="mt-1 text-[12px] leading-none text-ink-soft">{typing ? t(lang, "Thinking…", "Soch raha hoon…") : stage === "qa" ? t(lang, "Ask me anything", "Kuch bhi poocho") : t(lang, "Your insurance bestie", "Aapka insurance dost")}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <LangToggle lang={lang} setLang={switchLang} />
-                  <ThemeToggle />
-                </div>
+                <ThemeToggle />
               </div>
               {view === "chat" && (
                 <div className="mt-4">
@@ -410,7 +403,7 @@ function summarize(p: Profile, fresh: string[], l: Lang) {
   return `Got it: ${list}.${bits.length >= 3 ? " That just saved us a few questions." : ""}`;
 }
 
-function Landing({ onStart, lang, setLang }: { onStart: (text?: string) => void; lang: Lang; setLang: (l: Lang) => void }) {
+function Landing({ onStart, lang }: { onStart: (text?: string) => void; lang: Lang }) {
   const [text, setText] = useState("");
   const demo = useMemo(() => {
     const p: Profile = { cover: { self: false, partner: false, kids: false, parents: true }, parentAge: 63, city: "metro", conditions: [] };
@@ -446,10 +439,7 @@ function Landing({ onStart, lang, setLang }: { onStart: (text?: string) => void;
         <div aria-hidden className="pointer-events-none absolute -right-24 -top-20 h-96 w-96 rounded-full opacity-50 blur-3xl breathe" style={{ background: "radial-gradient(circle, #f49ac1, #ffc6a8 45%, transparent 70%)" }} />
         <div className="relative flex items-center justify-between">
           <Logo />
-          <div className="flex items-center gap-2">
-            <LangToggle lang={lang} setLang={setLang} />
-            <ThemeToggle />
-          </div>
+          <ThemeToggle />
         </div>
         <div className="relative mt-6 flex justify-center text-ink">
           <SlicedOrb size={250} />

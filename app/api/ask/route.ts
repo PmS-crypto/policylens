@@ -1,6 +1,7 @@
 import { langNote, llm, parseJson, type Lang } from "@/lib/ai";
 import { getPolicy } from "@/lib/policies";
 import { coverSummary, CONDITION_LABEL } from "@/lib/profile";
+import { glossaryAnswer } from "@/lib/glossary";
 import { relevantClauses } from "@/lib/retrieve";
 import type { Policy, Profile } from "@/lib/types";
 
@@ -16,8 +17,32 @@ Never promise a claim will be paid; say "as per the policy wording".
 Return ONLY JSON: {"answer": "...", "citations": [{"policyId":"...","clauseId":"..."}]}.
 In the answer you may use **bold** for policy names.`;
 
+const GENERAL = `You are PolicyLens, helping a young Indian person choose health insurance through a short chat.
+Mid-way through, they said something that isn't a direct answer: usually a question about an insurance term, a worry, or a side comment.
+Reply in at most 45 words.
+- If it's a question about an insurance term or how insurance works: explain it plainly. You may use one simple illustrative rupee example (e.g. "20% co-pay on a ₹50,000 bill = you pay ₹10,000").
+- If it's about cost or which plan: say we'll show real numbers for their family in a minute. Never quote premiums or prices.
+- If it's a feeling, worry or side comment: acknowledge it warmly in one or two sentences, with no numbers at all.
+Never invent figures, policies or facts.
+Don't recommend specific policies yet. Never end with a question and never repeat our question; we do that ourselves right after your reply. Plain text, no markdown.`;
+
 export async function POST(req: Request) {
-  const { question, policyIds, profile, lang } = (await req.json()) as { question: string; policyIds: string[]; profile: Profile; lang?: Lang };
+  const { question, policyIds, profile, lang, pending } = (await req.json()) as { question: string; policyIds: string[]; profile: Profile; lang?: Lang; pending?: string };
+
+  // Mid-conversation, before any plans exist: answer like a friend, briefly, then hand back to the question.
+  if (!policyIds?.length) {
+    const ai = await llm(
+      GENERAL + langNote(lang),
+      `The user is answering this question from us: "${pending ?? ""}"\nInstead they said: """${question}"""`,
+      300,
+    );
+    return Response.json({
+      // We re-ask our own question right after, so drop any trailing question the model adds.
+      answer: ai?.trim().replace(/(\s*[^.!?]*\?)+\s*$/, "").trim() || glossaryAnswer(question) || "Good question. I'll cover that properly once we've found your plans. For now, let's finish the basics.",
+      citations: [],
+      source: ai ? "ai" : "rules",
+    });
+  }
   const policies = policyIds.map(getPolicy).filter((p): p is Policy => !!p);
 
   const context = policies
