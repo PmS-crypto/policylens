@@ -7,7 +7,7 @@ import Decide from "@/components/Decide";
 import { FamilyBar, ProfileSheet } from "@/components/Family";
 import Plans from "@/components/Plans";
 import PolicySheet from "@/components/PolicySheet";
-import { Icon, Logo, Seal, inrShort } from "@/components/ui";
+import { AURA, Aura, Icon, type IconName, LangToggle, Logo, Money, Orb, SlicedOrb, ThemeToggle, inrShort } from "@/components/ui";
 import type { Lang } from "@/lib/ai";
 import { STEPS, nextStep } from "@/lib/flow";
 import { matchPolicies } from "@/lib/match";
@@ -217,50 +217,65 @@ export default function Home() {
 
   const readyCard =
     stage === "discover" && result && !busy && !typing ? (
-      <div className="msg-in rounded-[24px] bg-surface p-5 shadow-e2 ring-1 ring-line">
-        <Seal>Profile complete</Seal>
-        <p className="font-display mt-3 text-[22px] font-semibold leading-tight">Ready to compare plans for your family</p>
-        <div className="mt-4 flex items-end justify-between border-t border-line pt-4">
-          <div>
-            <p className="text-[12.5px] text-ink-soft">Suggested cover</p>
-            <p className="num text-[28px] font-semibold leading-none text-pine">₹{recommendSumInsured(profile).lakh} lakh</p>
-          </div>
-          <p className="max-w-[48%] text-right text-[12.5px] leading-snug text-ink-soft">{coverSummary(profile)}</p>
+      <Aura colors={AURA.dusk} scrim className="rise relative rounded-[32px] p-6 text-white shadow-e2">
+        <div className="absolute -right-20 -top-16 text-white opacity-70" aria-hidden>
+          <SlicedOrb size={150} />
         </div>
-        <div className="mt-5 grid grid-cols-[auto_1fr] gap-2">
-          <button onClick={() => setProfileOpen(true)} className="rounded-[14px] px-4 py-3.5 text-[14px] font-medium text-pine ring-1 ring-line">
+        <p className="relative text-[13px] font-medium opacity-85">Profile complete</p>
+        <p className="title relative mt-2 max-w-[14ch] text-[24px] leading-tight">Ready to compare plans for your family</p>
+        <div className="relative mt-8">
+          <p className="text-[12.5px] opacity-80">Suggested cover</p>
+          <p className="money mt-1 text-[64px]">₹{recommendSumInsured(profile).lakh}L</p>
+        </div>
+        <div className="relative mt-6 grid grid-cols-[auto_1fr] gap-2.5">
+          <button onClick={() => setProfileOpen(true)} className="rounded-full bg-white/15 px-5 py-4 text-[14px] font-semibold backdrop-blur">
             Review
           </button>
-          <button onClick={showPlans} className="flex items-center justify-center gap-2 rounded-[14px] bg-pine py-3.5 text-[14px] font-semibold text-white shadow-e2">
+          <button onClick={showPlans} className="flex items-center justify-center gap-2 rounded-full bg-white py-4 text-[14.5px] font-semibold text-[#16131d] shadow-e2">
             See my plans
             <Icon name="arrow" size={16} />
           </button>
         </div>
-      </div>
+      </Aura>
     ) : null;
 
   return (
-    <div className="min-h-dvh lg:flex lg:items-center lg:justify-center lg:gap-20 lg:p-6">
-      <aside className="hidden max-w-xs lg:block">
+    <div className="relative min-h-dvh overflow-hidden lg:flex lg:items-center lg:justify-center lg:gap-24 lg:p-6">
+      {/* Desktop stage: an aura glows behind the phone */}
+      <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 hidden h-[900px] w-[900px] -translate-x-1/4 -translate-y-1/2 rounded-full opacity-40 blur-3xl lg:block breathe" style={{ background: "radial-gradient(circle at 40% 40%, #b7a6ff, #f49ac1 40%, #ffc6a8 60%, transparent 70%)" }} />
+      <aside className="relative hidden max-w-sm lg:block">
         <Logo />
-        <p className="font-display mt-8 text-[36px] font-semibold leading-[1.08]">Health insurance, explained before you buy.</p>
-        <p className="mt-4 text-[15px] leading-relaxed text-ink-soft">PolicyLens is designed for your phone. Open this page on mobile and add it to your home screen.</p>
+        <p className="display mt-10 text-[56px]">See what you'd pay. Before you buy.</p>
+        <p className="mt-6 max-w-[34ch] text-[16px] leading-relaxed text-ink-soft">PolicyLens is designed for your phone. Open this page on mobile and add it to your home screen.</p>
       </aside>
 
-      <div className="relative mx-auto flex h-dvh w-full max-w-[440px] flex-col overflow-hidden bg-sage lg:mx-0 lg:h-[880px] lg:max-h-[94vh] lg:rounded-[48px] lg:border-[10px] lg:border-[#0a1f1a] lg:shadow-e3">
+      <div className="relative mx-auto flex h-dvh w-full max-w-[440px] flex-col overflow-hidden bg-canvas lg:mx-0 lg:h-[900px] lg:max-h-[94vh] lg:rounded-[56px] lg:shadow-e3 lg:ring-[10px] lg:ring-[#15121c]">
         {!started ? (
           <Landing onStart={start} lang={lang} setLang={switchLang} />
         ) : (
           <>
-            <header className="shrink-0 bg-pine pt-[env(safe-area-inset-top)]">
-              <div className="flex items-center justify-between px-5 pt-3.5">
-                <Logo light />
-                <LangToggle lang={lang} setLang={switchLang} />
+            <header className="shrink-0 pb-3 pt-[max(env(safe-area-inset-top),14px)]">
+              <div className="flex items-center justify-between px-5">
+                <div className="flex items-center gap-2.5">
+                  <Orb size={34} thinking={typing} />
+                  <div>
+                    <p className="title text-[16px] leading-none">PolicyLens</p>
+                    <p className="mt-1 text-[12px] leading-none text-ink-soft">{typing ? "Thinking" : stage === "qa" ? "Ask me anything" : "Here to help you choose"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <LangToggle lang={lang} setLang={switchLang} />
+                  <ThemeToggle />
+                </div>
               </div>
-              {view === "chat" ? <FamilyBar profile={profile} onOpen={() => setProfileOpen(true)} /> : <div className="h-3.5" />}
+              {view === "chat" && (
+                <div className="mt-4">
+                  <FamilyBar profile={profile} onOpen={() => setProfileOpen(true)} />
+                </div>
+              )}
             </header>
 
-            <main className="relative min-h-0 flex-1 overflow-y-auto">
+            <main className="relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
               {view === "chat" && (
                 <Chat
                   messages={messages}
@@ -309,39 +324,35 @@ export default function Home() {
   );
 }
 
-function LangToggle({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void }) {
-  return (
-    <div className="flex rounded-full bg-white/8 p-0.5 text-[12px] ring-1 ring-white/12" role="group" aria-label="Answer language">
-      {(["en", "hi"] as Lang[]).map((l) => (
-        <button key={l} onClick={() => setLang(l)} aria-pressed={lang === l} className={`font-display rounded-full px-3 py-1 ${lang === l ? "bg-white font-semibold text-pine" : "text-white/75"}`}>
-          {l === "en" ? "English" : "हिंदी"}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-const TABS: { id: View; label: string; icon: Parameters<typeof Icon>[0]["name"] }[] = [
+const TABS: { id: View; label: string; icon: IconName }[] = [
   { id: "chat", label: "Ask", icon: "chat" },
   { id: "plans", label: "Plans", icon: "layers" },
-  { id: "bill", label: "Your bill", icon: "receipt" },
+  { id: "bill", label: "Bill", icon: "receipt" },
   { id: "decide", label: "Decide", icon: "shield" },
 ];
 
+/** Floating pill navigation: the active tab expands to show its label. */
 function TabBar({ view, setView }: { view: View; setView: (v: View) => void }) {
   return (
-    <nav className="grid shrink-0 grid-cols-4 border-t border-line bg-surface/95 pb-[max(env(safe-area-inset-bottom),8px)] pt-2 backdrop-blur" aria-label="Sections">
-      {TABS.map((t) => {
-        const on = view === t.id;
-        return (
-          <button key={t.id} onClick={() => setView(t.id)} aria-current={on ? "page" : undefined} className={`relative flex flex-col items-center gap-1 py-1 text-[11px] ${on ? "font-semibold text-pine" : "text-ink-faint"}`}>
-            {on && <span className="absolute -top-2 h-[3px] w-6 rounded-full bg-gold" />}
-            <Icon name={t.icon} size={21} />
-            {t.label}
-          </button>
-        );
-      })}
-    </nav>
+    <div className="shrink-0 px-5 pb-[max(env(safe-area-inset-bottom),14px)] pt-2">
+      <nav className="flex items-center justify-between rounded-full bg-primary p-1.5 shadow-e3" aria-label="Sections">
+        {TABS.map((t) => {
+          const on = view === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setView(t.id)}
+              aria-current={on ? "page" : undefined}
+              aria-label={t.label}
+              className={`flex h-12 items-center justify-center gap-2 rounded-full transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${on ? "flex-[1.8] bg-accent px-4 text-white" : "flex-1 text-on-primary/60"}`}
+            >
+              <Icon name={t.icon} size={20} />
+              {on && <span className="rise text-[14px] font-semibold">{t.label}</span>}
+            </button>
+          );
+        })}
+      </nav>
+    </div>
   );
 }
 
@@ -374,80 +385,78 @@ function Landing({ onStart, lang, setLang }: { onStart: (text?: string) => void;
     });
   }, []);
 
-  const promises: { icon: Parameters<typeof Icon>[0]["name"]; title: string; body: string }[] = [
+  const promises: { icon: IconName; title: string; body: string }[] = [
     { icon: "phoneOff", title: "No phone number. No sales calls.", body: "Explore every plan without signing up." },
     { icon: "lock", title: "Your health details stay private", body: "Never shared with an insurer unless you choose a plan." },
-    { icon: "doc", title: "Every answer shows its source", body: "Each recommendation links to the exact policy clause." },
+    { icon: "doc", title: "Every answer shows its source", body: "Each recommendation links to the exact clause." },
   ];
 
   return (
-    <div className="no-scrollbar h-full overflow-y-auto bg-sage">
-      {/* 1. Promise: one sentence, on forest */}
-      <section className="rounded-b-[32px] bg-pine px-6 pb-24 pt-[max(env(safe-area-inset-top),18px)] text-white">
-        <div className="flex items-center justify-between">
-          <Logo light />
-          <LangToggle lang={lang} setLang={setLang} />
+    <div className="no-scrollbar relative h-full overflow-y-auto overflow-x-hidden">
+      {/* 1. Hero: the layers of your cover, breathing */}
+      <section className="relative px-6 pb-4 pt-[max(env(safe-area-inset-top),18px)]">
+        <div aria-hidden className="pointer-events-none absolute -right-24 -top-20 h-96 w-96 rounded-full opacity-50 blur-3xl breathe" style={{ background: "radial-gradient(circle, #f49ac1, #ffc6a8 45%, transparent 70%)" }} />
+        <div className="relative flex items-center justify-between">
+          <Logo />
+          <div className="flex items-center gap-2">
+            <LangToggle lang={lang} setLang={setLang} />
+            <ThemeToggle />
+          </div>
         </div>
-        <h1 className="font-display mt-10 text-[36px] font-semibold leading-[1.08]">Health insurance, explained before you buy.</h1>
-        <p className="mt-4 max-w-[34ch] text-[15px] leading-relaxed text-white/70">
-          Tell us about your family. We'll show what each plan would actually pay, line by line, from the policy's own wording.
+        <div className="relative mt-6 flex justify-center text-ink">
+          <SlicedOrb size={250} />
+        </div>
+        <h1 className="display relative mt-4 text-[46px]">See what you'd pay. Before you buy.</h1>
+        <p className="relative mt-5 max-w-[34ch] text-[16px] leading-relaxed text-ink-soft">
+          Tell us about your family. We'll run real hospital bills through every plan's fine print and show you the difference.
         </p>
       </section>
 
-      {/* 2. Proof: the same cover, two different outcomes */}
-      <section className="relative -mt-16 px-5">
-        <div className="rounded-[24px] bg-surface p-5 shadow-e2 ring-1 ring-line">
-          <p className="text-[13px] leading-snug text-ink-soft">
-            Two plans, both ₹10 lakh cover. A knee replacement for a 63-year-old in Mumbai costs <span className="num font-semibold text-ink">{inrShort(demo[0].r.bill)}</span>.
+      {/* 2. Proof: the same cover, two outcomes */}
+      <section className="px-5 pt-8">
+        <div className="rounded-[32px] bg-surface p-6 shadow-e2 ring-1 ring-line">
+          <p className="text-[13.5px] leading-relaxed text-ink-soft">
+            Mum's knee replacement in Mumbai. Bill: <span className="font-semibold text-ink">{inrShort(demo[0].r.bill)}</span>. Both plans say ₹10 lakh cover.
           </p>
-          <div className="mt-4 space-y-4">
+          <div className="mt-6 grid grid-cols-2 gap-3">
             {demo.map(({ pol, r }) => (
-              <div key={pol.id}>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-[14px] font-medium">{pol.name}</span>
-                  <span className={`num text-[22px] font-semibold ${r.youPay ? "text-owe" : "text-paid"}`}>
-                    {r.youPay ? `You pay ${inrShort(r.youPay)}` : "You pay ₹0"}
-                  </span>
-                </div>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-owe-soft">
-                  <div className="h-full rounded-full bg-paid" style={{ width: `${(r.insurerPays / r.bill) * 100}%` }} />
-                </div>
+              <div key={pol.id} className={`rounded-[22px] p-4 ${r.youPay ? "bg-owe-soft" : "bg-paid-soft"}`}>
+                <p className="text-[12.5px] font-medium">{pol.name}</p>
+                <p className="mt-4 text-[11.5px] text-ink-soft">You pay</p>
+                <Money value={r.youPay} className={`mt-1 block text-[30px] ${r.youPay ? "text-owe" : "text-paid"}`} />
               </div>
             ))}
-          </div>
-          <div className="mt-4 border-t border-line pt-3">
-            <Seal>Calculated from each policy's wording</Seal>
           </div>
         </div>
       </section>
 
-      {/* 3. Safety: what we promise */}
-      <section className="px-6 pt-8">
-        <ul className="space-y-5">
+      {/* 3. Safety */}
+      <section className="px-6 pt-10">
+        <ul className="space-y-6">
           {promises.map((p) => (
             <li key={p.title} className="flex gap-4">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-surface text-pine shadow-e1 ring-1 ring-line">
-                <Icon name={p.icon} size={18} />
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
+                <Icon name={p.icon} size={19} />
               </span>
               <div>
-                <p className="text-[15px] font-medium">{p.title}</p>
-                <p className="mt-0.5 text-[13.5px] text-ink-soft">{p.body}</p>
+                <p className="text-[15.5px] font-semibold">{p.title}</p>
+                <p className="mt-1 text-[14px] text-ink-soft">{p.body}</p>
               </div>
             </li>
           ))}
         </ul>
       </section>
 
-      {/* 4. Action: in the thumb zone */}
-      <section className="px-5 pb-[max(env(safe-area-inset-bottom),24px)] pt-9">
+      {/* 4. Action */}
+      <section className="px-5 pb-[max(env(safe-area-inset-bottom),28px)] pt-12">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             onStart(text.trim() || undefined);
           }}
-          className="rounded-[24px] bg-surface p-2 shadow-e2 ring-1 ring-line"
+          className="rounded-[32px] bg-surface p-2.5 shadow-e2 ring-1 ring-line"
         >
-          <label htmlFor="intro" className="block px-3 pt-2 text-[13px] font-medium text-ink-soft">
+          <label htmlFor="intro" className="block px-4 pt-3 text-[13px] font-medium text-ink-soft">
             Describe your family in your own words, or skip
           </label>
           <textarea
@@ -456,19 +465,19 @@ function Landing({ onStart, lang, setLang }: { onStart: (text?: string) => void;
             onChange={(e) => setText(e.target.value)}
             rows={2}
             placeholder="Meri maa 60 ki hai, unko thyroid hai. Mumbai, budget 40k."
-            className="w-full resize-none bg-transparent px-3 py-2 text-[15px] outline-none placeholder:text-ink-faint"
+            className="w-full resize-none bg-transparent px-4 py-2 text-[16px] outline-none placeholder:text-ink-faint"
           />
-          <button className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-pine py-4 text-[15px] font-semibold text-white shadow-e2">
+          <button className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-[18px] text-[16px] font-semibold text-on-primary shadow-e2">
             {text.trim() ? "Find my plans" : "Get started"}
-            <Icon name="arrow" size={17} />
+            <Icon name="arrow" size={18} />
           </button>
         </form>
-        <p className="mt-6 text-center text-[12.5px] text-ink-faint">Or see how it works for a sample family</p>
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <p className="mt-8 text-center text-[13px] text-ink-faint">Or see how it works for a sample family</p>
+        <div className="no-scrollbar -mx-5 mt-3 flex gap-2.5 overflow-x-auto px-5">
           {PERSONAS.map((p) => (
-            <button key={p.who} onClick={() => onStart(p.text)} className="rounded-[16px] bg-surface p-3 text-left shadow-e1 ring-1 ring-line">
-              <span className="block text-[13px] font-semibold">{p.who}</span>
-              <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-soft">{p.what}</span>
+            <button key={p.who} onClick={() => onStart(p.text)} className="shrink-0 rounded-[22px] bg-surface px-4 py-3.5 text-left shadow-e1 ring-1 ring-line">
+              <span className="block text-[14px] font-semibold">{p.who}</span>
+              <span className="mt-0.5 block text-[12.5px] text-ink-soft">{p.what}</span>
             </button>
           ))}
         </div>

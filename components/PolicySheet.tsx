@@ -5,7 +5,7 @@ import type { Lang } from "@/lib/ai";
 import { redFlags } from "@/lib/match";
 import type { Match, Profile } from "@/lib/types";
 import { RichText } from "./Chat";
-import { ReasonRow, Sheet } from "./ui";
+import { ReasonRow, Seal, Sheet } from "./ui";
 
 interface Props {
   match: Match;
@@ -54,10 +54,12 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
       title={
         <div>
           <p className="text-[13px] text-ink-soft">{p.insurer}</p>
-          <h2 className="font-display text-[26px] font-semibold leading-tight">{p.name}</h2>
-          <p className="mt-1 text-[12px] text-ink-soft">
-            Policy wording {p.docVersion}, checked {new Date(p.lastVerified).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-          </p>
+          <h2 className="display mt-1 text-[34px]">{p.name}</h2>
+          <div className="mt-3">
+            <Seal>
+              Policy wording {p.docVersion}, checked {new Date(p.lastVerified).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+            </Seal>
+          </div>
         </div>
       }
     >
@@ -66,33 +68,33 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
           e.preventDefault();
           ask(q);
         }}
-        className="mt-3 flex gap-2"
+        className="mt-5 flex gap-2 rounded-full bg-surface-2 p-1.5 pl-5"
       >
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Ask this policy anything"
           aria-label="Ask this policy"
-          className="min-w-0 flex-1 rounded-full bg-mist px-4 py-3 text-[15px] outline-none"
+          className="min-w-0 flex-1 bg-transparent py-2 text-[15px] outline-none placeholder:text-ink-faint"
         />
-        <button className="rounded-full bg-pine px-5 text-[14px] font-semibold text-white">Ask</button>
+        <button className="rounded-full bg-accent px-5 text-[14px] font-semibold text-white">Ask</button>
       </form>
-      <div className="no-scrollbar -mx-5 mt-2 flex gap-2 overflow-x-auto px-5">
+      <div className="no-scrollbar -mx-7 mt-3 flex gap-2 overflow-x-auto px-7">
         {suggestions.map((s) => (
-          <button key={s} onClick={() => ask(s)} className="shrink-0 rounded-full border border-line px-3.5 py-1.5 text-[13px]">
+          <button key={s} onClick={() => ask(s)} className="shrink-0 rounded-full px-4 py-2 text-[13px] ring-1 ring-line">
             {s}
           </button>
         ))}
       </div>
       {loading && <p className="mt-3 text-[14px] text-ink-soft">Reading the policy wording…</p>}
       {answer && !loading && (
-        <div className="mt-3 rounded-2xl bg-mist p-4 text-[14px] leading-relaxed">
+        <div className="rise mt-4 rounded-[24px] bg-accent-soft p-5 text-[15px] leading-relaxed">
           <p className="mb-1.5 text-[12px] text-ink-soft">{answer.q}</p>
           <RichText text={answer.a} />
           {answer.cites.length > 0 && (
             <div className="mt-2 flex gap-2">
               {answer.cites.map((c) => (
-                <button key={c} onClick={() => jump(c)} className="mark text-[12px] font-semibold">
+                <button key={c} onClick={() => jump(c)} className="rounded-full bg-surface px-2.5 py-1 text-[12px] font-semibold text-accent">
                   §{p.clauses.find((x) => x.id === c)?.section}
                 </button>
               ))}
@@ -101,17 +103,17 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
         </div>
       )}
 
-      <h3 className="mt-6 text-[16px] font-bold">For your family</h3>
-      <ul className="mt-3 space-y-4">
+      <h3 className="title mt-10 text-[20px]">For your family</h3>
+      <ul className="mt-5 space-y-6">
         {match.reasons.map((r) => (
           <ReasonRow key={r.title} r={r} onClause={() => jump(r.clauseId)} />
         ))}
       </ul>
 
       {flags.length > 0 && (
-        <div className="mt-6 rounded-2xl bg-owe-soft p-4">
-          <h3 className="text-[15px] font-bold text-owe">Catches in the fine print</h3>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-[14px]">
+        <div className="mt-10 rounded-[24px] bg-owe-soft p-5">
+          <h3 className="title text-[17px] text-owe">Catches in the fine print</h3>
+          <ul className="mt-3 list-disc space-y-1.5 pl-5 text-[14px]">
             {flags.map((f) => (
               <li key={f}>{f}</li>
             ))}
@@ -119,15 +121,15 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
         </div>
       )}
 
-      <h3 className="mt-6 text-[16px] font-bold">The policy wording</h3>
-      <div className="mt-3 space-y-2">
+      <h3 className="title mt-10 text-[20px]">The policy wording</h3>
+      <div className="mt-4 space-y-2.5">
         {p.clauses.map((c) => (
           <div
             key={c.id}
             ref={(el) => {
               refs.current[c.id] = el;
             }}
-            className={`rounded-2xl p-4 text-[14px] transition ${highlight === c.id ? "bg-mark/30" : "bg-mist"}`}
+            className={`rounded-[22px] p-5 text-[14px] transition-all duration-500 ${highlight === c.id ? "bg-accent-soft ring-2 ring-accent" : "bg-surface-2"}`}
           >
             <p className="font-semibold">
               <span className="mr-2 font-mono text-[12px] text-ink-soft">§{c.section}</span>
@@ -138,7 +140,7 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
         ))}
       </div>
 
-      <button onClick={onChoose} className="sticky bottom-0 mt-6 w-full rounded-2xl bg-pine py-4 text-[15px] font-semibold text-white shadow-lg">
+      <button onClick={onChoose} className="sticky bottom-0 mt-8 w-full rounded-full bg-primary py-4 text-[15px] font-semibold text-on-primary shadow-e2">
         Choose {p.name}
       </button>
     </Sheet>

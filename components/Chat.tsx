@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Lang } from "@/lib/ai";
 import type { Chip } from "@/lib/flow";
 import { getPolicy } from "@/lib/policies";
-import { Icon } from "./ui";
+import { Icon, Orb, type IconName } from "./ui";
 
 export interface Citation {
   policyId: string;
@@ -34,6 +34,20 @@ interface Props {
   onText: (text: string) => void;
   onCitation: (c: Citation) => void;
 }
+
+const TILE_ICON: Record<string, IconName> = {
+  self: "person",
+  partner: "heart",
+  kids: "child",
+  parents: "elder",
+  private_room: "bed",
+  low_oop: "wallet",
+  ped_fast: "clock",
+  low_premium: "tag",
+  maternity: "child",
+  restoration: "refresh",
+  network: "pin",
+};
 
 type Rec = { start: () => void; stop: () => void; lang: string; interimResults: boolean; onresult: (e: { results: { 0: { transcript: string } }[] }) => void; onend: () => void };
 
@@ -68,7 +82,7 @@ export default function Chat(props: Props) {
     setText("");
   };
 
-  // Voice input where the browser supports it (Chrome / Android); resolved after mount to avoid hydration mismatch.
+  // Voice input where supported (Chrome / Android); resolved after mount to avoid a hydration mismatch.
   const [SR, setSR] = useState<(new () => Rec) | undefined>();
   useEffect(() => {
     const w = window as unknown as Record<string, unknown>;
@@ -89,39 +103,49 @@ export default function Chat(props: Props) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="no-scrollbar flex-1 space-y-4 overflow-y-auto px-5 pb-5 pt-5">
+      <div className="no-scrollbar flex-1 space-y-6 overflow-y-auto px-6 pb-28 pt-6">
         {messages.map((m) => (
           <Bubble key={m.id} m={m} onCitation={onCitation} />
         ))}
+
         {typing && (
-          <div className="flex w-fit items-center gap-1 rounded-full bg-surface px-4 py-3 text-ink-faint shadow-e1" aria-label="PolicyLens is typing">
-            <span className="dot h-1.5 w-1.5 rounded-full bg-current" />
-            <span className="dot h-1.5 w-1.5 rounded-full bg-current" />
-            <span className="dot h-1.5 w-1.5 rounded-full bg-current" />
+          <div className="flex items-center gap-3 text-[13px] text-ink-faint" aria-label="PolicyLens is thinking">
+            <Orb size={26} thinking />
+            Reading the fine print
           </div>
         )}
+
         {!typing && chips.length > 0 && (
-          <div className={`msg-in ${tiles ? "grid grid-cols-2 gap-2.5" : "flex flex-wrap gap-2"}`}>
-            {chips.map((c) => {
+          <div className={`rise ${tiles ? "grid grid-cols-2 gap-3" : "flex flex-wrap gap-2.5"}`}>
+            {chips.map((c, i) => {
               const on = picked.includes(c.value);
               const click = () => (multi ? toggle(c.value) : onChips([c.value], [c.label]));
+              const icon = TILE_ICON[c.value];
               return tiles ? (
                 <button
                   key={c.value}
                   onClick={click}
                   aria-pressed={on}
-                  className={`relative rounded-[18px] p-4 text-left transition ${on ? "bg-pine text-white shadow-e2" : "bg-surface text-ink shadow-e1 ring-1 ring-line"}`}
+                  style={{ animationDelay: `${i * 40}ms` }}
+                  className={`rise relative flex min-h-[132px] flex-col justify-between rounded-[26px] p-4 text-left transition-all duration-300 ${
+                    on ? "-translate-y-0.5 bg-primary text-on-primary shadow-e2" : "bg-surface text-ink shadow-e1 ring-1 ring-line"
+                  }`}
                 >
-                  <span className={`absolute right-3 top-3 grid h-5 w-5 place-items-center rounded-full ${on ? "bg-gold text-white" : "ring-1 ring-line"}`}>{on && <Icon name="check" size={12} />}</span>
-                  <span className="font-display block pr-6 text-[17px] font-semibold leading-tight">{c.label}</span>
-                  {c.hint && <span className={`mt-1 block text-[12.5px] leading-snug ${on ? "text-white/70" : "text-ink-soft"}`}>{c.hint}</span>}
+                  <span className="flex items-start justify-between">
+                    <span className={`grid h-10 w-10 place-items-center rounded-full ${on ? "bg-accent text-white" : "bg-surface-2 text-ink"}`}>{icon && <Icon name={icon} size={19} />}</span>
+                    <span className={`grid h-6 w-6 place-items-center rounded-full transition ${on ? "bg-accent text-white" : "ring-1 ring-line"}`}>{on && <Icon name="check" size={13} stroke={2.6} />}</span>
+                  </span>
+                  <span className="mt-4">
+                    <span className="title block text-[16px] leading-tight">{c.label}</span>
+                    {c.hint && <span className={`mt-1 block text-[12.5px] leading-snug ${on ? "opacity-70" : "text-ink-soft"}`}>{c.hint}</span>}
+                  </span>
                 </button>
               ) : (
                 <button
                   key={c.value}
                   onClick={click}
                   aria-pressed={multi ? on : undefined}
-                  className={`rounded-full px-4 py-2.5 text-[14px] transition ${on ? "bg-pine text-white shadow-e2" : "bg-surface text-ink shadow-e1 ring-1 ring-line active:bg-mist"}`}
+                  className={`rounded-full px-5 py-3 text-[14.5px] transition-all duration-200 ${on ? "bg-primary text-on-primary shadow-e2" : "bg-surface text-ink shadow-e1 ring-1 ring-line active:scale-[0.97]"}`}
                 >
                   {c.label}
                 </button>
@@ -131,44 +155,45 @@ export default function Chat(props: Props) {
               <button
                 disabled={!picked.length}
                 onClick={() => onChips(picked, picked.map((v) => chips.find((c) => c.value === v)?.label ?? v))}
-                className={`rounded-full bg-pine px-6 py-2.5 text-[14px] font-semibold text-white shadow-e2 disabled:bg-line disabled:text-ink-faint disabled:shadow-none ${tiles ? "col-span-2 mt-1 py-3.5" : ""}`}
+                className={`flex items-center justify-center gap-2 rounded-full bg-accent px-7 py-3 text-[14.5px] font-semibold text-white shadow-e2 transition disabled:bg-surface-2 disabled:text-ink-faint disabled:shadow-none ${tiles ? "col-span-2 mt-1 py-4" : ""}`}
               >
                 Continue
+                <Icon name="arrow" size={16} />
               </button>
             )}
           </div>
         )}
         {footer}
-        <div ref={end} />
+        <div ref={end} className="h-px scroll-mb-28" />
       </div>
 
+      {/* Floating input */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
           send(text);
         }}
-        className="flex items-center gap-2 border-t border-line bg-surface/95 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-3 backdrop-blur"
+        className="absolute inset-x-4 bottom-[max(env(safe-area-inset-bottom),14px)] z-20 flex items-center gap-2 rounded-full bg-glass p-1.5 pl-5 shadow-e2 ring-1 ring-line backdrop-blur-xl"
       >
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={listening ? "Listening…" : placeholder}
           aria-label="Message"
-          className="min-w-0 flex-1 rounded-full bg-mist px-4 py-3 text-[15px] outline-none ring-1 ring-transparent transition placeholder:text-ink-faint focus:bg-surface focus:ring-line"
+          className="min-w-0 flex-1 bg-transparent py-2.5 text-[15.5px] outline-none placeholder:text-ink-faint"
         />
-        {SR && !text && (
+        {SR && !text ? (
           <button
             type="button"
             onClick={mic}
             aria-label={listening ? "Stop listening" : "Speak your answer"}
-            className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${listening ? "recording bg-owe text-white" : "bg-pine text-white"}`}
+            className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${listening ? "recording bg-owe text-white" : "bg-primary text-on-primary"}`}
           >
-            <Icon name="mic" />
+            <Icon name="mic" size={18} />
           </button>
-        )}
-        {(text || !SR) && (
-          <button type="submit" aria-label="Send" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-pine text-white">
-            <Icon name="arrow" />
+        ) : (
+          <button type="submit" aria-label="Send" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent text-white">
+            <Icon name="arrow" size={18} />
           </button>
         )}
       </form>
@@ -179,43 +204,42 @@ export default function Chat(props: Props) {
 function Bubble({ m, onCitation }: { m: Msg; onCitation: (c: Citation) => void }) {
   if (m.role === "user")
     return (
-      <div className="msg-in flex justify-end">
-        <p className="max-w-[80%] rounded-[20px] rounded-br-[6px] bg-pine px-4 py-2.5 text-[15px] leading-snug text-white shadow-e1">{m.text}</p>
+      <div className="rise flex justify-end">
+        <p className="max-w-[80%] rounded-[24px] rounded-br-[8px] bg-primary px-5 py-3 text-[15px] leading-snug text-on-primary">{m.text}</p>
       </div>
     );
   if (m.tone === "hint")
     return (
-      <p className="msg-in flex items-start gap-2 rounded-[14px] bg-mist px-3.5 py-2.5 text-[12.5px] leading-relaxed text-ink-soft">
-        <Icon name="lock" size={14} className="mt-0.5 shrink-0 text-pine" />
+      <p className="rise flex items-start gap-2.5 text-[13px] leading-relaxed text-ink-soft">
+        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
+          <Icon name="lock" size={13} />
+        </span>
         {m.text}
       </p>
     );
   if (m.tone === "insight")
     return (
-      <div className="msg-in rounded-[18px] bg-surface p-4 shadow-e1 ring-1 ring-line">
-        <p className="flex items-center gap-1.5 text-[12.5px] font-semibold text-gold">
-          <Icon name="info" size={14} />
+      <div className="rise relative overflow-hidden rounded-[26px] bg-surface p-5 shadow-e1 ring-1 ring-line">
+        <div aria-hidden className="absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-60 blur-2xl" style={{ background: "radial-gradient(#ffb38a, #f49ac1 60%, transparent 70%)" }} />
+        <p className="relative flex items-center gap-2 text-[13px] font-semibold text-accent">
+          <Icon name="sparkle" size={15} />
           Worth knowing
         </p>
-        <p className="mt-1.5 text-[14px] leading-relaxed text-ink">{m.text}</p>
+        <p className="relative mt-2 text-[15px] leading-relaxed">{m.text}</p>
       </div>
     );
   return (
-    <div className="msg-in max-w-[92%] text-[15.5px] leading-[1.55] text-ink">
+    <div className="rise max-w-[94%] text-[17px] leading-[1.55] tracking-[-0.005em]">
       <RichText text={m.text} />
       {!!m.citations?.length && (
-        <div className="mt-3 flex flex-wrap gap-1.5">
+        <div className="mt-3 flex flex-wrap gap-2">
           {m.citations.map((c) => {
             const p = getPolicy(c.policyId);
             const cl = p?.clauses.find((x) => x.id === c.clauseId);
             if (!p || !cl) return null;
             return (
-              <button
-                key={c.policyId + c.clauseId}
-                onClick={() => onCitation(c)}
-                className="inline-flex items-center gap-1 rounded-full bg-surface px-2.5 py-1 text-[12px] font-medium text-pine shadow-e1 ring-1 ring-line"
-              >
-                <Icon name="doc" size={12} />
+              <button key={c.policyId + c.clauseId} onClick={() => onCitation(c)} className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1.5 text-[12.5px] font-semibold text-accent">
+                <Icon name="doc" size={13} />
                 {p.name} §{cl.section}
               </button>
             );
@@ -231,7 +255,7 @@ export function RichText({ text }: { text: string }) {
     <>
       {text.split("\n").map((line, i) => (
         <p key={i} className={line ? "" : "h-2"}>
-          {line.split(/(\*\*[^*]+\*\*)/).map((seg, j) => (seg.startsWith("**") ? <strong key={j}>{seg.slice(2, -2)}</strong> : <span key={j}>{seg}</span>))}
+          {line.split(/(\*\*[^*]+\*\*)/).map((seg, j) => (seg.startsWith("**") ? <strong key={j} className="font-semibold">{seg.slice(2, -2)}</strong> : <span key={j}>{seg}</span>))}
         </p>
       ))}
     </>

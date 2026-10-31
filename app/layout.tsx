@@ -1,29 +1,39 @@
 import type { Metadata, Viewport } from "next";
-import { Anek_Devanagari, Geist, Geist_Mono } from "next/font/google";
+import { Anek_Devanagari, Archivo, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+// Archivo's width axis gives two voices from one family: expanded headlines, condensed money.
+const archivo = Archivo({ variable: "--font-archivo", subsets: ["latin"], axes: ["wdth"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
-// Indian-designed family with Latin and Devanagari drawn together: English and हिंदी read as one product.
-const anek = Anek_Devanagari({ variable: "--font-anek", subsets: ["latin", "devanagari"], weight: ["400", "500", "600", "700"] });
+// Devanagari glyphs for Hindi answers.
+const anek = Anek_Devanagari({ variable: "--font-anek", subsets: ["devanagari"], weight: ["400", "600", "700"] });
 
 export const metadata: Metadata = {
   title: "PolicyLens",
-  description: "Health insurance, explained before you buy.",
+  description: "See what you'd pay before you buy health insurance.",
   appleWebApp: { capable: true, title: "PolicyLens", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f2b25",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f3f1f6" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d0b12" },
+  ],
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
 };
 
+// Set the theme before paint so there's no flash between light and dark.
+const themeScript = `try{var t=localStorage.getItem('pl-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){}`;
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} ${anek.variable} antialiased`}>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className={`${archivo.variable} ${geistMono.variable} ${anek.variable} antialiased`}>{children}</body>
     </html>
   );
 }

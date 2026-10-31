@@ -1,23 +1,13 @@
 "use client";
 
 import { stepProgress } from "@/lib/flow";
-import {
-  CITY_LABEL,
-  CONDITION_LABEL,
-  PRIORITY_LABEL,
-  conditionHolder,
-  coverSummary,
-  effectivePriorities,
-  inr,
-  recommendSumInsured,
-} from "@/lib/profile";
+import { CITY_LABEL, CONDITION_LABEL, PRIORITY_LABEL, conditionHolder, coverSummary, effectivePriorities, inr, recommendSumInsured } from "@/lib/profile";
 import type { Profile } from "@/lib/types";
-import { Icon, Sheet } from "./ui";
+import { AURA, Aura, Icon, type IconName, Sheet } from "./ui";
 
 interface Member {
   key: string;
-  label: string;
-  age?: number;
+  icon: IconName;
   flagged?: boolean;
 }
 
@@ -27,40 +17,38 @@ function members(p: Profile): Member[] {
   const holder = conditionHolder(p);
   const sick = !!p.conditions?.length;
   const m: Member[] = [];
-  if (c.self) m.push({ key: "self", label: "You", age: p.selfAge, flagged: sick && holder === "self" });
-  if (c.partner) m.push({ key: "partner", label: "Partner", age: p.selfAge });
-  if (c.kids) for (let i = 0; i < (p.kidsCount ?? 1); i++) m.push({ key: "kid" + i, label: "Kid" });
-  if (c.parents) m.push({ key: "parents", label: "Parents", age: p.parentAge, flagged: sick && holder === "parent" });
+  if (c.self) m.push({ key: "self", icon: "person", flagged: sick && holder === "self" });
+  if (c.partner) m.push({ key: "partner", icon: "heart" });
+  if (c.kids) for (let i = 0; i < (p.kidsCount ?? 1); i++) m.push({ key: "kid" + i, icon: "child" });
+  if (c.parents) m.push({ key: "parents", icon: "elder", flagged: sick && holder === "parent" });
   return m;
 }
 
-/** The family, assembling itself as the conversation goes. Tap to review the profile. */
+/** The family assembling itself as the conversation goes. Tap to review. */
 export function FamilyBar({ profile, onOpen }: { profile: Profile; onOpen: () => void }) {
   const ms = members(profile);
   const { done, total } = stepProgress(profile);
-  const pct = total ? done / total : 0;
   return (
-    <button onClick={onOpen} className="flex w-full items-center gap-3 px-4 py-3 text-left" aria-label="Review your profile">
-      <div className="flex -space-x-2">
-        {ms.length === 0 && <span className="grid h-10 w-10 place-items-center rounded-full border border-dashed border-white/35 text-white/50"><Icon name="people" size={16} /></span>}
-        {ms.slice(0, 5).map((m) => (
-          <span key={m.key} className="font-display relative grid h-10 w-10 place-items-center rounded-full border-2 border-pine bg-[#e9efe9] text-[12px] font-semibold text-pine">
-            {m.label === "Parents" ? "M&D" : m.label === "Partner" ? "P" : m.label[0]}
-            {m.flagged && <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-pine bg-gold" />}
+    <button onClick={onOpen} className="mx-5 flex w-[calc(100%-2.5rem)] items-center gap-3 rounded-full bg-surface p-1.5 pr-4 text-left shadow-e1 ring-1 ring-line" aria-label="Review your profile">
+      <div className="flex -space-x-2.5">
+        {ms.length === 0 && (
+          <span className="grid h-9 w-9 place-items-center rounded-full border border-dashed border-line text-ink-faint">
+            <Icon name="person" size={16} />
+          </span>
+        )}
+        {ms.slice(0, 5).map((m, i) => (
+          <span key={m.key} className="rise relative grid h-9 w-9 place-items-center rounded-full bg-surface-2 text-ink ring-2 ring-surface" style={{ animationDelay: `${i * 60}ms` }}>
+            <Icon name={m.icon} size={16} />
+            {m.flagged && <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-accent ring-2 ring-surface" />}
           </span>
         ))}
       </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline justify-between gap-2">
-          <p className="truncate text-[14px] font-medium text-white">{profile.cover ? coverSummary(profile) : "Your family"}</p>
-          <p className="num shrink-0 text-[12px] text-white/55">
-            {done} of {total}
-          </p>
-        </div>
-        <div className="mt-2 h-[3px] overflow-hidden rounded-full bg-white/12">
-          <div className="h-full rounded-full bg-gold transition-all duration-500" style={{ width: `${pct * 100}%` }} />
-        </div>
-      </div>
+      <p className="min-w-0 flex-1 truncate text-[13.5px] font-medium">{profile.cover ? coverSummary(profile) : "Your family"}</p>
+      <span className="flex items-center gap-1.5" aria-label={`${done} of ${total} answered`}>
+        {Array.from({ length: total }).map((_, i) => (
+          <span key={i} className={`h-1.5 rounded-full transition-all duration-500 ${i < done ? "w-3 bg-accent" : "w-1.5 bg-line"}`} />
+        ))}
+      </span>
     </button>
   );
 }
@@ -77,31 +65,31 @@ export function ProfileSheet({ profile: p, onEdit, onClose }: { profile: Profile
     { label: "Yearly budget", value: p.budget === undefined ? undefined : p.budget ? `Up to ${inr(p.budget)}` : "Open", field: "budget" },
   ];
   return (
-    <Sheet onClose={onClose} title={<h2 className="font-display text-[26px] font-semibold leading-tight">What I know about your family</h2>}>
-      <p className="flex items-start gap-2 text-[14px] leading-relaxed text-ink-soft">
-        <Icon name="lock" size={15} className="mt-0.5 shrink-0 text-pine" />
-        Tap any answer to change it. Nothing here is shared with an insurer unless you choose a plan.
+    <Sheet onClose={onClose} title={<h2 className="display text-[30px]">Your family, as I understand it</h2>}>
+      <p className="mt-3 flex items-start gap-2.5 text-[14px] leading-relaxed text-ink-soft">
+        <Icon name="lock" size={16} className="mt-0.5 shrink-0 text-accent" />
+        Tap any answer to change it. Nothing here goes to an insurer unless you choose a plan.
       </p>
-      <ul className="mt-4 divide-y divide-line">
+      <ul className="mt-6 divide-y divide-line">
         {rows.map((r) => (
           <li key={r.label}>
-            <button disabled={!r.value} onClick={() => onEdit(r.field)} className="flex w-full items-center justify-between gap-4 py-3.5 text-left">
+            <button disabled={!r.value} onClick={() => onEdit(r.field)} className="flex w-full items-center justify-between gap-4 py-4 text-left">
               <span className="text-[14px] text-ink-soft">{r.label}</span>
-              <span className={`text-right text-[14px] font-medium ${r.value ? "" : "text-ink-soft/50"}`}>{r.value ?? "Not yet"}</span>
+              <span className={`text-right text-[15px] font-medium ${r.value ? "" : "text-ink-faint"}`}>{r.value ?? "Not yet"}</span>
             </button>
           </li>
         ))}
       </ul>
       {p.cover && p.city && (
-        <div className="mt-5 rounded-[20px] bg-pine p-5 text-white shadow-e2">
-          <p className="text-[13px] text-white/65">Cover we'd suggest</p>
-          <p className="num mt-1 text-[38px] font-semibold leading-none">₹{si.lakh} lakh</p>
-          <ul className="mt-3 space-y-1.5 text-[13px] leading-relaxed text-white/75">
+        <Aura colors={AURA.dusk} scrim className="relative mt-6 rounded-[28px] p-6 text-white">
+          <p className="text-[13px] opacity-80">Cover we'd suggest</p>
+          <p className="money mt-2 text-[64px]">₹{si.lakh}L</p>
+          <ul className="mt-4 space-y-2 text-[13.5px] leading-relaxed opacity-90">
             {si.why.map((w) => (
               <li key={w}>{w}.</li>
             ))}
           </ul>
-        </div>
+        </Aura>
       )}
     </Sheet>
   );

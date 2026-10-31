@@ -38,7 +38,9 @@ OPENAI_API_KEY=...         # uses gpt-4o-mini (override with OPENAI_MODEL)
 
 PolicyLens is a mobile-first progressive web app. On a phone, open the URL and choose **Add to Home Screen** to install it. On a laptop it renders inside a phone frame for demos.
 
-- **Design language:** taken from the two documents families struggle with, the hospital bill and the policy fine print. Pine and sage colours, a highlighter yellow for clauses, and Bricolage Grotesque for rupee amounts.
+- **Design language ("Aura"):** a grainy, breathing gradient is the AI's presence and the stand-in for protection. A sliced gradient orb (layers of cover) is the hero illustration. Archivo on its width axis: expanded for headlines, condensed for rupee amounts. Ultraviolet accent, mint for paid, coral for you pay.
+- **Light and dark mode:** follows the phone's setting, with a toggle in the header. The bill stays printed paper in both.
+- **Motion:** breathing orb (faster while thinking), messages rising in, amounts counting up, the bill printing out of a slot, a stamp thud, a floating pill tab bar. All of it is disabled under the reduced-motion setting.
 - **Your bill (signature screen):** every plan rendered as an itemised hospital bill. Deductions are struck through and tagged with their clause, and each bill ends in a stamp: "Paid in full", "90% paid" or "Not covered yet".
 - **Plans lead with what you'd pay**, not with the premium. The ranking includes that headline outcome.
 - **People first:** the chat starts with family tiles, and you can speak your answers (voice input in Chrome/Android).

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { CITY_COST_FACTOR, CITY_LABEL } from "@/lib/profile";
 import { SCENARIOS, YEAR_LABEL, headlineScenario, simulate, type RoomType } from "@/lib/simulate";
 import type { Match, Profile } from "@/lib/types";
-import { Segmented, inrShort } from "./ui";
+import { Money, Segmented, inrShort } from "./ui";
 
 interface Props {
   profile: Profile;
@@ -30,101 +30,99 @@ export default function Bill({ profile, top, focusId, onOpen }: Props) {
   const cur = all.find((x) => x.m.policy.id === pid) ?? all[0];
   const { m, r } = cur;
   const today = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  const printKey = `${m.policy.id}-${sid}-${year}-${room}`;
 
   return (
-    <div className="pb-8">
-      <div className="px-6 pt-6">
-        <h1 className="font-display text-[28px] font-semibold leading-[1.1]">Your bill, before it happens</h1>
-        <p className="mt-2.5 text-[14px] leading-relaxed text-ink-soft">Pick something that could happen. I'll run the hospital bill through each plan's rules and show you every rupee that comes back to you.</p>
-      </div>
+    <div className="pb-12">
+      <header className="px-6 pt-6">
+        <p className="text-[13px] font-medium text-accent">Reality check</p>
+        <h1 className="display mt-2 text-[38px]">Your bill, before it happens</h1>
+        <p className="mt-3 max-w-[36ch] text-[15px] leading-relaxed text-ink-soft">Pick a moment. I'll run the hospital bill through each plan's rules and show every rupee that comes back to you.</p>
+      </header>
 
-      <div className="no-scrollbar mt-5 flex gap-2 overflow-x-auto px-5 pb-1">
+      <div className="no-scrollbar mt-6 flex gap-2.5 overflow-x-auto px-6 pb-2">
         {scenarios.map((x) => (
           <button
             key={x.id}
             onClick={() => setSid(x.id)}
-            className={`shrink-0 rounded-full px-4 py-2.5 text-[13px] transition ${sid === x.id ? "bg-pine font-semibold text-white shadow-e2" : "bg-surface text-ink shadow-e1 ring-1 ring-line"} ${x.relevant(profile) ? "" : "opacity-55"}`}
+            className={`shrink-0 rounded-full px-5 py-3 text-[14px] transition-all duration-300 ${sid === x.id ? "bg-primary font-semibold text-on-primary shadow-e2" : "bg-surface shadow-e1 ring-1 ring-line"} ${x.relevant(profile) ? "" : "opacity-50"}`}
           >
             {x.title}
           </button>
         ))}
       </div>
 
-      <div className="mt-4 space-y-2 px-5">
+      <div className="mt-4 space-y-2.5 px-6">
         <Segmented label="When it happens" value={year} onChange={setYear} options={[1, 2, 3, 4].map((y) => ({ value: y, label: YEAR_LABEL[y] }))} />
-        <Segmented label="Room type" value={room} onChange={setRoom} options={[{ value: "shared", label: "Shared room" }, { value: "private", label: "Private room" }, { value: "deluxe", label: "Deluxe room" }]} />
+        <Segmented label="Room type" value={room} onChange={setRoom} options={[{ value: "shared", label: "Shared" }, { value: "private", label: "Private" }, { value: "deluxe", label: "Deluxe" }]} />
       </div>
 
-      {/* Plan switcher doubles as the summary: what you pay on each */}
-      <div className="mt-5 grid grid-cols-3 gap-2 px-5">
-        {all.map(({ m: mm, r: rr }) => (
-          <button
-            key={mm.policy.id}
-            onClick={() => setPid(mm.policy.id)}
-            className={`rounded-[16px] p-3 text-left transition ${mm.policy.id === m.policy.id ? "bg-pine text-white shadow-e2" : "bg-surface shadow-e1 ring-1 ring-line"}`}
-          >
-            <span className={`block truncate text-[12px] ${mm.policy.id === m.policy.id ? "text-white/70" : "text-ink-soft"}`}>{mm.policy.name}</span>
-            <span className={`num block text-[18px] font-semibold ${rr.youPay === 0 ? (mm.policy.id === m.policy.id ? "text-[#8fd6b4]" : "text-paid") : mm.policy.id === m.policy.id ? "text-[#f2a59c]" : "text-owe"}`}>
-              {inrShort(rr.youPay)}
-            </span>
-          </button>
-        ))}
+      {/* Switcher doubles as the summary of what you'd pay on each plan */}
+      <div className="mt-8 grid grid-cols-3 gap-2.5 px-6">
+        {all.map(({ m: mm, r: rr }, i) => {
+          const on = mm.policy.id === m.policy.id;
+          return (
+            <button key={mm.policy.id} onClick={() => setPid(mm.policy.id)} className={`rounded-[22px] p-3.5 text-left transition-all duration-300 ${on ? "bg-primary text-on-primary shadow-e2" : "bg-surface shadow-e1 ring-1 ring-line"}`}>
+              <span className="money block text-[14px] opacity-60">0{i + 1}</span>
+              <span className="mt-1 block truncate text-[12.5px] font-medium">{mm.policy.name}</span>
+              <Money value={rr.youPay} className={`mt-2 block text-[24px] ${on ? "" : rr.youPay === 0 ? "text-paid" : "text-owe"}`} />
+            </button>
+          );
+        })}
       </div>
 
-      {/* The receipt */}
-      <div className="relative mx-5 mt-4 drop-shadow-[0_12px_20px_rgba(15,43,37,0.12)]">
-        <div className="receipt-edge bg-surface px-5 pb-10 pt-5 font-mono text-[12.5px] leading-relaxed text-ink">
-          <div className="text-center">
-            <p className="font-sans text-[15px] font-bold">Estimated hospital bill</p>
-            <p className="text-ink-soft">
-              {profile.cityName ?? CITY_LABEL[city]}, {today}
-            </p>
-            <p className="text-ink-soft">
-              Claim under {m.policy.insurer} {m.policy.name}, ₹{m.sumInsured}L
-            </p>
-            <div
-              key={`${m.policy.id}-${sid}-${year}-${room}-${r.youPay}`}
-              className={`stamp stamp-in mx-auto mt-3 w-fit px-3 py-1 font-sans text-[15px] font-semibold uppercase ${r.blocked ? "text-owe" : r.youPay === 0 ? "text-paid" : "text-warn"}`}
-            >
-              {r.blocked ? "Not covered yet" : r.youPay === 0 ? "Paid in full" : `${Math.round((r.insurerPays / r.bill) * 100)}% paid`}
-            </div>
-          </div>
-          <div className="my-3 border-t border-dashed border-ink/30" />
-          <Line label={s.title} amount={r.bill} />
-          <p className="text-ink-soft">
-            {s.days > 0 ? `${s.days} nights, ${room} room` : "Day-care procedure"}, {YEAR_LABEL[year].toLowerCase()}
-          </p>
-
-          <div className="my-3 border-t border-dashed border-ink/30" />
-          <p className="mb-1 font-sans text-[12px] font-semibold text-ink-soft">Not paid by the insurer</p>
-          {r.lines.length === 0 && <p className="text-paid">Nothing. Every rupee is admissible.</p>}
-          {r.lines.map((l) => (
-            <div key={l.label} className="py-1">
-              <Line label={l.label} amount={-l.amount} owe />
-              <p className="text-[11.5px] text-ink-soft">
-                {l.note}{" "}
-                {l.clauseId && (
-                  <button onClick={() => onOpen(m.policy.id, l.clauseId)} className="mark font-semibold text-ink">
-                    §{m.policy.clauses.find((c) => c.id === l.clauseId)?.section}
-                  </button>
-                )}
+      {/* The printer slot and the receipt that comes out of it */}
+      <div className="mx-6 mt-8">
+        <div className="relative z-10 h-3 rounded-full bg-primary/90 shadow-e2" aria-hidden />
+        <div key={printKey} className="print relative -mt-1.5 mx-2 drop-shadow-[0_18px_24px_rgba(20,10,40,0.18)]">
+          <div className="receipt-edge bg-[#fbfaf7] px-6 pb-12 pt-7 font-mono text-[12.5px] leading-relaxed text-[#1b1722]">
+            <div className="text-center">
+              <p className="font-sans text-[16px] font-bold">Estimated hospital bill</p>
+              <p className="text-[#6b6577]">
+                {profile.cityName ?? CITY_LABEL[city]}, {today}
               </p>
+              <p className="text-[#6b6577]">
+                {m.policy.insurer} {m.policy.name}, ₹{m.sumInsured}L
+              </p>
+              <div className={`stamp stamp-in mx-auto mt-4 w-fit px-3.5 py-1 font-sans text-[15px] font-extrabold uppercase ${r.blocked ? "text-[#d23a46]" : r.youPay === 0 ? "text-[#11845a]" : "text-[#a8640c]"}`}>
+                {r.blocked ? "Not covered yet" : r.youPay === 0 ? "Paid in full" : `${Math.round((r.insurerPays / r.bill) * 100)}% paid`}
+              </div>
             </div>
-          ))}
-
-          <div className="my-3 border-t border-dashed border-ink/30" />
-          <Line label="Insurer pays" amount={r.insurerPays} />
-          <div className="mt-2 flex items-end justify-between font-sans">
-            <span className="text-[15px] font-bold">You pay</span>
-            <span className={`num text-[34px] font-semibold leading-none ${r.youPay === 0 ? "text-paid" : "text-owe"}`}>{inrShort(r.youPay)}</span>
+            <div className="my-4 border-t border-dashed border-[#1b1722]/25" />
+            <Line label={s.title} amount={r.bill} />
+            <p className="text-[#6b6577]">
+              {s.days > 0 ? `${s.days} nights, ${room} room` : "Day-care procedure"}, {YEAR_LABEL[year].toLowerCase()}
+            </p>
+            <div className="my-4 border-t border-dashed border-[#1b1722]/25" />
+            <p className="mb-1 font-sans text-[12px] font-semibold text-[#6b6577]">Not paid by the insurer</p>
+            {r.lines.length === 0 && <p className="text-[#11845a]">Nothing. Every rupee is admissible.</p>}
+            {r.lines.map((l) => (
+              <div key={l.label} className="py-1.5">
+                <Line label={l.label} amount={-l.amount} owe />
+                <p className="text-[11.5px] text-[#6b6577]">
+                  {l.note}{" "}
+                  {l.clauseId && (
+                    <button onClick={() => onOpen(m.policy.id, l.clauseId)} className="rounded bg-[#e4dcff] px-1 font-semibold text-[#3b2bb0]">
+                      §{m.policy.clauses.find((c) => c.id === l.clauseId)?.section}
+                    </button>
+                  )}
+                </p>
+              </div>
+            ))}
+            <div className="my-4 border-t border-dashed border-[#1b1722]/25" />
+            <Line label="Insurer pays" amount={r.insurerPays} />
+            <div className="mt-3 flex items-end justify-between font-sans">
+              <span className="text-[16px] font-bold">You pay</span>
+              <Money value={r.youPay} className={`text-[48px] ${r.youPay === 0 ? "text-[#11845a]" : "text-[#d23a46]"}`} />
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="mx-5 mt-5 rounded-[20px] bg-surface shadow-e1 ring-1 ring-line p-4">
-        <div className="flex items-center justify-between text-[13px]">
-          <span className="font-medium">Change the bill amount</span>
-          <span className="num font-semibold">{inrShort(bill)}</span>
+      <div className="mx-6 mt-8 rounded-[24px] bg-surface p-5 shadow-e1 ring-1 ring-line">
+        <div className="flex items-baseline justify-between">
+          <span className="text-[14px] font-medium">Change the bill amount</span>
+          <Money value={bill} className="text-[22px]" />
         </div>
         <input
           type="range"
@@ -134,10 +132,10 @@ export default function Bill({ profile, top, focusId, onOpen }: Props) {
           value={bill}
           aria-label="Hospital bill amount"
           onChange={(e) => setBills({ ...bills, [sid]: Number(e.target.value) })}
-          className="mt-3 w-full accent-[#12312a]"
+          className="mt-4 w-full accent-[var(--accent)]"
         />
       </div>
-      <p className="mt-4 px-5 text-[12px] leading-relaxed text-ink-soft">
+      <p className="mt-5 px-6 text-[12.5px] leading-relaxed text-ink-soft">
         An estimate from typical {CITY_LABEL[city].toLowerCase()} hospital costs and each plan's wording. The insurer assesses the real bill.
       </p>
     </div>
@@ -147,8 +145,8 @@ export default function Bill({ profile, top, focusId, onOpen }: Props) {
 function Line({ label, amount, owe }: { label: string; amount: number; owe?: boolean }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <span className={owe ? "text-owe line-through decoration-owe/40" : ""}>{label}</span>
-      <span className={`shrink-0 tabular-nums ${owe ? "text-owe" : ""}`}>
+      <span className={owe ? "text-[#d23a46] line-through decoration-[#d23a46]/40" : ""}>{label}</span>
+      <span className={`shrink-0 tabular-nums ${owe ? "text-[#d23a46]" : ""}`}>
         {amount < 0 ? "−" : ""}
         {inrShort(Math.abs(amount))}
       </span>
