@@ -3,6 +3,7 @@ import { getPolicy } from "@/lib/policies";
 import { coverSummary, CONDITION_LABEL } from "@/lib/profile";
 import { glossaryAnswer } from "@/lib/glossary";
 import { relevantClauses } from "@/lib/retrieve";
+import { verifyNumbers } from "@/lib/verify";
 import type { Policy, Profile } from "@/lib/types";
 
 interface Citation {
@@ -60,6 +61,23 @@ export async function POST(req: Request) {
   // Hinglish must stay in Roman script; retry once if the model drifts into Devanagari.
   if (lang === "hi" && ai?.answer && /[\u0900-\u097F]/.test(ai.answer))
     ai = parseJson<{ answer: string; citations: Citation[] }>(await llm(SYSTEM + langNote(lang), user + reply + " Your last reply used Devanagari. Use Roman letters only.", 600)) ?? ai;
+  // Number check: every number the AI states must trace to these clauses or the user's own details.
+  // One corrective retry; if it still can't be traced, we show the policy's own words instead.
+  let replaced: string[] | null = null;
+  if (ai?.answer) {
+    const check = verifyNumbers(ai.answer, [user]);
+    if (!check.ok) {
+      const retry = parseJson<{ answer: string; citations: Citation[] }>(
+        await llm(SYSTEM + langNote(lang), `${user}${reply}\n\nYour previous answer used numbers that are not in the clauses (${check.unsupported.join(", ")}). Use only numbers that appear in the clauses above.`, 600),
+      );
+      if (retry?.answer && verifyNumbers(retry.answer, [user]).ok) ai = retry;
+      else {
+        console.warn("[ask] unverifiable numbers, falling back to clause text:", check.unsupported);
+        replaced = check.unsupported;
+        ai = null;
+      }
+    }
+  }
   if (ai?.answer) {
     // Models sometimes cite "§4.1" or "ped" interchangeably; normalise to clause ids we can link to.
     const citations = (ai.citations ?? [])
@@ -77,7 +95,7 @@ export async function POST(req: Request) {
           const c = relevantClauses(question, pol)[0];
           return c ? [{ policyId: pol.id, clauseId: c.id }] : [];
         });
-    return Response.json({ answer: ai.answer, citations: cited, source: "ai" });
+    return Response.json({ answer: ai.answer, citations: cited, source: "ai", checked: true });
   }
 
   // Fallback: retrieval-only answer that quotes the most relevant clause per policy.
@@ -93,6 +111,8 @@ export async function POST(req: Request) {
     answer: `${short ? `**Short answer:** ${short}\n\n` : ""}Here's what the policy wording says:\n\n${parts.join("\n\n")}`,
     citations,
     source: "rules",
+    checked: true,
+    replaced,
   });
 }
 

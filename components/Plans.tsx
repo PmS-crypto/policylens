@@ -22,9 +22,10 @@ interface Props {
   onOpen: (id: string, clause?: string) => void;
   onChoose: (id: string) => void;
   onBill: (id: string) => void;
+  onExplain: () => void;
 }
 
-export default function Plans({ lang, profile, top, all, excluded, notes, onOpen, onChoose, onBill }: Props) {
+export default function Plans({ lang, profile, top, all, excluded, notes, onOpen, onChoose, onBill, onExplain }: Props) {
   const [active, setActive] = useState(0);
   const [mode, setMode] = useState<"cards" | "compare">("cards");
   const rail = useRef<HTMLDivElement>(null);
@@ -53,6 +54,10 @@ export default function Plans({ lang, profile, top, all, excluded, notes, onOpen
               )
             : t(lang, "Not features. The rules that decide how much of a bill actually gets paid.", "Features nahi. Woh rules jo decide karte hain ki bill ka kitna paisa milega.")}
         </p>
+        <button onClick={onExplain} className="mt-3 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-accent">
+          <Icon name="info" size={15} />
+          {t(lang, "How we ranked these", "Ranking kaise ki")}
+        </button>
         <div className="mt-6">
           <Segmented
             label="Plan view"

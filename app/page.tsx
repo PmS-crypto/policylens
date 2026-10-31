@@ -5,6 +5,7 @@ import Awareness from "@/components/Awareness";
 import Bill from "@/components/Bill";
 import Chat, { type Citation, type Msg } from "@/components/Chat";
 import Decide from "@/components/Decide";
+import HowWeRank from "@/components/HowWeRank";
 import { FamilyBar, ProfileSheet } from "@/components/Family";
 import Plans from "@/components/Plans";
 import PolicySheet from "@/components/PolicySheet";
@@ -50,6 +51,7 @@ export default function Home() {
   const [view, setView] = useState<View>("chat");
   const [sheet, setSheet] = useState<{ id: string; clause?: string } | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [explain, setExplain] = useState<"rank" | "numbers" | null>(null);
   const [chosen, setChosen] = useState<string | null>(null);
   const [billFocus, setBillFocus] = useState<string | undefined>();
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -169,7 +171,7 @@ export default function Home() {
       body: JSON.stringify({ question: q, policyIds: top.map((m) => m.policy.id), profile: profileRef.current, lang: langRef.current }),
     }).then((r) => r.json());
     setTyping(false);
-    push({ role: "ai", text: res.answer, citations: res.citations });
+    push({ role: "ai", text: res.answer, citations: res.citations, checked: res.checked });
     setBusy(false);
   }
 
@@ -328,18 +330,20 @@ export default function Home() {
                   notes={notes}
                   onOpen={(id, clause) => setSheet({ id, clause })}
                   onChoose={choose}
+                  onExplain={() => setExplain("rank")}
                   onBill={(id) => {
                     setBillFocus(id);
                     setView("bill");
                   }}
                 />
               )}
-              {view === "bill" && <Bill key={billFocus} lang={lang} profile={profile} top={top} focusId={billFocus} onOpen={(id, clause) => setSheet({ id, clause })} onChoose={choose} />}
+              {view === "bill" && <Bill key={billFocus} lang={lang} profile={profile} top={top} focusId={billFocus} onOpen={(id, clause) => setSheet({ id, clause })} onChoose={choose} onExplain={() => setExplain("numbers")} />}
               {view === "decide" && chosenMatch && <Decide lang={lang} profile={profile} match={chosenMatch} top={top} onSwitch={setChosen} />}
             </main>
 
             {resultsReady && <TabBar view={view} setView={setView} lang={lang} />}
 
+            {explain && <HowWeRank profile={profile} top={top} section={explain} onClose={() => setExplain(null)} />}
             {profileOpen && <ProfileSheet profile={profile} lang={lang} onEdit={onEdit} onClose={() => setProfileOpen(false)} />}
             {sheetMatch && (
               <PolicySheet match={sheetMatch} focusClause={sheet?.clause} profile={profile} lang={lang} onClose={() => setSheet(null)} onChoose={() => choose(sheetMatch.policy.id)} />

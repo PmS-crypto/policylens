@@ -1,4 +1,5 @@
 import { langNote, llm, type Lang } from "@/lib/ai";
+import { verifyNumbers } from "@/lib/verify";
 import { matchPolicies } from "@/lib/match";
 import { CONDITION_LABEL, PRIORITY_LABEL, coverSummary, effectivePriorities } from "@/lib/profile";
 import type { Profile } from "@/lib/types";
@@ -23,8 +24,13 @@ Policy: ${m.policy.insurer} ${m.policy.name}, â‚¹${m.sumInsured}L cover, est. â‚
 Strengths: ${good.map((r) => `${r.title} (${r.detail})`).join("; ") || "none"}.
 Trade-offs: ${bad.map((r) => `${r.title} (${r.detail})`).join("; ") || "none"}.`;
       const reply = lang === "hi" ? "\n\nWrite the note in Hinglish (Hindi in Roman letters mixed with English), like a WhatsApp message to a friend. Not English, not Devanagari." : "\n\nWrite the note in English.";
-      const ai = await llm(SYSTEM + langNote(lang), facts + reply, 250);
-      return { policyId: m.policy.id, note: ai?.trim() || fallback(profile, pri, good.map((r) => r.title), bad[0]?.title), source: ai ? "ai" : "rules" };
+      let ai = await llm(SYSTEM + langNote(lang), facts + reply, 250);
+      // Every number in the note must come from the facts above; otherwise use the plain template.
+      if (ai && !verifyNumbers(ai, [facts]).ok) {
+        console.warn("[explain] unverifiable numbers:", verifyNumbers(ai, [facts]).unsupported);
+        ai = null;
+      }
+      return { policyId: m.policy.id, note: ai?.trim() || fallback(profile, pri, good.map((r) => r.title), bad[0]?.title), source: ai ? "ai" : "rules", checked: true };
     }),
   );
   return Response.json({ notes });

@@ -12,6 +12,7 @@ import { Icon, Money, Segmented, inrShort } from "./ui";
 interface Props {
   lang: Lang;
   onChoose: (id: string) => void;
+  onExplain: () => void;
   profile: Profile;
   top: Match[];
   focusId?: string;
@@ -19,7 +20,7 @@ interface Props {
 }
 
 /** The signature screen: each plan rendered as the hospital bill you'd actually receive. */
-export default function Bill({ lang, profile, top, focusId, onOpen, onChoose }: Props) {
+export default function Bill({ lang, profile, top, focusId, onOpen, onChoose, onExplain }: Props) {
   const head = useMemo(() => headlineScenario(profile), [profile]);
   const scenarios = useMemo(() => [...SCENARIOS].sort((a, b) => Number(b.relevant(profile)) - Number(a.relevant(profile))), [profile]);
   const [sid, setSid] = useState(head.scenario.id);
@@ -51,6 +52,10 @@ export default function Bill({ lang, profile, top, focusId, onOpen, onChoose }: 
         <p className="text-[13px] font-medium text-accent">{t(lang, "Will this actually cover me?", "Kya yeh sach mein cover karega?")}</p>
         <h1 className="display mt-2 text-[38px]">{t(lang, "Your bill, before it happens", "Bill, hone se pehle")}</h1>
         <p className="mt-3 max-w-[36ch] text-[15px] leading-relaxed text-ink-soft">{t(lang, "Every likely hospital trip for your family, run through each plan's rules. Tap any box for the full bill.", "Aapki family ke har possible hospital trip ko har plan ke rules se check kiya. Poora bill dekhne ke liye kisi bhi box pe tap karo.")}</p>
+        <button onClick={onExplain} className="mt-3 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-accent">
+          <Icon name="info" size={15} />
+          {t(lang, "Where these numbers come from", "Yeh numbers kahan se aaye")}
+        </button>
       </header>
 
       {/* Coverage map: every likely event × every plan. On a phone, the event name gets its own line

@@ -101,6 +101,8 @@ export interface Match {
   prioritiesTotal: number;
   reasons: Reason[];
   label?: string;
+  /** How the score was built: each factor, how much it counts, and how this plan did on it (0–1). */
+  breakdown: { key: string; label: string; weight: number; score: number }[];
 }
 
 export interface Excluded {

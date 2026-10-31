@@ -183,12 +183,19 @@ export function matchPolicies(p: Profile): { matches: Match[]; excluded: Exclude
     dims.push({ key: "headline", score: sim.bill ? sim.insurerPays / sim.bill : 1 });
     let num = 0;
     let den = 0;
+    const byKey = new Map<string, { weight: number; total: number }>();
     for (const d of dims) {
-      const w = d.key === "headline" ? 4 : d.key === "planned" ? 3 : explicit.has(d.key as Priority) ? 3 : d.key === "sublimits" ? 1.5 : 1;
+      const w = weightOf(d.key, explicit);
       num += w * d.score;
       den += w;
+      const g = byKey.get(d.key) ?? { weight: 0, total: 0 };
+      g.weight += w;
+      g.total += w * d.score;
+      byKey.set(d.key, g);
     }
     const score = num / den;
+    // Same numbers, grouped by factor, so the ranking can be shown and explained exactly as computed.
+    const breakdown = [...byKey].map(([key, g]) => ({ key, label: FACTOR_LABEL[key] ?? key, weight: g.weight, score: g.total / g.weight })).sort((a, b) => b.weight - a.weight);
     const metKeys = new Set<Priority>();
     for (const pr of explicit) {
       const relevant = dims.filter((d) => d.key === pr);
@@ -207,6 +214,7 @@ export function matchPolicies(p: Profile): { matches: Match[]; excluded: Exclude
       prioritiesMet: metKeys.size,
       prioritiesTotal: explicit.size,
       reasons,
+      breakdown,
     } satisfies Match;
   });
 
@@ -223,6 +231,24 @@ export function matchPolicies(p: Profile): { matches: Match[]; excluded: Exclude
   }
   return { matches, excluded, targetSI: target };
 }
+
+/** How much each factor counts. The family's likeliest hospital visit counts most; their stated priorities next. */
+export function weightOf(key: string, explicit: Set<Priority>) {
+  return key === "headline" ? 4 : key === "planned" ? 3 : explicit.has(key as Priority) ? 3 : key === "sublimits" ? 1.5 : 1;
+}
+
+export const FACTOR_LABEL: Record<string, string> = {
+  headline: "What you'd pay on your likeliest hospital visit",
+  planned: "Cover for the surgery you expect",
+  private_room: "Room rent rules",
+  low_oop: "Your share at claim time (co-pay, consumables)",
+  ped_fast: "Wait for existing illnesses",
+  low_premium: "Price against your budget",
+  maternity: "Maternity cover",
+  restoration: "Cover that refills",
+  network: "Hospital network",
+  sublimits: "Caps on common surgeries",
+};
 
 const order = (r: Reason) => (r.kind === "good" ? 0 : r.kind === "caveat" ? 1 : 2);
 

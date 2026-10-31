@@ -18,6 +18,8 @@ export interface Msg {
   text: string;
   tone?: "insight" | "hint";
   citations?: Citation[];
+  /** Every number in this AI answer was traced back to the policy wording. */
+  checked?: boolean;
 }
 
 interface Props {
@@ -291,8 +293,14 @@ function Bubble({ m, lang, onCitation }: { m: Msg; lang: Lang; onCitation: (c: C
   return (
     <div className="rise max-w-[94%] text-[17px] leading-[1.55] tracking-[-0.005em]">
       <RichText text={m.text} />
+      {m.checked && !!m.citations?.length && (
+        <p className="mt-3 flex items-center gap-1.5 text-[12px] text-ink-soft">
+          <Icon name="check" size={13} stroke={2.4} className="text-paid" />
+          {t(lang, "Numbers checked against the policy wording", "Numbers policy wording se check kiye gaye")}
+        </p>
+      )}
       {!!m.citations?.length && (
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-2 flex flex-wrap gap-2">
           {m.citations.map((c) => {
             const p = getPolicy(c.policyId);
             const cl = p?.clauses.find((x) => x.id === c.clauseId);

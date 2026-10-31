@@ -6,7 +6,7 @@ import { t } from "@/lib/flow";
 import { redFlags } from "@/lib/match";
 import type { Match, Profile } from "@/lib/types";
 import { RichText } from "./Chat";
-import { ReasonRow, Seal, Sheet } from "./ui";
+import { Icon, ReasonRow, Seal, Sheet } from "./ui";
 
 interface Props {
   match: Match;
@@ -20,7 +20,7 @@ interface Props {
 export default function PolicySheet({ match, focusClause, profile, lang, onClose, onChoose }: Props) {
   const p = match.policy;
   const [q, setQ] = useState("");
-  const [answer, setAnswer] = useState<{ q: string; a: string; cites: string[] } | null>(null);
+  const [answer, setAnswer] = useState<{ q: string; a: string; cites: string[]; checked?: boolean } | null>(null);
   const [loading, setLoading] = useState(false);
   const [highlight, setHighlight] = useState(focusClause);
   const refs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -38,7 +38,7 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
     setQ("");
     const res = await fetch("/api/ask", { method: "POST", body: JSON.stringify({ question, policyIds: [p.id], profile, lang }) });
     const data = await res.json();
-    setAnswer({ q: question, a: data.answer, cites: (data.citations ?? []).map((c: { clauseId: string }) => c.clauseId) });
+    setAnswer({ q: question, a: data.answer, cites: (data.citations ?? []).map((c: { clauseId: string }) => c.clauseId), checked: data.checked });
     setLoading(false);
   };
 
@@ -94,6 +94,12 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
         <div className="rise mt-4 rounded-[24px] bg-accent-soft p-5 text-[15px] leading-relaxed">
           <p className="mb-1.5 text-[12px] text-ink-soft">{answer.q}</p>
           <RichText text={answer.a} />
+          {answer.checked && (
+            <p className="mt-3 flex items-center gap-1.5 text-[12px] text-ink-soft">
+              <Icon name="check" size={13} stroke={2.4} className="text-paid" />
+              {t(lang, "Numbers checked against the policy wording", "Numbers policy wording se check kiye gaye")}
+            </p>
+          )}
           {answer.cites.length > 0 && (
             <div className="mt-2 flex gap-2">
               {answer.cites.map((c) => (
