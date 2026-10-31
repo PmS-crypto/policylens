@@ -189,7 +189,9 @@ export function matchPolicies(p: Profile): { matches: Match[]; excluded: Exclude
   const rest = top.slice(1);
   if (rest.length) {
     const budget = rest.reduce((a, b) => (a.premium <= b.premium ? a : b));
-    budget.label = budget.premium < top[0].premium ? "Budget pick" : "Strong alternative";
+    // Only call it a budget pick if it actually fits the budget the user gave us.
+    const fitsBudget = !p.budget || budget.premium <= p.budget;
+    budget.label = budget.premium < top[0].premium ? (fitsBudget ? "Budget pick" : "Lower premium") : "Strong alternative";
     rest.filter((m) => m !== budget).forEach((m) => (m.label = m.premium > top[0].premium ? "Maximum protection" : "Strong alternative"));
   }
   return { matches, excluded, targetSI: target };

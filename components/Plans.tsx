@@ -1,12 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { copayApplies } from "@/lib/match";
 import { POLICIES } from "@/lib/policies";
 import { PRIVATE_ROOM_RATE, effectivePriorities, eldestAge } from "@/lib/profile";
 import type { Lang } from "@/lib/ai";
 import { t } from "@/lib/flow";
 import { headlineScenario, headlineSentence, simulate } from "@/lib/simulate";
+import { budgetLevers, coverageStructures } from "@/lib/structure";
+import { BudgetFix, OverBudgetFlag, StructureAdvice } from "./Structure";
 import type { Excluded, Match, Priority, Profile } from "@/lib/types";
 import { Aura, Icon, Money, PLAN_AURAS, ReasonRow, Seal, Segmented, inrShort } from "./ui";
 
@@ -14,6 +16,7 @@ interface Props {
   lang: Lang;
   profile: Profile;
   top: Match[];
+  all: Match[];
   excluded: Excluded[];
   notes: Record<string, string>;
   onOpen: (id: string, clause?: string) => void;
@@ -21,12 +24,15 @@ interface Props {
   onBill: (id: string) => void;
 }
 
-export default function Plans({ lang, profile, top, excluded, notes, onOpen, onChoose, onBill }: Props) {
+export default function Plans({ lang, profile, top, all, excluded, notes, onOpen, onChoose, onBill }: Props) {
   const [active, setActive] = useState(0);
   const [mode, setMode] = useState<"cards" | "compare">("cards");
   const rail = useRef<HTMLDivElement>(null);
   const head = headlineScenario(profile);
   const sentence = headlineSentence(profile, lang);
+  const structures = useMemo(() => coverageStructures(profile, top), [profile, top]);
+  const fit = useMemo(() => budgetLevers(profile, top, all), [profile, top, all]);
+  const seeFit = () => document.getElementById("fit")?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   const onScroll = () => {
     const el = rail.current;
@@ -58,6 +64,7 @@ export default function Plans({ lang, profile, top, excluded, notes, onOpen, onC
             ]}
           />
         </div>
+        {mode === "cards" && fit && profile.budget && <OverBudgetFlag over={fit.over} budget={profile.budget} onSee={seeFit} />}
       </header>
 
       {mode === "cards" ? (
@@ -150,6 +157,10 @@ export default function Plans({ lang, profile, top, excluded, notes, onOpen, onC
               <span key={m.policy.id} className={`h-1.5 rounded-full transition-all duration-500 ${i === active ? "w-8 bg-accent" : "w-1.5 bg-line"}`} />
             ))}
           </div>
+          {fit && profile.budget && fit.levers.length > 0 && (
+            <BudgetFix over={fit.over} budget={profile.budget} levers={fit.levers} bestName={top[0].policy.name} sentence={head.sentence} />
+          )}
+          <StructureAdvice structures={structures} />
           {excluded.length > 0 && (
             <details className="mx-6 mt-8 rounded-[24px] bg-surface p-5 text-[14px] shadow-e1 ring-1 ring-line">
               <summary className="cursor-pointer font-semibold">{t(lang, "Why some plans didn't make the cut", "Kuch plans kyun nahi dikhe")}</summary>
@@ -175,6 +186,7 @@ const LABEL_HI: Record<string, string> = {
   "Budget pick": "Budget wala",
   "Maximum protection": "Full protection",
   "Strong alternative": "Solid option",
+  "Lower premium": "Kam premium",
 };
 
 type Tone = "good" | "caveat" | "bad" | "neutral";

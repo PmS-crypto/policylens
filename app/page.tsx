@@ -323,6 +323,7 @@ export default function Home() {
                   lang={lang}
                   profile={profile}
                   top={top}
+                  all={result.matches}
                   excluded={result.excluded}
                   notes={notes}
                   onOpen={(id, clause) => setSheet({ id, clause })}
