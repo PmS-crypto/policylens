@@ -6,6 +6,7 @@ import Bill from "@/components/Bill";
 import Chat, { type Citation, type Msg } from "@/components/Chat";
 import Decide from "@/components/Decide";
 import HowWeRank from "@/components/HowWeRank";
+import TryBill from "@/components/TryBill";
 import Thinking from "@/components/Thinking";
 import { FamilyBar, ProfileSheet } from "@/components/Family";
 import Plans from "@/components/Plans";
@@ -16,9 +17,8 @@ import { STEPS, nextStep, t } from "@/lib/flow";
 import { effectiveBudget, planningProfile } from "@/lib/afford";
 import { inferences, type Inference } from "@/lib/infer";
 import { matchPolicies } from "@/lib/match";
-import { POLICIES, getPolicy } from "@/lib/policies";
+import { POLICIES } from "@/lib/policies";
 import { CITY_LABEL, CONDITION_LABEL, PLANNED_LABEL, coverSummary, inr, isProfileComplete, recommendSumInsured } from "@/lib/profile";
-import { SCENARIOS, simulate } from "@/lib/simulate";
 import type { Priority, Profile } from "@/lib/types";
 
 type View = "chat" | "plans" | "bill" | "decide";
@@ -445,14 +445,6 @@ function summarize(p: Profile, fresh: string[], l: Lang) {
 
 function Landing({ onStart, lang }: { onStart: (text?: string) => void; lang: Lang }) {
   const [text, setText] = useState("");
-  const demo = useMemo(() => {
-    const p: Profile = { cover: { self: false, partner: false, kids: false, parents: true }, parentAge: 63, city: "metro", conditions: [] };
-    const s = SCENARIOS.find((x) => x.id === "knee")!;
-    return ["suraksha-complete", "pratham-saver"].map((id) => {
-      const pol = getPolicy(id)!;
-      return { pol, r: simulate(pol, 10, p, s, { year: 3, room: "private" }) };
-    });
-  }, []);
 
   // Three short reassurances, shown right under the button where people hesitate.
   const promises: { icon: IconName; label: string }[] = [
@@ -483,20 +475,9 @@ function Landing({ onStart, lang }: { onStart: (text?: string) => void; lang: La
         </p>
       </section>
 
-      {/* 2. Proof: same cover, very different payout */}
+      {/* 2. Discovery: try a hospital bill before answering anything */}
       <section className="px-5 pt-6">
-        <div className="rounded-[32px] bg-surface p-5 shadow-e2 ring-1 ring-line">
-          <p className="text-[14px] font-medium">{t(lang, "Same ₹10 lakh cover. Same knee surgery.", "Same ₹10 lakh cover. Same knee surgery.")}</p>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            {demo.map(({ pol, r }) => (
-              <div key={pol.id} className={`rounded-[22px] p-4 ${r.youPay ? "bg-owe-soft" : "bg-paid-soft"}`}>
-                <p className="text-[12.5px] text-ink-soft">{pol.name}</p>
-                <p className="mt-2 text-[12px] font-medium">{t(lang, "You pay", "Aap doge")}</p>
-                <Money value={r.youPay} className={`mt-1 block text-[30px] ${r.youPay ? "text-owe" : "text-paid"}`} />
-              </div>
-            ))}
-          </div>
-        </div>
+        <TryBill onStart={onStart} />
       </section>
 
       {/* 3. Action, with reassurance right where people hesitate */}
