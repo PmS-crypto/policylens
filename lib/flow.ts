@@ -93,8 +93,11 @@ export const STEPS: Step[] = [
     skip: (p) => !p.cover?.parents,
     done: (p) => p.parentAge !== undefined,
     apply: (p, [v]) => ({ ...p, parentAge: Number(v) }),
+    // Only when parents are covered and their age is known: a "null" age from the AI must not trigger this.
     insight: (p, l) =>
-      (p.parentAge ?? 0) >= 61
+      !p.cover?.parents || !p.parentAge || p.parentAge < 55
+        ? null
+        : p.parentAge >= 61
         ? t(
             l,
             `After 60, many plans make you pay 20% of every bill for ${parentsShort(p)}. I'll point out each one.`,

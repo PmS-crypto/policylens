@@ -25,6 +25,7 @@ type View = "chat" | "plans" | "bill" | "decide";
 
 const uid = () => Math.random().toString(36).slice(2);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const SAVE_KEY = "pl-session";
 const doneIds = (p: Profile) => STEPS.filter((s) => s.done(p)).map((s) => s.id);
 
 const PERSONAS: Record<Lang, { who: string; what: string; text: string }[]> = {
@@ -63,6 +64,53 @@ export default function Home() {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [prefill, setPrefill] = useState<Priority[]>([]);
   const insightsShown = useRef(new Set<string>());
+
+  // Answers are saved on this device, so going home (or closing the app) never loses them.
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SAVE_KEY) ?? "null");
+      if (!saved?.messages?.length) return;
+      update(saved.profile ?? {});
+      setMessages(saved.messages);
+      setStage(saved.stage ?? "discover");
+      setView(saved.view ?? "chat");
+      setChosen(saved.chosen ?? null);
+      setSplitBase(saved.splitBase ?? null);
+      setNotes(saved.notes ?? {});
+      setPrefill(saved.prefill ?? []);
+      insightsShown.current = new Set(saved.insights ?? []);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (!messages.length) return;
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ profile, messages, stage, view, chosen, splitBase, notes, prefill, insights: [...insightsShown.current] }));
+    } catch {}
+  }, [profile, messages, stage, view, chosen, splitBase, notes, prefill]);
+
+  function goHome() {
+    setSheet(null);
+    setProfileOpen(false);
+    setExplain(null);
+    setStarted(false);
+  }
+
+  function reset() {
+    update({});
+    setMessages([]);
+    setStage("discover");
+    setView("chat");
+    setChosen(null);
+    setSplitBase(null);
+    setNotes({});
+    setPrefill([]);
+    setThinking(null);
+    insightsShown.current = new Set();
+    try {
+      localStorage.removeItem(SAVE_KEY);
+    } catch {}
+  }
 
   useEffect(() => {
     if ("serviceWorker" in navigator && location.hostname !== "localhost") navigator.serviceWorker.register("/sw.js").catch(() => {});
@@ -184,6 +232,7 @@ export default function Home() {
   }
 
   async function start(text?: string) {
+    if (messages.length) reset();
     setStarted(true);
     setBusy(true);
     await aiSay(
@@ -308,18 +357,18 @@ export default function Home() {
 
       <div className="relative mx-auto flex h-dvh w-full max-w-[440px] flex-col overflow-hidden bg-canvas lg:mx-0 lg:h-[900px] lg:max-h-[94vh] lg:rounded-[56px] lg:shadow-e3 lg:ring-[10px] lg:ring-[#15121c]">
         {!started ? (
-          <Landing onStart={start} lang={lang} />
+          <Landing onStart={start} lang={lang} saved={messages.length ? (stage === "qa" ? "plans" : "answers") : null} onResume={() => setStarted(true)} onReset={reset} />
         ) : (
           <>
             <header className="shrink-0 pb-3 pt-[max(env(safe-area-inset-top),14px)]">
               <div className="flex items-center justify-between px-5">
-                <div className="flex items-center gap-2.5">
+                <button onClick={goHome} aria-label="Go to home. Your answers are saved." className="-m-1 flex items-center gap-2.5 rounded-full p-1 text-left">
                   <Orb size={34} thinking={typing} />
                   <div>
                     <p className="title text-[16px] leading-none">PolicyLens</p>
                     <p className="mt-1 text-[12px] leading-none text-ink-soft">{typing ? t(lang, "Thinking…", "Soch raha hoon…") : stage === "qa" ? t(lang, "Ask me anything", "Kuch bhi poocho") : t(lang, "Your insurance friend", "Aapka insurance dost")}</p>
                   </div>
-                </div>
+                </button>
                 <ThemeToggle />
               </div>
               {view === "chat" && (
@@ -443,7 +492,19 @@ function summarize(p: Profile, fresh: string[], l: Lang) {
   return `Got it: ${list}.${bits.length >= 3 ? " That saves a few questions." : ""}`;
 }
 
-function Landing({ onStart, lang }: { onStart: (text?: string) => void; lang: Lang }) {
+function Landing({
+  onStart,
+  lang,
+  saved,
+  onResume,
+  onReset,
+}: {
+  onStart: (text?: string) => void;
+  lang: Lang;
+  saved: "answers" | "plans" | null;
+  onResume: () => void;
+  onReset: () => void;
+}) {
   const [text, setText] = useState("");
 
   // Three short reassurances, shown right under the button where people hesitate.
@@ -477,6 +538,21 @@ function Landing({ onStart, lang }: { onStart: (text?: string) => void; lang: La
 
       {/* 2. Action, with reassurance right where people hesitate */}
       <section className="px-5 pt-6">
+        {saved && (
+          <div className="mb-4 rounded-[28px] bg-accent-soft p-5">
+            <p className="title text-[17px]">Welcome back</p>
+            <p className="mt-1 text-[14px] leading-relaxed text-ink-soft">{saved === "plans" ? "Your plans are saved." : "Your answers are saved."} Pick up where you left off.</p>
+            <div className="mt-4 flex items-center gap-4">
+              <button onClick={onResume} className="flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-[15px] font-semibold text-on-primary shadow-e1">
+                Continue
+                <Icon name="arrow" size={16} />
+              </button>
+              <button onClick={onReset} className="text-[14px] font-semibold text-ink-soft">
+                Start over
+              </button>
+            </div>
+          </div>
+        )}
         <form
           onSubmit={(e) => {
             e.preventDefault();
