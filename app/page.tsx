@@ -29,9 +29,9 @@ const doneIds = (p: Profile) => STEPS.filter((s) => s.done(p)).map((s) => s.id);
 
 const PERSONAS: Record<Lang, { who: string; what: string; text: string }[]> = {
   en: [
-    { who: "Riya, 29", what: "Buying for her dad", text: "I'm 29 and live in Bengaluru. I want to cover my parents. Dad is 62 and has diabetes and BP. Budget around 45k a year." },
-    { who: "Arjun, 32", what: "Baby on the way", text: "I'm 32, want cover for me and my wife in Pune. We're planning a baby next year, no health issues. I'd like a private room. My company gives 3 lakh cover." },
-    { who: "Kabir, 24", what: "First job", text: "I'm 24, just started my first job in Indore. Just me. Want something cheap but decent." },
+    { who: "Riya, 29", what: "Wants cover for her dad", text: "I'm 29 and live in Bengaluru. I want to cover my parents. Dad is 62 and has diabetes and BP. Budget around 45k a year." },
+    { who: "Arjun, 32", what: "Having a baby soon", text: "I'm 32, want cover for me and my wife in Pune. We're planning a baby next year, no health issues. I'd like a private room. My company gives 3 lakh cover." },
+    { who: "Kabir, 24", what: "Just got his first job", text: "I'm 24, just started my first job in Indore. Just me. Want something cheap but decent." },
   ],
   hi: [
     { who: "Riya, 29", what: "Papa ke liye, unko sugar hai", text: "Main 29 ki hoon, Bengaluru mein rehti hoon. Mummy-papa ko cover karna hai. Papa 62 ke hain, unko sugar aur BP hai. Budget 45k saal ka." },
@@ -275,7 +275,7 @@ export default function Home() {
       {top[0] && <Awareness profile={plan} best={top[0]} lang={lang} />}
       <Aura colors={AURA.dusk} scrim className="rise relative rounded-[32px] p-6 text-white shadow-e2">
         <div className="absolute -right-20 -top-16 text-white opacity-70" aria-hidden>
-          <SlicedOrb size={150} />
+          <SlicedOrb size={120} />
         </div>
         <p className="relative text-[13px] font-medium opacity-85">{t(lang, "Profile done", "Profile ready")}</p>
         <p className="title relative mt-2 max-w-[14ch] text-[24px] leading-tight">{profile.cover?.parents && !profile.cover.self && !profile.cover.partner ? "Let's find the right cover for your parents" : t(lang, "Let's find the right cover for your family", "Chalo, family ka plan dhoondte hain")}</p>
@@ -449,8 +449,8 @@ function Landing({ onStart, lang }: { onStart: (text?: string) => void; lang: La
   // Three short reassurances, shown right under the button where people hesitate.
   const promises: { icon: IconName; label: string }[] = [
     { icon: "phoneOff", label: t(lang, "No phone number", "Phone number nahi") },
-    { icon: "lock", label: t(lang, "Private by default", "Poori tarah private") },
-    { icon: "doc", label: t(lang, "Every answer sourced", "Har jawaab ka proof") },
+    { icon: "lock", label: t(lang, "Your info stays private", "Poori tarah private") },
+    { icon: "doc", label: t(lang, "We show our proof", "Har jawaab ka proof") },
   ];
 
   return (
@@ -463,25 +463,20 @@ function Landing({ onStart, lang }: { onStart: (text?: string) => void; lang: La
           <ThemeToggle />
         </div>
         <div className="relative mt-2 flex justify-center text-ink">
-          <SlicedOrb size={150} />
+          <SlicedOrb size={120} />
         </div>
-        <h1 className="display relative mt-3 text-[clamp(32px,10.4vw,40px)]">{t(lang, "Health insurance that actually pays.", "Health insurance jo sach mein pay kare.")}</h1>
+        <h1 className="display relative mt-3 text-[clamp(32px,10.4vw,40px)]">{t(lang, "Insurance that pays the hospital bill.", "Health insurance jo sach mein pay kare.")}</h1>
         <p className="relative mt-3 max-w-[30ch] text-[17px] leading-relaxed text-ink-soft">
           {t(
             lang,
-            "Answer a few questions. Get 3 plans that suit your family, and see how much each one pays if someone goes to hospital.",
+            "Tell us who's in your family. We'll show you which plans pay the most if someone gets sick.",
             "Kuch sawaalon ke jawaab do. Apni family ke liye 3 plans pao, aur dekho hospital jaane par har plan kitna deta hai.",
           )}
         </p>
       </section>
 
-      {/* 2. Discovery: try a hospital bill before answering anything */}
+      {/* 2. Action, with reassurance right where people hesitate */}
       <section className="px-5 pt-6">
-        <TryBill onStart={onStart} />
-      </section>
-
-      {/* 3. Action, with reassurance right where people hesitate */}
-      <section className="px-5 pb-[max(env(safe-area-inset-bottom),28px)] pt-5">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -490,18 +485,18 @@ function Landing({ onStart, lang }: { onStart: (text?: string) => void; lang: La
           className="rounded-[32px] bg-surface p-2.5 shadow-e2 ring-1 ring-line"
         >
           <label htmlFor="intro" className="sr-only">
-            {t(lang, "Who are you covering?", "Kisko cover karna hai?")}
+            {t(lang, "Who do you want to cover?", "Kisko cover karna hai?")}
           </label>
           <textarea
             id="intro"
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={2}
-            placeholder={t(lang, "Who are you covering? e.g. My parents, 62 and 58, in Pune", "Kisko cover karna hai? jaise: Mummy-papa, 62 aur 58, Pune")}
+            placeholder={t(lang, "Who do you want to cover? Like: Mum and Dad, 62 and 58", "Kisko cover karna hai? jaise: Mummy-papa, 62 aur 58, Pune")}
             className="w-full resize-none bg-transparent px-4 py-3 text-[16px] outline-none placeholder:text-ink-faint"
           />
           <button className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-[18px] text-[16px] font-semibold text-on-primary shadow-e2">
-            {text.trim() ? t(lang, "Find my plans", "Mere plans dhoondo") : t(lang, "Get started", "Shuru karo")}
+            {text.trim() ? t(lang, "Show my plans", "Mere plans dhoondo") : t(lang, "Get started", "Shuru karo")}
             <Icon name="arrow" size={18} />
           </button>
         </form>
@@ -514,7 +509,7 @@ function Landing({ onStart, lang }: { onStart: (text?: string) => void; lang: La
           ))}
         </ul>
 
-        <p className="mt-10 text-[13px] font-medium text-ink-soft">{t(lang, "Or try a sample family", "Ya sample family try karo")}</p>
+        <p className="mt-10 text-[13px] font-medium text-ink-soft">{t(lang, "Or pick a family like yours", "Ya sample family try karo")}</p>
         <div className="no-scrollbar -mx-5 mt-3 flex gap-2.5 overflow-x-auto px-5">
           {PERSONAS[lang].map((p) => (
             <button key={p.who} onClick={() => onStart(p.text)} className="shrink-0 rounded-[22px] bg-surface px-4 py-3.5 text-left shadow-e1 ring-1 ring-line">
@@ -523,6 +518,11 @@ function Landing({ onStart, lang }: { onStart: (text?: string) => void; lang: La
             </button>
           ))}
         </div>
+      </section>
+
+      {/* 3. Discovery: try a hospital bill, for people not ready to answer questions yet */}
+      <section className="px-5 pb-[max(env(safe-area-inset-bottom),28px)] pt-10">
+        <TryBill onStart={onStart} />
       </section>
     </div>
   );

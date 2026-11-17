@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { POLICIES } from "@/lib/policies";
-import { SCENARIOS, simulate } from "@/lib/simulate";
+import { SCENARIOS, simulate, type SimLine } from "@/lib/simulate";
 import type { Profile } from "@/lib/types";
 import { Icon, Money, Segmented, inrShort } from "./ui";
 
@@ -13,13 +13,39 @@ const EVENTS: Record<Who, string[]> = {
   parent: ["knee", "cataract", "cardiac", "dengue", "diabetes"],
 };
 const SHORT: Record<string, string> = {
-  dengue: "Dengue",
+  dengue: "Dengue fever",
   cardiac: "Heart attack",
-  knee: "Knee replacement",
-  cataract: "Cataract",
-  diabetes: "Diabetes complication",
-  childbirth: "Baby's delivery",
+  knee: "New knee",
+  cataract: "Eye surgery",
+  diabetes: "Sugar problem",
+  childbirth: "Having a baby",
 };
+
+/** The engine's deduction lines, said the way you'd say them to a child. */
+function plain(line: SimLine): string {
+  const n = line.label.match(/(\d+)-year/)?.[1];
+  const years = n === "1" ? "1 year" : `${n} years`;
+  switch (line.clauseId) {
+    case "specific":
+      return `Too soon. This plan makes you wait ${years} for this.`;
+    case "ped":
+      return `It comes from an old illness, so this plan makes you wait ${years}.`;
+    case "maternity":
+      if (line.label.startsWith("Maternity not")) return "This plan doesn't pay for babies.";
+      if (n) return `Too soon. This plan makes you wait ${years} for a baby.`;
+      return "This plan pays only a small part for a baby.";
+    case "copay":
+      return `At this age, you pay ${line.label.match(/\d+/)?.[0]}% of every bill.`;
+    case "room":
+      return "The hospital room costs more than this plan allows.";
+    case "consumables":
+      return "Gloves, masks and needles aren't paid for.";
+    case "sublimits":
+      return "This plan pays only up to a fixed amount for this.";
+    default:
+      return "The bill is bigger than the cover.";
+  }
+}
 const AGE = { me: { min: 18, max: 60, start: 30 }, parent: { min: 50, max: 80, start: 64 } };
 const SI = 10;
 
@@ -63,7 +89,7 @@ export default function TryBill({ onStart }: { onStart: (text: string) => void }
       .map((pol) => {
         const r = simulate(pol, SI, p, s, { year, room: "private" });
         const biggest = [...r.lines].sort((a, b) => b.amount - a.amount)[0];
-        return { pol, r, why: r.youPay > 0 ? biggest?.label : undefined };
+        return { pol, r, why: r.youPay > 0 && biggest ? plain(biggest) : undefined };
       })
       .sort((a, b) => a.r.youPay - b.r.youPay);
   }, [who, age, sid, year]);
@@ -74,14 +100,14 @@ export default function TryBill({ onStart }: { onStart: (text: string) => void }
 
   return (
     <div className="rounded-[32px] bg-surface p-5 shadow-e2 ring-1 ring-line">
-      <h2 className="title text-[19px]">Try a hospital bill</h2>
-      <p className="mt-1 text-[13.5px] leading-relaxed text-ink-soft">Same ₹{SI} lakh cover on every plan. Pick what happens and see who pays.</p>
+      <h2 className="title text-[19px]">What if someone goes to hospital?</h2>
+      <p className="mt-1 text-[13.5px] leading-relaxed text-ink-soft">Every plan here gives ₹{SI} lakh. Pick what happens and see how much each one really pays.</p>
 
       <div className="mt-4 space-y-3">
-        <Segmented<Who> label="Who's in hospital" value={who} onChange={pickWho} options={[{ value: "parent", label: "A parent" }, { value: "me", label: "Me" }]} />
+        <Segmented<Who> label="Who is sick" value={who} onChange={pickWho} options={[{ value: "parent", label: "Mum or Dad" }, { value: "me", label: "Me" }]} />
 
         <div className="flex items-center justify-between gap-3">
-          <span className="text-[13.5px] text-ink-soft">{who === "parent" ? "Their age" : "Your age"}</span>
+          <span className="text-[13.5px] text-ink-soft">Age</span>
           <div className="flex items-center gap-1 rounded-full bg-surface-2 p-1">
             <button aria-label="Younger" onClick={() => setAge((a) => Math.max(AGE[who].min, a - 1))} className="grid h-8 w-8 place-items-center rounded-full text-[18px] font-semibold disabled:opacity-30" disabled={age <= AGE[who].min}>
               −
@@ -93,7 +119,7 @@ export default function TryBill({ onStart }: { onStart: (text: string) => void }
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2" role="group" aria-label="What happens">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="What happened">
           {EVENTS[who].map((id) => (
             <button
               key={id}
@@ -110,20 +136,20 @@ export default function TryBill({ onStart }: { onStart: (text: string) => void }
       </div>
 
       <div className="mt-5 rounded-[22px] bg-surface-2 px-4 py-3.5">
-        <p className="text-[13px] text-ink-soft">Bill in a big-city hospital: {inrShort(bill)}</p>
+        <p className="text-[13px] text-ink-soft">Hospital bill: {inrShort(bill)}</p>
         <p className="mt-1 text-[15px] font-semibold leading-snug">
-          {rows.length < 2 ? "Only one plan accepts this age." : lo === hi ? `Every plan leaves you ${inrShort(lo)} to pay.` : `You'd pay anywhere from ${inrShort(lo)} to ${inrShort(hi)}.`}
+          {rows.length < 2 ? "Only one plan takes people this age." : lo === hi ? `With every plan, you pay ${inrShort(lo)} yourself.` : `You might pay ${inrShort(lo)} to ${inrShort(hi)} yourself.`}
         </p>
       </div>
 
-      <ul className="mt-3 divide-y divide-line" aria-label="What each plan leaves you to pay">
+      <ul className="mt-3 divide-y divide-line" aria-label="How much you pay with each plan">
         {rows.map(({ pol, r, why }) => {
           const share = r.bill ? r.insurerPays / r.bill : 0;
           return (
             <li key={pol.id} className="py-3">
               <div className="flex items-baseline justify-between gap-3">
                 <span className="min-w-0 truncate text-[14px] font-medium">{pol.name}</span>
-                <span className={`shrink-0 text-[12px] font-medium ${r.youPay ? "text-owe" : "text-paid"}`}>{r.youPay ? "You pay" : "Fully paid"}</span>
+                <span className={`shrink-0 text-[12px] font-medium ${r.youPay ? "text-owe" : "text-paid"}`}>{r.youPay ? "You pay" : "Plan pays it all"}</span>
               </div>
               <div className="mt-1.5 flex items-center gap-3">
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-owe-soft" aria-hidden>
@@ -133,15 +159,15 @@ export default function TryBill({ onStart }: { onStart: (text: string) => void }
                   <Money value={r.youPay} className={`text-[17px] ${r.youPay ? "text-owe" : "text-paid"}`} />
                 </span>
               </div>
-              {why && <p className="mt-1 text-[12.5px] leading-snug text-ink-soft">{r.blocked ? why : `Mostly: ${why.toLowerCase()}`}</p>}
+              {why && <p className="mt-1 text-[12.5px] leading-snug text-ink-soft">{why}</p>}
             </li>
           );
         })}
       </ul>
-      {rows.length < POLICIES.length && <p className="mt-1 text-[12px] text-ink-faint">{POLICIES.length - rows.length === 1 ? "1 plan doesn't" : `${POLICIES.length - rows.length} plans don't`} accept someone aged {age}.</p>}
+      {rows.length < POLICIES.length && <p className="mt-1 text-[12px] text-ink-faint">{POLICIES.length - rows.length === 1 ? "1 plan doesn't" : `${POLICIES.length - rows.length} plans don't`} take people aged {age}.</p>}
 
       <button onClick={() => onStart(handoff(who, age, sid))} className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-surface-2 py-3.5 text-[14.5px] font-semibold text-ink ring-1 ring-line">
-        Find plans that cover this
+        Find plans for this
         <Icon name="arrow" size={16} />
       </button>
     </div>
