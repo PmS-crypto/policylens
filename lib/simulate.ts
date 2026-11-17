@@ -19,12 +19,12 @@ export interface Scenario {
 }
 
 export const SCENARIOS: Scenario[] = [
-  { id: "dengue", title: "Dengue, 4 nights in hospital", icon: "🦟", blurb: "The most common monsoon claim in India", bill: 115000, days: 4, category: "general", who: "eldest", relevant: () => true },
-  { id: "cardiac", title: "Heart attack: angioplasty", icon: "🫀", blurb: "Emergency procedure with one stent", bill: 450000, days: 5, category: "cardiac", who: "eldest", ped: ["heart", "bp", "diabetes"], relevant: () => true },
-  { id: "knee", title: "Knee replacement", icon: "🦵", blurb: "Very common after 55", bill: 380000, days: 5, category: "knee", who: "parent", relevant: (p) => !!p.cover?.parents || eldestAge(p) >= 50 || !!p.upcoming?.includes("joint") },
-  { id: "cataract", title: "Cataract surgery (one eye)", icon: "👁️", blurb: "A day-care procedure", bill: 75000, days: 0, category: "cataract", who: "parent", relevant: (p) => !!p.cover?.parents || eldestAge(p) >= 50 || !!p.upcoming?.includes("cataract") },
-  { id: "diabetes", title: "Diabetes complication", icon: "🩸", blurb: "Kidney infection needing admission", bill: 180000, days: 5, category: "general", who: "eldest", ped: ["diabetes"], relevant: (p) => !!p.conditions?.includes("diabetes") },
-  { id: "childbirth", title: "C-section delivery", icon: "👶", blurb: "Including newborn care", bill: 165000, days: 4, category: "maternity", who: "partner", relevant: (p) => !!p.cover?.partner && (p.planningBaby ?? (p.selfAge ?? 40) < 38) },
+  { id: "dengue", title: "Dengue fever, 4 nights in hospital", icon: "🦟", blurb: "Very common in the rainy season", bill: 115000, days: 4, category: "general", who: "eldest", relevant: () => true },
+  { id: "cardiac", title: "Heart attack", icon: "🫀", blurb: "Doctors put one tiny tube in the heart", bill: 450000, days: 5, category: "cardiac", who: "eldest", ped: ["heart", "bp", "diabetes"], relevant: () => true },
+  { id: "knee", title: "New knee surgery", icon: "🦵", blurb: "Very common after 55", bill: 380000, days: 5, category: "knee", who: "parent", relevant: (p) => !!p.cover?.parents || eldestAge(p) >= 50 || !!p.upcoming?.includes("joint") },
+  { id: "cataract", title: "Eye surgery (one eye)", icon: "👁️", blurb: "You go home the same day", bill: 75000, days: 0, category: "cataract", who: "parent", relevant: (p) => !!p.cover?.parents || eldestAge(p) >= 50 || !!p.upcoming?.includes("cataract") },
+  { id: "diabetes", title: "Sugar (diabetes) problem", icon: "🩸", blurb: "A kidney infection that needs a hospital stay", bill: 180000, days: 5, category: "general", who: "eldest", ped: ["diabetes"], relevant: (p) => !!p.conditions?.includes("diabetes") },
+  { id: "childbirth", title: "Having a baby (C-section)", icon: "👶", blurb: "Care for the new baby too", bill: 165000, days: 4, category: "maternity", who: "partner", relevant: (p) => !!p.cover?.partner && (p.planningBaby ?? (p.selfAge ?? 40) < 38) },
 ];
 
 export interface SimLine {
@@ -69,15 +69,15 @@ export function simulate(
 
   // Waiting periods and outright exclusions
   if (s.category === "maternity") {
-    if (!policy.maternity.covered) return block("Maternity not covered", "maternity", "This policy excludes childbirth entirely.");
-    if (opts.year <= (policy.maternity.waitYears ?? 0)) return block(`In ${policy.maternity.waitYears}-year maternity waiting period`, "maternity", `Delivery in year ${opts.year} falls inside the waiting period.`);
+    if (!policy.maternity.covered) return block("Baby not covered", "maternity", "This plan never pays for having a baby.");
+    if (opts.year <= (policy.maternity.waitYears ?? 0)) return block(`Too soon: ${policy.maternity.waitYears}-year wait for a baby`, "maternity", `In year ${opts.year}, the plan pays nothing for a baby yet.`);
   }
   if ((s.category === "knee" || s.category === "cataract") && opts.year <= policy.specificWaitYears)
-    return block(`In ${policy.specificWaitYears}-year specified-disease waiting period`, "specific", `Planned ${s.category === "knee" ? "joint replacement" : "cataract"} surgery in year ${opts.year} isn't covered yet.`);
+    return block(`Too soon: ${policy.specificWaitYears}-year wait for this surgery`, "specific", `In year ${opts.year}, the plan pays nothing for ${s.category === "knee" ? "a new knee" : "eye surgery"} yet.`);
   const patientHasConditions = s.who === "eldest" || conditionHolder(p) === (s.who === "parent" ? "parent" : "self");
   const pedHit = patientHasConditions && s.ped?.some((c) => p.conditions?.includes(c));
   if (pedHit && opts.year <= policy.pedWaitYears)
-    return block(`Linked to a pre-existing condition (${policy.pedWaitYears}-year wait)`, "ped", `Insurers treat this as a complication of a declared condition. Year ${opts.year} is inside the waiting period.`);
+    return block(`Old illness: ${policy.pedWaitYears}-year wait`, "ped", `This comes from an illness you already have. In year ${opts.year}, the plan pays nothing yet.`);
 
   let admissible = bill;
 
@@ -94,37 +94,37 @@ export function simulate(
       const roomExcess = (rate - cap) * s.days;
       const associated = (bill - rate * s.days) * 0.55;
       const prop = associated * (1 - cap / rate);
-      lines.push({ label: "Room rent above the cap", amount: roomExcess, clauseId: "room", note: `Room costs ₹${Math.round(rate).toLocaleString("en-IN")}/day, policy pays up to ₹${Math.round(cap).toLocaleString("en-IN")}/day.` });
-      lines.push({ label: "Proportionate deduction", amount: prop, clauseId: "room", note: `Doctor, surgery and nursing charges are paid only ${Math.round((cap / rate) * 100)}%, because the room exceeded the cap.` });
+      lines.push({ label: "Room costs more than allowed", amount: roomExcess, clauseId: "room", note: `The room is ₹${Math.round(rate).toLocaleString("en-IN")} a day. The plan pays up to ₹${Math.round(cap).toLocaleString("en-IN")} a day.` });
+      lines.push({ label: "Doctor's bill cut too", amount: prop, clauseId: "room", note: `The room costs too much, so the plan pays only ${Math.round((cap / rate) * 100)}% of doctor, surgery and nurse costs.` });
       admissible -= roomExcess + prop;
     }
   }
 
   if (!policy.consumablesCovered) {
     const c = bill * 0.06;
-    lines.push({ label: "Consumables not paid", amount: c, clauseId: "consumables", note: "Gloves, PPE kits, syringes and similar items." });
+    lines.push({ label: "Gloves, masks and needles", amount: c, clauseId: "consumables", note: "This plan doesn't pay for these." });
     admissible -= c;
   }
 
   const sub = s.category === "knee" ? policy.sublimits.knee : s.category === "cataract" ? policy.sublimits.cataract : s.category === "cardiac" ? policy.sublimits.cardiac : undefined;
   if (sub && admissible > sub) {
-    lines.push({ label: "Above the sub-limit", amount: admissible - sub, clauseId: "sublimits", note: `This procedure is capped at ₹${sub.toLocaleString("en-IN")} regardless of your sum insured.` });
+    lines.push({ label: "Over the limit for this surgery", amount: admissible - sub, clauseId: "sublimits", note: `The plan pays only up to ₹${sub.toLocaleString("en-IN")} for this, whatever your cover.` });
     admissible = sub;
   }
   if (s.category === "maternity" && policy.maternity.limit && admissible > policy.maternity.limit) {
-    lines.push({ label: "Above the maternity limit", amount: admissible - policy.maternity.limit, clauseId: "maternity", note: `Delivery is capped at ₹${policy.maternity.limit.toLocaleString("en-IN")}.` });
+    lines.push({ label: "Over the limit for a baby", amount: admissible - policy.maternity.limit, clauseId: "maternity", note: `The plan pays only up to ₹${policy.maternity.limit.toLocaleString("en-IN")} for a baby.` });
     admissible = policy.maternity.limit;
   }
 
   if (copayApplies(policy, age)) {
     const c = admissible * (policy.copay.percent / 100);
-    lines.push({ label: `${policy.copay.percent}% co-payment`, amount: c, clauseId: "copay", note: `Applies because the patient is ${age}.` });
+    lines.push({ label: `Your ${policy.copay.percent}% share`, amount: c, clauseId: "copay", note: `You pay this part because the patient is ${age}.` });
     admissible -= c;
   }
 
   const siAmt = si * 100000;
   if (admissible > siAmt) {
-    lines.push({ label: "Above your sum insured", amount: admissible - siAmt, note: `Your cover is ₹${si} lakh.` });
+    lines.push({ label: "More than your cover", amount: admissible - siAmt, note: `Your cover is ₹${si} lakh.` });
     admissible = siAmt;
   }
 
@@ -136,11 +136,11 @@ export const YEAR_LABEL: Record<number, string> = { 1: "This year", 2: "Next yea
 
 const PHRASE: Record<string, string> = {
   dengue: "spends 4 nights in hospital with dengue",
-  cardiac: "needs an angioplasty after a heart attack",
-  knee: "needs a knee replacement",
-  cataract: "needs cataract surgery",
-  diabetes: "is admitted for a diabetes complication",
-  childbirth: "has a C-section delivery",
+  cardiac: "has a heart attack",
+  knee: "needs a new knee",
+  cataract: "needs eye surgery",
+  diabetes: "is in hospital with a sugar problem",
+  childbirth: "has a baby by C-section",
 };
 
 /** The single most likely costly event for this family, used to headline each plan. */

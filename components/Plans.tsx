@@ -52,21 +52,21 @@ export default function Plans({ lang, profile, top, all, excluded, notes, onOpen
         {top.length === 0 ? (
           <>
             <p className="text-[13px] font-medium text-accent">What type of cover do I need?</p>
-            <h1 className="display mt-2 text-[38px]">Two policies will work better</h1>
-            <p className="mt-3 max-w-[36ch] text-[15px] leading-relaxed text-ink-soft">No single plan accepts everyone together. Here's why, and what to do instead.</p>
+            <h1 className="display mt-2 text-[38px]">Two plans will work better</h1>
+            <p className="mt-3 max-w-[36ch] text-[15px] leading-relaxed text-ink-soft">No one plan takes everyone. Here's why, and what to do.</p>
           </>
         ) : (
         <>
-        <p className="text-[13px] font-medium text-accent">{mode === "cards" ? t(lang, "Which policy should I consider?", "Kaunsi policy dekhni chahiye?") : t(lang, "How do I compare these?", "Inhe compare kaise karun?")}</p>
-        <h1 className="display mt-2 text-[38px]">{mode === "cards" ? t(lang, "Your top 3", "Aapke top 3") : t(lang, "What's actually different", "Asli farak kya hai")}</h1>
+        <p className="text-[13px] font-medium text-accent">{mode === "cards" ? t(lang, "Which plan should I pick?", "Kaunsi policy dekhni chahiye?") : t(lang, "How do I compare these?", "Inhe compare kaise karun?")}</p>
+        <h1 className="display mt-2 text-[38px]">{mode === "cards" ? t(lang, "Your top 3", "Aapke top 3") : t(lang, "What's really different", "Asli farak kya hai")}</h1>
         <p className="mt-3 max-w-[36ch] text-[15px] leading-relaxed text-ink-soft">
           {mode === "cards"
             ? t(
                 lang,
-                `Went through ${POLICIES.length} policies clause by clause. Ranked only on what you told me, and each one leads with what you'd actually pay.`,
+                `I read all ${POLICIES.length} plans, line by line. I ranked them only on what you told me. Each one shows what you'd really pay.`,
                 `${POLICIES.length} policies clause by clause padhi. Ranking sirf aapki baaton pe hai, aur har card pe pehle wahi dikhta hai jo aap asal mein doge.`,
               )
-            : t(lang, "Not features. The rules that decide how much of a bill actually gets paid.", "Features nahi. Woh rules jo decide karte hain ki bill ka kitna paisa milega.")}
+            : t(lang, "Not extras. The rules that decide how much of a bill gets paid.", "Features nahi. Woh rules jo decide karte hain ki bill ka kitna paisa milega.")}
         </p>
         <button onClick={onExplain} className="mt-3 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-accent">
           <Icon name="info" size={15} />
@@ -107,7 +107,7 @@ export default function Plans({ lang, profile, top, all, excluded, notes, onOpen
 
       {top.length === 0 ? (
         <section className="mx-5 mt-6 rounded-[28px] bg-surface p-6 shadow-e1 ring-1 ring-line">
-          <h2 className="title text-[20px] leading-tight">No single policy covers everyone together</h2>
+          <h2 className="title text-[20px] leading-tight">No one plan covers everyone together</h2>
           <ul className="mt-3 space-y-1.5 text-[13.5px] leading-relaxed text-ink-soft">
             {excluded.slice(0, 3).map((e) => (
               <li key={e.policy.id}>
@@ -117,7 +117,7 @@ export default function Plans({ lang, profile, top, all, excluded, notes, onOpen
           </ul>
           {profile.cover?.parents && (profile.cover.self || profile.cover.partner || profile.cover.kids) && (
             <>
-              <p className="mt-5 text-[14.5px] leading-relaxed">That's common when parents are much older. Two policies usually work out better anyway: their claims can't use up your cover.</p>
+              <p className="mt-5 text-[14.5px] leading-relaxed">This is common when parents are much older. Two plans often work better anyway. Their bills can't use up your cover.</p>
               <div className="mt-5 grid grid-cols-2 gap-2.5">
                 <button onClick={() => split.onSwitch("family")} className="rounded-full py-3.5 text-[14px] font-semibold ring-1 ring-line">
                   Your family
@@ -145,7 +145,7 @@ export default function Plans({ lang, profile, top, all, excluded, notes, onOpen
                           <span className="whitespace-nowrap rounded-full bg-white/20 px-3 py-1 text-[12px] font-semibold backdrop-blur">{lang === "hi" ? LABEL_HI[m.label ?? ""] ?? m.label : m.label}</span>
                         </span>
                         <span className="whitespace-nowrap text-[12px] opacity-80">
-                          {m.prioritiesTotal > 0 ? `${m.prioritiesMet}/${m.prioritiesTotal} priorities` : m.fit}
+                          {m.prioritiesTotal > 0 ? `${m.prioritiesMet}/${m.prioritiesTotal} needs met` : m.fit}
                         </span>
                       </div>
                       <p className="mt-10 text-[13px] opacity-85">{m.policy.insurer}</p>
@@ -163,7 +163,7 @@ export default function Plans({ lang, profile, top, all, excluded, notes, onOpen
                         )}
                         <p className="mt-1 text-[14px] font-medium">
                           {r.blocked
-                            ? t(lang, "is what you'd pay. It's still in the waiting period.", "aapko dena hoga. Waiting period abhi chal raha hai.")
+                            ? t(lang, "is what you'd pay. It's too soon, so the plan pays nothing yet.", "aapko dena hoga. Waiting period abhi chal raha hai.")
                             : r.youPay === 0
                               ? t(lang, `of the ${inrShort(r.bill)} bill. You pay nothing.`, `${inrShort(r.bill)} ke bill mein se. Aapko kuch nahi dena.`)
                               : t(lang, `of the ${inrShort(r.bill)} bill. You pay ${inrShort(r.youPay)}.`, `${inrShort(r.bill)} ke bill mein se. Aap doge ${inrShort(r.youPay)}.`)}
@@ -202,7 +202,7 @@ export default function Plans({ lang, profile, top, all, excluded, notes, onOpen
                       )}
                       <div className="mt-4">
                         <Seal>
-                          {t(lang, "Policy wording", "Policy wording")} {m.policy.docVersion}, {t(lang, "checked", "checked")} {new Date(m.policy.lastVerified).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
+                          {t(lang, "Plan wording", "Policy wording")} {m.policy.docVersion}, {t(lang, "checked", "checked")} {new Date(m.policy.lastVerified).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
                         </Seal>
                       </div>
                       <ul className="mt-6 space-y-6 border-t border-line pt-6">
@@ -233,7 +233,7 @@ export default function Plans({ lang, profile, top, all, excluded, notes, onOpen
           <button onClick={() => onBill(top[active]?.policy.id ?? top[0].policy.id)} className="mx-5 mt-8 flex w-[calc(100%-2.5rem)] items-center justify-between gap-4 rounded-[28px] bg-primary p-5 text-left text-on-primary shadow-e2">
             <span>
               <span className="block text-[12.5px] opacity-70">{t(lang, "Next step", "Agla step")}</span>
-              <span className="title mt-1 block text-[18px] leading-tight">{t(lang, "Will these plans actually cover you?", "Kya yeh plans sach mein cover karenge?")}</span>
+              <span className="title mt-1 block text-[18px] leading-tight">{t(lang, "Will these plans really pay?", "Kya yeh plans sach mein cover karenge?")}</span>
               <span className="mt-1 block text-[13px] opacity-75">{t(lang, "See real hospital bills for your family, plan by plan.", "Apni family ke asli hospital bills dekho, har plan ke saath.")}</span>
             </span>
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent text-white">
@@ -247,7 +247,7 @@ export default function Plans({ lang, profile, top, all, excluded, notes, onOpen
           <StructureAdvice structures={structures} />
           {excluded.length > 0 && (
             <details className="mx-6 mt-8 rounded-[24px] bg-surface p-5 text-[14px] shadow-e1 ring-1 ring-line">
-              <summary className="cursor-pointer font-semibold">{t(lang, "Why some plans didn't make the cut", "Kuch plans kyun nahi dikhe")}</summary>
+              <summary className="cursor-pointer font-semibold">{t(lang, "Why some plans aren't here", "Kuch plans kyun nahi dikhe")}</summary>
               <ul className="mt-3 space-y-2 text-ink-soft">
                 {excluded.map((e) => (
                   <li key={e.policy.id}>
@@ -268,9 +268,9 @@ export default function Plans({ lang, profile, top, all, excluded, notes, onOpen
 const LABEL_HI: Record<string, string> = {
   "Best fit for you": "Aapke liye best",
   "Budget pick": "Budget wala",
-  "Maximum protection": "Full protection",
-  "Strong alternative": "Solid option",
-  "Lower premium": "Kam premium",
+  "Most cover": "Full protection",
+  "Good backup": "Solid option",
+  "Costs less": "Kam premium",
 };
 
 type Tone = "good" | "caveat" | "bad" | "neutral";
@@ -281,14 +281,14 @@ function Compare({ lang, profile, top, onOpen }: { lang: Lang; profile: Profile;
   const age = eldestAge(profile);
   const rate = PRIVATE_ROOM_RATE[profile.city ?? "tier2"];
   const rows: { label: string; why: string; matters?: Priority | true; clause?: string; cell: (m: Match) => [string, Tone] }[] = [
-    { label: "Yearly premium", why: "Estimated", matters: "low_premium", cell: (m) => [inrShort(m.premium), profile.budget && m.premium > profile.budget ? "bad" : "neutral"] },
-    { label: "Room rent", why: "Going over a cap shrinks your whole claim", matters: "private_room", clause: "room", cell: ({ policy: p, sumInsured }) => (p.roomRent.kind === "none" ? ["No cap", "good"] : p.roomRent.kind === "single" ? ["Private room", "good"] : [`${inrShort(((p.roomRent.percent ?? 1) / 100) * sumInsured * 1e5)}/day`, ((p.roomRent.percent ?? 1) / 100) * sumInsured * 1e5 >= rate ? "caveat" : "bad"]) },
-    { label: "Co-pay", why: "Your share of every bill", matters: "low_oop", clause: "copay", cell: ({ policy: p }) => (!p.copay.percent ? ["None", "good"] : copayApplies(p, age) ? [`${p.copay.percent}% always`, "bad"] : [`${p.copay.percent}% at ${p.copay.fromAge}+`, "caveat"]) },
-    { label: "Existing illness", why: "Wait before it's covered", matters: "ped_fast", clause: "ped", cell: ({ policy: p }) => [`${p.pedWaitYears} yr`, p.pedWaitYears <= 1 ? "good" : p.pedWaitYears === 2 ? "caveat" : "bad"] },
-    { label: "Surgery caps", why: "Limits regardless of cover", matters: true, clause: "sublimits", cell: ({ policy: p }) => (Object.keys(p.sublimits).length ? ["Yes", "bad"] : ["None", "good"]) },
-    { label: "Maternity", why: "Delivery and newborn", matters: "maternity", clause: "maternity", cell: ({ policy: p }) => (p.maternity.covered ? [`After ${p.maternity.waitYears} yr`, "good"] : ["No", pri.has("maternity") ? "bad" : "neutral"]) },
-    { label: "Cover refills", why: "If one claim uses it up", matters: "restoration", clause: "restoration", cell: ({ policy: p }) => (p.restoration === "unlimited" ? ["Always", "good"] : p.restoration === "once" ? ["Once", "caveat"] : ["Never", "bad"]) },
-    { label: "Consumables", why: "Gloves, PPE, 5–10% of a bill", clause: "consumables", cell: ({ policy: p }) => (p.consumablesCovered ? ["Paid", "good"] : ["Not paid", "caveat"]) },
+    { label: "Yearly cost", why: "Our best guess", matters: "low_premium", cell: (m) => [inrShort(m.premium), profile.budget && m.premium > profile.budget ? "bad" : "neutral"] },
+    { label: "Room limit", why: "Go over it and the plan pays less on everything", matters: "private_room", clause: "room", cell: ({ policy: p, sumInsured }) => (p.roomRent.kind === "none" ? ["No limit", "good"] : p.roomRent.kind === "single" ? ["Private room", "good"] : [`${inrShort(((p.roomRent.percent ?? 1) / 100) * sumInsured * 1e5)}/day`, ((p.roomRent.percent ?? 1) / 100) * sumInsured * 1e5 >= rate ? "caveat" : "bad"]) },
+    { label: "Your share", why: "What you pay of every bill", matters: "low_oop", clause: "copay", cell: ({ policy: p }) => (!p.copay.percent ? ["None", "good"] : copayApplies(p, age) ? [`${p.copay.percent}% always`, "bad"] : [`${p.copay.percent}% at ${p.copay.fromAge}+`, "caveat"]) },
+    { label: "Illness you have", why: "Wait before it pays", matters: "ped_fast", clause: "ped", cell: ({ policy: p }) => [`${p.pedWaitYears} yr`, p.pedWaitYears <= 1 ? "good" : p.pedWaitYears === 2 ? "caveat" : "bad"] },
+    { label: "Surgery limits", why: "Pays only up to a set amount", matters: true, clause: "sublimits", cell: ({ policy: p }) => (Object.keys(p.sublimits).length ? ["Yes", "bad"] : ["None", "good"]) },
+    { label: "Having a baby", why: "Birth and newborn", matters: "maternity", clause: "maternity", cell: ({ policy: p }) => (p.maternity.covered ? [`After ${p.maternity.waitYears} yr`, "good"] : ["No", pri.has("maternity") ? "bad" : "neutral"]) },
+    { label: "Cover refills", why: "If one big bill uses it up", matters: "restoration", clause: "restoration", cell: ({ policy: p }) => (p.restoration === "unlimited" ? ["Always", "good"] : p.restoration === "once" ? ["Once", "caveat"] : ["Never", "bad"]) },
+    { label: "Gloves, masks, needles", why: "5–10% of a bill", clause: "consumables", cell: ({ policy: p }) => (p.consumablesCovered ? ["Paid", "good"] : ["Not paid", "caveat"]) },
   ];
   const matters = (r: (typeof rows)[number]) => r.matters === true || (!!r.matters && pri.has(r.matters));
   return (
@@ -322,7 +322,7 @@ function Compare({ lang, profile, top, onOpen }: { lang: Lang; profile: Profile;
           ))}
         </div>
       </div>
-      <p className="mt-4 px-1 text-[12.5px] text-ink-soft">{t(lang, "Highlighted rows are the ones you said matter. Tap any value to read the clause.", "Highlighted rows woh hain jo aapne important bataye. Clause padhne ke liye kisi bhi value pe tap karo.")}</p>
+      <p className="mt-4 px-1 text-[12.5px] text-ink-soft">{t(lang, "Highlighted rows are the ones you care about. Tap any value to read the plan's words.", "Highlighted rows woh hain jo aapne important bataye. Clause padhne ke liye kisi bhi value pe tap karo.")}</p>
     </div>
   );
 }
@@ -335,7 +335,7 @@ function WorkedOut({ items }: { items: Inference[] }) {
     <section className="mt-5 rounded-[24px] bg-accent-soft p-5" aria-labelledby="worked-title">
       <h2 id="worked-title" className="flex items-center gap-2 text-[14px] font-semibold text-accent">
         <Icon name="sparkle" size={15} />
-        What I worked out from your answers
+        What I learned from your answers
       </h2>
       <ul className="mt-3 space-y-3">
         {list.map((i) => (

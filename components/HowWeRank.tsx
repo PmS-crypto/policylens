@@ -32,7 +32,7 @@ export default function HowWeRank({ profile, top, section, onClose }: { profile:
 
   return (
     <Sheet onClose={onClose} title={<h2 className="display text-[30px]">{section === "numbers" ? "How the numbers work" : "How we ranked your plans"}</h2>}>
-      <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">The ranking is plain code, not AI. Here's exactly what it weighed for your family.</p>
+      <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">A simple program ranks the plans, not AI. Here's what it checked for your family.</p>
 
       {/* What counts, and how much */}
       <section className="mt-7" aria-labelledby="factors">
@@ -63,7 +63,7 @@ export default function HowWeRank({ profile, top, section, onClose }: { profile:
           ))}
         </ul>
         <p className="mt-4 text-[12.5px] leading-relaxed text-ink-soft">
-          Your likeliest hospital visit counts most. What you said matters counts 3×. Everything else counts once. Plans your family can't join are removed first.
+          Your most likely hospital trip counts most. What you said matters counts 3×. Most other things count once. First, we remove plans your family can't join.
         </p>
       </section>
 
@@ -78,7 +78,7 @@ export default function HowWeRank({ profile, top, section, onClose }: { profile:
               <li key={w.key} className="flex gap-2">
                 <Icon name="check" size={16} stroke={2.4} className="mt-1 shrink-0 text-paid" />
                 <span>
-                  <span className="font-medium">{w.label}:</span> {a.policy.name} does better{w.weight >= 3 ? ", and this counts heavily for you" : ""}.
+                  <span className="font-medium">{w.label}:</span> {a.policy.name} does better{w.weight >= 3 ? ", and this matters a lot for you" : ""}.
                 </span>
               </li>
             ))}
@@ -86,11 +86,11 @@ export default function HowWeRank({ profile, top, section, onClose }: { profile:
               <li key={l.key} className="flex gap-2 text-ink-soft">
                 <Icon name="info" size={16} className="mt-1 shrink-0 text-warn" />
                 <span>
-                  <span className="font-medium text-ink">{l.label}:</span> {b.policy.name} is actually better here, but it matters less overall.
+                  <span className="font-medium text-ink">{l.label}:</span> {b.policy.name} does better here, but this matters less.
                 </span>
               </li>
             ))}
-            {!wins.length && <li>They're very close. {a.policy.name} edges ahead across several small factors.</li>}
+            {!wins.length && <li>They're very close. {a.policy.name} wins by a little on a few small things.</li>}
           </ul>
         </section>
       )}
@@ -100,9 +100,9 @@ export default function HowWeRank({ profile, top, section, onClose }: { profile:
         <h3 id="never" className="title text-[19px]">What we never use</h3>
         <ul className="mt-3 space-y-3 text-[14px] leading-relaxed">
           {[
-            "Commissions, insurer payments or sponsored placement. The ranking code has no such data in it.",
-            "AI to rank or price plans. The AI only explains results the code has already worked out.",
-            "Unchecked AI numbers. Every number in an AI answer is checked against the policy wording; if one can't be traced, you see the policy's own words instead.",
+            "Money from insurance companies, or paid spots. The ranking code doesn't even have this data.",
+            "AI to rank or price plans. AI only explains what the code already worked out.",
+            "AI numbers we haven't checked. We check every AI number against the plan's own words. If one doesn't match, you see the plan's words instead.",
           ].map((x) => (
             <li key={x} className="flex gap-2.5">
               <Icon name="shield" size={17} className="mt-0.5 shrink-0 text-accent" />
@@ -116,13 +116,13 @@ export default function HowWeRank({ profile, top, section, onClose }: { profile:
       <section ref={numbersRef} className="mt-8 scroll-mt-4" aria-labelledby="numbers">
         <h3 id="numbers" className="title text-[19px]">Where the bill numbers come from</h3>
         <p className="mt-2 text-[14px] leading-relaxed text-ink-soft">
-          Typical treatment costs, adjusted for a {CITY_LABEL[city].toLowerCase()} (×{CITY_COST_FACTOR[city]}), then run through each plan's rules.
+          Usual hospital prices, changed for a {CITY_LABEL[city].toLowerCase()} (×{CITY_COST_FACTOR[city]}). Then we apply each plan's rules.
         </p>
         <div className="mt-4 overflow-hidden rounded-[20px] ring-1 ring-line">
           <table className="w-full text-[13px]">
             <thead>
               <tr className="bg-surface-2 text-left text-[12px] text-ink-soft">
-                <th className="px-3 py-2 font-medium">Event</th>
+                <th className="px-3 py-2 font-medium">What happens</th>
                 <th className="px-3 py-2 text-right font-medium">Your city</th>
               </tr>
             </thead>
@@ -134,7 +134,7 @@ export default function HowWeRank({ profile, top, section, onClose }: { profile:
                 </tr>
               ))}
               <tr className="border-t border-line">
-                <td className="px-3 py-2">Private room, per day</td>
+                <td className="px-3 py-2">Private room, one day</td>
                 <td className="px-3 py-2 text-right tabular-nums">{inrShort(PRIVATE_ROOM_RATE[city])}</td>
               </tr>
             </tbody>
@@ -142,21 +142,21 @@ export default function HowWeRank({ profile, top, section, onClose }: { profile:
         </div>
         <p className="mt-4 text-[13px] font-medium">Then each plan's rules, in this order:</p>
         <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-[13.5px] leading-relaxed text-ink-soft">
-          <li>Waiting periods: if one hasn't passed, nothing is paid.</li>
-          <li>Room rent above the cap, plus the proportionate cut on doctor and nursing charges (we assume 55% of non-room charges are affected).</li>
-          <li>Consumables like gloves and PPE, if the plan excludes them (we assume 6% of the bill).</li>
-          <li>Caps on specific surgeries.</li>
-          <li>Co-pay, for members old enough for it to apply.</li>
-          <li>Your total cover limit.</li>
+          <li>Too soon: if you still have to wait, the plan pays nothing.</li>
+          <li>Room limit: if the room costs more, the plan cuts the doctor's bill too. We guess this hits 55% of the other costs.</li>
+          <li>Gloves, masks and needles, if the plan won't pay for them. We guess 6% of the bill.</li>
+          <li>Limits on certain surgeries.</li>
+          <li>Your share of the bill, if the patient is old enough.</li>
+          <li>Your total cover.</li>
         </ol>
         <p className="mt-4 rounded-[16px] bg-warn-soft px-4 py-3 text-[13px] leading-relaxed text-warn">
-          These are estimates, not quotes. Real bills vary by hospital, and the insurer assesses every claim. You can change the bill amount on the bill screen.
+          These are guesses, not prices. Real bills change from hospital to hospital. The insurance company checks every bill. You can change the bill amount on the bill screen.
         </p>
       </section>
 
       {/* Where the policy data comes from */}
       <section className="mt-8" aria-labelledby="sources">
-        <h3 id="sources" className="title text-[19px]">Where the policy data comes from</h3>
+        <h3 id="sources" className="title text-[19px]">Where the plan details come from</h3>
         <ul className="mt-3 divide-y divide-line text-[13.5px]">
           {top.map((m) => (
             <li key={m.policy.id} className="flex items-baseline justify-between gap-3 py-2.5">
@@ -169,7 +169,7 @@ export default function HowWeRank({ profile, top, section, onClose }: { profile:
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-[12.5px] leading-relaxed text-ink-soft">In this prototype, plans and prices are illustrative, modelled on typical Indian policy wording. The insurer's own policy document always takes precedence.</p>
+        <p className="mt-3 text-[12.5px] leading-relaxed text-ink-soft">This is a test version. Plans and prices are examples, based on usual Indian plans. The insurance company's own papers always come first.</p>
       </section>
     </Sheet>
   );

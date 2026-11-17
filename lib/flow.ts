@@ -33,11 +33,11 @@ export const t = (l: Lang, en: string, hi: string) => (l === "hi" ? hi : en);
 export const STEPS: Step[] = [
   {
     id: "goal",
-    ask: (_, l) => t(l, "Okay, let's start with your people, not policies. Who are we covering?", "Chalo, policies baad mein. Pehle batao, kisko cover karna hai?"),
+    ask: (_, l) => t(l, "Let's start with your family. Who needs cover?", "Chalo, policies baad mein. Pehle batao, kisko cover karna hai?"),
     chips: (_, l) => [
       { label: t(l, "Me", "Main"), value: "self", hint: t(l, "Just you", "Sirf aap") },
       { label: "Partner", value: "partner", hint: t(l, "Husband or wife", "Husband ya wife") },
-      { label: t(l, "Kids", "Bachche"), value: "kids", hint: t(l, "The little ones", "Chhote wale") },
+      { label: t(l, "Kids", "Bachche"), value: "kids", hint: t(l, "Your children", "Chhote wale") },
       { label: t(l, "Parents", "Mummy-Papa"), value: "parents", hint: t(l, "Mom, dad or both", "Ek ya dono") },
     ],
     multi: true,
@@ -65,8 +65,8 @@ export const STEPS: Step[] = [
   },
   {
     id: "partnerAge",
-    ask: (_, l) => t(l, "And your partner's age?", "Aur partner ki age?"),
-    hint: (_, l) => t(l, "Why I'm asking: premiums and eligibility follow the eldest person on the policy.", "Kyun pooch raha hoon: premium aur eligibility sabse bade member ki age se tay hote hain."),
+    ask: (_, l) => t(l, "How old is your partner?", "Aur partner ki age?"),
+    hint: (_, l) => t(l, "The oldest person sets the price.", "Kyun pooch raha hoon: premium aur eligibility sabse bade member ki age se tay hote hain."),
     chips: (_, l) => [
       { label: t(l, "Under 25", "25 se kam"), value: "23" },
       { label: "25–30", value: "28" },
@@ -82,7 +82,7 @@ export const STEPS: Step[] = [
   {
     id: "parentAge",
     ask: (_, l) =>
-      t(l, "How old is your elder parent? Age changes a lot here: who'll accept them, waiting periods, co-pay.", "Ghar mein elder parent ki age kitni hai? Yahan age se kaafi farak padta hai: eligibility, waiting period, co-pay sab."),
+      t(l, "How old is your older parent?", "Ghar mein elder parent ki age kitni hai? Yahan age se kaafi farak padta hai: eligibility, waiting period, co-pay sab."),
     chips: () => [
       { label: "50–55", value: "53" },
       { label: "56–60", value: "58" },
@@ -97,18 +97,18 @@ export const STEPS: Step[] = [
       (p.parentAge ?? 0) >= 61
         ? t(
             l,
-            `Most plans add a 20% co-pay after 60, which means you'd pay a fifth of every hospital bill for ${parentsShort(p)}. I'll call out every plan that does this.`,
+            `After 60, many plans make you pay 20% of every bill for ${parentsShort(p)}. I'll point out each one.`,
             "Seedhi baat: bahut saare plans 60 ke baad 20% co-pay laga dete hain. Matlab har hospital bill ka ek-paanchva hissa aapki jeb se. Main har aise plan ko flag karunga.",
           )
         : t(
             l,
-            `${parentsShort(p) === "your parents" ? "They'll" : parentsShort(p) === "Dad" ? "He'll" : "She'll"} cross 60 soon, and some plans start a co-pay at 61. So I'll check what happens then, not just today.`,
+            `${parentsShort(p) === "your parents" ? "They'll" : parentsShort(p) === "Dad" ? "He'll" : "She'll"} turn 60 soon. Some plans then make you pay part of each bill. I'll check that too.`,
             "Woh jaldi 60 cross karenge, aur kuch plans 61 se co-pay shuru kar dete hain. Toh main aaj ka nahi, aage ka bhi dekhunga.",
           ),
   },
   {
     id: "kids",
-    ask: (_, l) => t(l, "How many kids are we adding?", "Kitne bachche add karne hain?"),
+    ask: (_, l) => t(l, "How many kids?", "Kitne bachche add karne hain?"),
     chips: () => [
       { label: "1", value: "1" },
       { label: "2", value: "2" },
@@ -120,7 +120,7 @@ export const STEPS: Step[] = [
   },
   {
     id: "baby",
-    ask: (_, l) => t(l, "Any baby plans in the next 3 years? No pressure, it just changes the maths.", "Agle 3 saal mein baby plan hai? Koi pressure nahi, bas calculation badal jaata hai."),
+    ask: (_, l) => t(l, "Planning a baby in the next 3 years?", "Agle 3 saal mein baby plan hai? Koi pressure nahi, bas calculation badal jaata hai."),
     chips: (_, l) => [
       { label: t(l, "Yes", "Haan"), value: "yes" },
       { label: t(l, "Maybe", "Shayad"), value: "maybe" },
@@ -133,7 +133,7 @@ export const STEPS: Step[] = [
       p.planningBaby
         ? t(
             l,
-            "Good call telling me now. Maternity cover has a 2–4 year waiting period, so you buy before you plan, not after.",
+            "Good to know. Plans wait 2–4 years before paying for a baby. So buy early.",
             "Achha kiya abhi bata diya. Maternity cover mein 2–4 saal ka waiting period hota hai, toh plan karne se pehle lena padta hai, baad mein nahi.",
           )
         : null,
@@ -142,12 +142,12 @@ export const STEPS: Step[] = [
     id: "conditions",
     ask: (p, l) =>
       p.cover?.parents
-        ? t(l, "Do your parents, or anyone else here, have an existing health condition?", "Mummy-Papa ya kisi aur ko pehle se koi health condition hai?")
-        : t(l, "Does anyone you're covering have an existing health condition?", "Jinhe cover kar rahe ho, unme kisi ko pehle se koi health condition hai?"),
+        ? t(l, "Do your parents or anyone else have an illness already?", "Mummy-Papa ya kisi aur ko pehle se koi health condition hai?")
+        : t(l, "Does anyone have an illness already?", "Jinhe cover kar rahe ho, unme kisi ko pehle se koi health condition hai?"),
     hint: (_, l) =>
       t(
         l,
-        "This stays between us and only helps me check waiting periods. Always declare it to the insurer though: hiding it is a top reason claims get rejected.",
+        "This stays private. Always tell the insurance company. If you hide it, they may not pay.",
         "Yeh sirf waiting period check karne ke liye hai, kisi ke saath share nahi hota. Par insurer ko hamesha sach batana: chhupane se claims reject hote hain.",
       ),
     chips: (_, l) => [
@@ -155,7 +155,7 @@ export const STEPS: Step[] = [
       { label: t(l, "Diabetes", "Sugar / Diabetes"), value: "diabetes" },
       { label: "High BP", value: "bp" },
       { label: "Thyroid", value: "thyroid" },
-      { label: t(l, "Heart condition", "Heart problem"), value: "heart" },
+      { label: t(l, "Heart problem", "Heart problem"), value: "heart" },
       { label: "Asthma", value: "asthma" },
     ],
     multi: true,
@@ -166,8 +166,8 @@ export const STEPS: Step[] = [
         ? t(
             l,
             p.cover?.parents
-              ? `${p.conditions.map((c) => CONDITION_LABEL[c]).join(" and ")} for ${parentsShort(p)}: noted. That's exactly what I'll check every plan against, because existing conditions are only covered after a 1–4 year wait, and that's where plans differ most.`
-              : `${p.conditions.map((c) => CONDITION_LABEL[c]).join(" and ")}: noted. Existing conditions are only covered after a 1–4 year wait, and that's where plans differ most. I'll check every plan against it.`,
+              ? `${p.conditions.map((c) => CONDITION_LABEL[c]).join(" and ")} for ${parentsShort(p)}: got it. Plans wait 1–4 years before paying for this. I'll check each one.`
+              : `${p.conditions.map((c) => CONDITION_LABEL[c]).join(" and ")}: got it. Plans wait 1–4 years before paying for this. I'll check each one.`,
             "Aapke liye yahi sabse important hai. Pehle se wali bimari 1–4 saal ke wait ke baad hi cover hoti hai, aur plans mein sabse bada farak yahin hai.",
           )
         : null,
@@ -175,7 +175,7 @@ export const STEPS: Step[] = [
   {
     id: "conditionWho",
     ask: (p, l) => t(l, `Who has ${p.conditions?.length === 1 ? "it" : "them"}?`, "Yeh kisko hai?"),
-    hint: (_, l) => t(l, "Why I'm asking: the waiting period applies to that person, and it changes whether separate policies make sense.", "Kyun pooch raha hoon: waiting period usi par lagta hai, aur isse alag policy ka faisla badalta hai."),
+    hint: (_, l) => t(l, "The wait is only for that person. It may mean separate plans.", "Kyun pooch raha hoon: waiting period usi par lagta hai, aur isse alag policy ka faisla badalta hai."),
     chips: (p, l) =>
       [
         p.cover?.self ? { label: t(l, "Me", "Mujhe"), value: "self" } : null,
@@ -190,13 +190,13 @@ export const STEPS: Step[] = [
   {
     id: "upcoming",
     ask: (_, l) =>
-      t(l, "A few quick ones so I get this exactly right. Is any treatment or surgery likely in the next 2 years?", "Kuch chhote sawaal, taaki sab sahi ho. Agle 2 saal mein koi treatment ya surgery hone ki sambhavna hai?"),
-    hint: (_, l) => t(l, "Why I'm asking: planned surgeries have their own waiting periods and payout caps, and plans differ a lot here.", "Kyun pooch raha hoon: planned surgery ke alag waiting period aur limits hote hain, aur plans mein yahan bahut farak hai."),
+      t(l, "Might anyone need surgery in the next 2 years?", "Kuch chhote sawaal, taaki sab sahi ho. Agle 2 saal mein koi treatment ya surgery hone ki sambhavna hai?"),
+    hint: (_, l) => t(l, "Plans wait before paying for surgery. Some pay only part.", "Kyun pooch raha hoon: planned surgery ke alag waiting period aur limits hote hain, aur plans mein yahan bahut farak hai."),
     chips: (_, l) => [
       { label: t(l, "Nothing planned", "Kuch nahi"), value: "none" },
-      { label: t(l, "Cataract", "Cataract (motiyabind)"), value: "cataract" },
-      { label: t(l, "Knee or hip replacement", "Knee ya hip replacement"), value: "joint" },
-      { label: t(l, "Heart procedure", "Heart procedure"), value: "heart" },
+      { label: t(l, "Eye (cataract)", "Cataract (motiyabind)"), value: "cataract" },
+      { label: t(l, "New knee or hip", "Knee ya hip replacement"), value: "joint" },
+      { label: t(l, "Heart surgery", "Heart procedure"), value: "heart" },
     ],
     multi: true,
     done: (p) => p.upcoming !== undefined,
@@ -205,17 +205,17 @@ export const STEPS: Step[] = [
       p.upcoming?.length
         ? t(
             l,
-            "Good to know now, not later. Planned surgeries usually come with a 1–2 year wait, and some plans cap what they'll pay. I'll put the plans that cover it soonest, without caps, at the top.",
+            "Good to know. Plans often wait 1–2 years before paying for surgery. Some pay only part. The best ones go at the top.",
             "Achha hua abhi bata diya. Planned surgery par aksar 1–2 saal ka wait hota hai, aur kuch plans limit laga dete hain. Jo plan sabse jaldi aur bina limit cover kare, woh upar dikhaunga.",
           )
         : null,
   },
   {
     id: "city",
-    ask: (_, l) => t(l, "Where would you usually get treated?", "Treatment usually kahan karwaoge?"),
+    ask: (_, l) => t(l, "Where would you go to hospital?", "Treatment usually kahan karwaoge?"),
     chips: (_, l) => [
-      { label: t(l, "Metro (Mumbai, Delhi, Bengaluru…)", "Metro (Mumbai, Delhi, Bengaluru…)"), value: "metro" },
-      { label: t(l, "Tier-2 city (Jaipur, Indore…)", "Tier-2 city (Jaipur, Indore…)"), value: "tier2" },
+      { label: t(l, "Big city (Mumbai, Delhi, Bengaluru…)", "Metro (Mumbai, Delhi, Bengaluru…)"), value: "metro" },
+      { label: t(l, "Mid-size city (Jaipur, Indore…)", "Tier-2 city (Jaipur, Indore…)"), value: "tier2" },
       { label: t(l, "Smaller town", "Chhota shehar"), value: "tier3" },
     ],
     done: (p) => !!p.city,
@@ -224,14 +224,14 @@ export const STEPS: Step[] = [
       p.city === "metro"
         ? t(
             l,
-            "A private room in a metro hospital is around ₹7,000 a day. Many budget plans cap rooms below that, and going over the cap shrinks your whole claim, not just the room charge.",
+            "A big-city hospital room costs about ₹7,000 a day. Cheap plans often allow less. Then the plan cuts the doctor's bill too.",
             "Dhyaan dena: metro hospital mein private room lagbhag ₹7,000 roz ka hota hai. Kaafi budget plans ki room limit isse kam hai, aur limit cross hui toh poora claim kat jaata hai, sirf room ka nahi.",
           )
         : null,
   },
   {
     id: "employer",
-    ask: (_, l) => t(l, "Does your job give you health cover?", "Office se health cover milta hai?"),
+    ask: (_, l) => t(l, "Does your work give you health cover?", "Office se health cover milta hai?"),
     chips: (_, l) => [
       { label: t(l, "No", "Nahi"), value: "0" },
       { label: t(l, "Up to ₹3L", "₹3L tak"), value: "3" },
@@ -245,7 +245,7 @@ export const STEPS: Step[] = [
       (p.employerCover ?? 0) > 0
         ? t(
             l,
-            "Nice, but it disappears the day you switch jobs. And waiting periods on your own policy only start once you buy, so starting early is the move.",
+            "Nice. But it ends when you leave the job. Your own plan's wait starts when you buy. So buy early.",
             "Badhiya, par job badli toh yeh cover bhi gaya. Aur apni policy ka waiting period tabhi shuru hota hai jab aap lete ho, toh jaldi lena hi smart move hai.",
           )
         : null,
@@ -254,9 +254,9 @@ export const STEPS: Step[] = [
     id: "existingCover",
     ask: (p, l) =>
       p.cover?.parents && !p.cover.self
-        ? t(l, "Do your parents already have a health policy of their own?", "Kya Mummy-Papa ki pehle se koi apni health policy hai?")
-        : t(l, "Do you already have a health policy of your own, apart from work?", "Office ke alawa, kya aapki pehle se koi apni health policy hai?"),
-    hint: (_, l) => t(l, "Why I'm asking: topping up a policy you have keeps the waiting periods you've already served.", "Kyun pooch raha hoon: purani policy ko top up karne se jo waiting period poora ho chuka hai, woh bacha rehta hai."),
+        ? t(l, "Do your parents have their own health plan?", "Kya Mummy-Papa ki pehle se koi apni health policy hai?")
+        : t(l, "Do you have your own health plan, apart from work?", "Office ke alawa, kya aapki pehle se koi apni health policy hai?"),
+    hint: (_, l) => t(l, "Adding to it keeps the waiting time you've already done.", "Kyun pooch raha hoon: purani policy ko top up karne se jo waiting period poora ho chuka hai, woh bacha rehta hai."),
     chips: (_, l) => [
       { label: t(l, "No", "Nahi"), value: "0" },
       { label: t(l, "Yes, up to ₹5L", "Haan, ₹5L tak"), value: "5" },
@@ -269,15 +269,15 @@ export const STEPS: Step[] = [
       (p.existingCover ?? 0) > 0
         ? t(
             l,
-            "Nice. I'll look at topping it up rather than replacing it. That's usually the cheapest way to more cover, and you keep the waiting periods you've already served.",
+            "Nice. I'll look at adding extra cover on top. It's often cheapest. And you keep the waiting time you've done.",
             "Badhiya. Main ise replace karne ke bajaye top up karne ka option dekhunga. Yeh aksar sabse sasta hai, aur poore hue waiting period bache rehte hain.",
           )
         : null,
   },
   {
     id: "savings",
-    ask: (_, l) => t(l, "If a ₹5 lakh hospital bill came tomorrow, could your savings handle it?", "Agar kal ₹5 lakh ka hospital bill aa jaaye, kya savings se ho jaayega?"),
-    hint: (_, l) => t(l, "Why I'm asking: it decides how much cover you need on top, and whether a cheaper top-up plan suits you.", "Kyun pooch raha hoon: isse tay hota hai kitna cover chahiye, aur sasta top-up plan aapke liye theek hai ya nahi."),
+    ask: (_, l) => t(l, "Could your savings pay a ₹5 lakh hospital bill?", "Agar kal ₹5 lakh ka hospital bill aa jaaye, kya savings se ho jaayega?"),
+    hint: (_, l) => t(l, "This tells me how much cover you need.", "Kyun pooch raha hoon: isse tay hota hai kitna cover chahiye, aur sasta top-up plan aapke liye theek hai ya nahi."),
     chips: (_, l) => [
       { label: t(l, "Yes, comfortably", "Haan, aaram se"), value: "covered" },
       { label: t(l, "Partly", "Thoda bahut"), value: "partly" },
@@ -287,14 +287,14 @@ export const STEPS: Step[] = [
     apply: (p, [v]) => ({ ...p, savings: v as Profile["savings"] }),
     insight: (p, l) =>
       p.savings === "no"
-        ? t(l, "Then the right cover matters even more. I've added headroom so one big bill doesn't land on your savings.", "Tab sahi cover aur bhi zaroori hai. Maine extra cover joda hai taaki ek bada bill savings par na pade.")
+        ? t(l, "Then cover matters more. I've added extra so one big bill won't hit your savings.", "Tab sahi cover aur bhi zaroori hai. Maine extra cover joda hai taaki ek bada bill savings par na pade.")
         : null,
   },
   {
     id: "tobacco",
-    ask: (_, l) => t(l, "Does anyone you're covering smoke or use tobacco?", "Jinhe cover kar rahe ho, unme koi smoke ya tobacco leta hai?"),
+    ask: (_, l) => t(l, "Does anyone smoke or chew tobacco?", "Jinhe cover kar rahe ho, unme koi smoke ya tobacco leta hai?"),
     hint: (_, l) =>
-      t(l, "Why I'm asking: insurers usually charge a little more for tobacco. Always declare it, because hiding it is a top reason claims get rejected.", "Kyun pooch raha hoon: tobacco par premium thoda zyada hota hai. Hamesha batao, chhupane se claims reject hote hain."),
+      t(l, "It costs a little more. Always tell them. If you hide it, they may not pay.", "Kyun pooch raha hoon: tobacco par premium thoda zyada hota hai. Hamesha batao, chhupane se claims reject hote hain."),
     chips: (_, l) => [
       { label: t(l, "No", "Nahi"), value: "no" },
       { label: t(l, "Yes", "Haan"), value: "yes" },
@@ -303,12 +303,12 @@ export const STEPS: Step[] = [
     apply: (p, [v]) => ({ ...p, tobacco: v === "yes" }),
     insight: (p, l) =>
       p.tobacco
-        ? t(l, "Thanks for being upfront. I've priced every plan with that in mind, so there are no surprises later.", "Sach batane ke liye shukriya. Maine har plan ka premium isi hisaab se lagaya hai, taaki baad mein koi surprise na ho.")
+        ? t(l, "Thanks for telling me. Every price here includes it. No surprises later.", "Sach batane ke liye shukriya. Maine har plan ka premium isi hisaab se lagaya hai, taaki baad mein koi surprise na ho.")
         : null,
   },
   {
     id: "priorities",
-    ask: (_, l) => t(l, "What matters most to you? Pick up to 3.", "Aapke liye sabse zaroori kya hai? 3 tak chuno."),
+    ask: (_, l) => t(l, "What matters most? Pick up to 3.", "Aapke liye sabse zaroori kya hai? 3 tak chuno."),
     chips: (_, l) => (Object.keys(PRIORITY_COPY) as Priority[]).map((k) => ({ label: PRIORITY_COPY[k][l][0], value: k, hint: PRIORITY_COPY[k][l][1] })),
     multi: true,
     max: 3,
@@ -318,11 +318,11 @@ export const STEPS: Step[] = [
   },
   {
     id: "income",
-    ask: (_, l) => t(l, "Roughly what does your household earn in a year?", "Ghar ki saal ki kamai lagbhag kitni hai?"),
+    ask: (_, l) => t(l, "About how much does your family earn a year?", "Ghar ki saal ki kamai lagbhag kitni hai?"),
     hint: (_, l) =>
       t(
         l,
-        "Why I'm asking: a plan only protects you if you can keep renewing it as premiums rise with age. This stays private and is never shared.",
+        "Prices go up with age. You must keep paying each year. This stays private.",
         "Kyun pooch raha hoon: plan tabhi kaam aata hai jab aap har saal renew kar sako. Yeh private rehta hai, kisi ke saath share nahi hota.",
       ),
     chips: (_, l) => [
@@ -338,7 +338,7 @@ export const STEPS: Step[] = [
   },
   {
     id: "budget",
-    ask: (_, l) => t(l, "Last one, promise. What yearly premium feels okay?", "Bas last sawaal. Saal ka kitna premium theek lagega?"),
+    ask: (_, l) => t(l, "Last one! How much can you pay a year?", "Bas last sawaal. Saal ka kitna premium theek lagega?"),
     chips: (_, l) => [
       { label: t(l, "Under ₹15k", "₹15k se kam"), value: "15000" },
       { label: "₹15–25k", value: "25000" },
@@ -353,13 +353,13 @@ export const STEPS: Step[] = [
 ];
 
 const PRIORITY_COPY: Record<Priority, Record<Lang, [string, string]>> = {
-  private_room: { en: ["Private room", "Your own room, no deductions"], hi: ["Private room", "Apna room, koi katauti nahi"] },
-  low_oop: { en: ["Pay less at claim time", "Keep money out of your pocket"], hi: ["Claim pe kam kharcha", "Jeb se kam se kam paisa"] },
-  ped_fast: { en: ["Existing illness, covered fast", "Shorter wait for what you already have"], hi: ["Purani bimari jaldi cover", "Kam waiting period"] },
-  low_premium: { en: ["Low premium", "Keep the yearly cost down"], hi: ["Kam premium", "Saal ka kharcha kam"] },
-  maternity: { en: ["Maternity", "Delivery and newborn costs"], hi: ["Maternity", "Delivery aur newborn ka kharcha"] },
-  restoration: { en: ["Cover that refills", "Resets if one claim uses it up"], hi: ["Cover refill ho", "Ek claim mein khatam ho toh wapas bhare"] },
-  network: { en: ["Big hospital network", "More places with no upfront payment"], hi: ["Bada hospital network", "Zyada jagah cashless"] },
+  private_room: { en: ["Own room", "A room just for you"], hi: ["Private room", "Apna room, koi katauti nahi"] },
+  low_oop: { en: ["Pay less in hospital", "You pay less of the bill"], hi: ["Claim pe kam kharcha", "Jeb se kam se kam paisa"] },
+  ped_fast: { en: ["Old illness paid soon", "Less wait for an illness you have"], hi: ["Purani bimari jaldi cover", "Kam waiting period"] },
+  low_premium: { en: ["Low price", "Costs less each year"], hi: ["Kam premium", "Saal ka kharcha kam"] },
+  maternity: { en: ["Having a baby", "Birth and newborn costs"], hi: ["Maternity", "Delivery aur newborn ka kharcha"] },
+  restoration: { en: ["Cover that refills", "Fills up again if you use it up"], hi: ["Cover refill ho", "Ek claim mein khatam ho toh wapas bhare"] },
+  network: { en: ["Lots of hospitals", "More places where you don't pay first"], hi: ["Bada hospital network", "Zyada jagah cashless"] },
 };
 
 export const nextStep = (p: Profile) => STEPS.find((s) => !s.done(p) && !s.skip?.(p)) ?? null;

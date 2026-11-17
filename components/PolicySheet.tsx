@@ -17,6 +17,21 @@ interface Props {
   onChoose: () => void;
 }
 
+/** Plain headings for the insurer's clause titles. The clause text below each stays word for word. */
+const CLAUSE_LABEL: Record<string, string> = {
+  room: "Room limit",
+  copay: "Your share of the bill",
+  ped: "Illnesses you already have",
+  specific: "Wait for planned surgery",
+  initial: "First 30 days",
+  maternity: "Having a baby",
+  restoration: "Cover refills",
+  consumables: "Gloves, masks and needles",
+  ncb: "Cover grows each year",
+  sublimits: "Limits on treatments",
+  exclusions: "What it won't pay for",
+};
+
 export default function PolicySheet({ match, focusClause, profile, lang, onClose, onChoose }: Props) {
   const p = match.policy;
   const [q, setQ] = useState("");
@@ -44,10 +59,10 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
 
   const suggestions = [
     profile.conditions?.length
-      ? t(lang, `When does ${profile.conditions[0] === "bp" ? "BP" : profile.conditions[0]} get covered?`, `${profile.conditions[0] === "bp" ? "BP" : profile.conditions[0]} kab se cover hoga?`)
-      : t(lang, "What's not covered?", "Kya cover nahi hota?"),
+      ? t(lang, `When does it pay for ${profile.conditions[0] === "bp" ? "BP" : profile.conditions[0]}?`, `${profile.conditions[0] === "bp" ? "BP" : profile.conditions[0]} kab se cover hoga?`)
+      : t(lang, "What won't it pay for?", "Kya cover nahi hota?"),
     t(lang, "What if I pick a bigger room?", "Bada room liya toh kya hoga?"),
-    profile.cover?.parents ? t(lang, "Is knee replacement covered?", "Knee replacement cover hai?") : t(lang, "Any hidden limits?", "Koi chhupi limit hai?"),
+    profile.cover?.parents ? t(lang, "Does it pay for a new knee?", "Knee replacement cover hai?") : t(lang, "Any hidden limits?", "Koi chhupi limit hai?"),
   ];
   const flags = redFlags(p);
 
@@ -60,7 +75,7 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
           <h2 className="display mt-1 text-[34px]">{p.name}</h2>
           <div className="mt-3">
             <Seal>
-              Policy wording {p.docVersion}, checked {new Date(p.lastVerified).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+              Plan papers {p.docVersion}, checked {new Date(p.lastVerified).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
             </Seal>
           </div>
         </div>
@@ -77,7 +92,7 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={t(lang, "Ask anything about this plan", "Is plan ke baare mein kuch bhi poocho")}
-          aria-label="Ask this policy"
+          aria-label="Ask about this plan"
           className="min-w-0 flex-1 bg-transparent py-2 text-[15px] outline-none placeholder:text-ink-faint"
         />
         <button className="rounded-full bg-accent px-5 text-[14px] font-semibold text-white">{t(lang, "Ask", "Poocho")}</button>
@@ -89,7 +104,7 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
           </button>
         ))}
       </div>
-      {loading && <p className="mt-3 text-[14px] text-ink-soft">{t(lang, "Reading the fine print…", "Fine print padh raha hoon…")}</p>}
+      {loading && <p className="mt-3 text-[14px] text-ink-soft">{t(lang, "Reading the plan…", "Fine print padh raha hoon…")}</p>}
       {answer && !loading && (
         <div className="rise mt-4 rounded-[24px] bg-accent-soft p-5 text-[15px] leading-relaxed">
           <p className="mb-1.5 text-[12px] text-ink-soft">{answer.q}</p>
@@ -97,7 +112,7 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
           {answer.checked && (
             <p className="mt-3 flex items-center gap-1.5 text-[12px] text-ink-soft">
               <Icon name="check" size={13} stroke={2.4} className="text-paid" />
-              {t(lang, "Numbers checked against the policy wording", "Numbers policy wording se check kiye gaye")}
+              {t(lang, "Numbers checked against the plan's own words", "Numbers policy wording se check kiye gaye")}
             </p>
           )}
           {answer.cites.length > 0 && (
@@ -130,7 +145,7 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
         </div>
       )}
 
-      <h3 className="title mt-10 text-[20px]">{t(lang, "The exact words in the policy", "Policy ke exact shabd")}</h3>
+      <h3 className="title mt-10 text-[20px]">{t(lang, "The plan's exact words", "Policy ke exact shabd")}</h3>
       <div className="mt-4 space-y-2.5">
         {p.clauses.map((c) => (
           <div
@@ -142,7 +157,7 @@ export default function PolicySheet({ match, focusClause, profile, lang, onClose
           >
             <p className="font-semibold">
               <span className="mr-2 font-mono text-[12px] text-ink-soft">§{c.section}</span>
-              {c.title}
+              {lang === "en" ? CLAUSE_LABEL[c.id] ?? c.title : c.title}
             </p>
             <p className="mt-1 leading-relaxed">{highlight === c.id ? <span className="mark">{c.text}</span> : c.text}</p>
           </div>

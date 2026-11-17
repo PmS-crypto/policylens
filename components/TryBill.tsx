@@ -31,7 +31,7 @@ function plain(line: SimLine): string {
     case "ped":
       return `It comes from an old illness, so this plan makes you wait ${years}.`;
     case "maternity":
-      if (line.label.startsWith("Maternity not")) return "This plan doesn't pay for babies.";
+      if (line.label.startsWith("Baby not")) return "This plan doesn't pay for babies.";
       if (n) return `Too soon. This plan makes you wait ${years} for a baby.`;
       return "This plan pays only a small part for a baby.";
     case "copay":

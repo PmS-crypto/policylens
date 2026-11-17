@@ -30,7 +30,7 @@ function LayerBar({ layers }: { layers: Layer[] }) {
               <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${LAYER_STYLE[l.kind]}`} />
               {l.label}
             </span>
-            <span className="shrink-0 font-medium tabular-nums">{l.premium ? `${inrShort(l.premium)}/yr` : "Paid by employer"}</span>
+            <span className="shrink-0 font-medium tabular-nums">{l.premium ? `${inrShort(l.premium)}/yr` : "Paid by work"}</span>
           </li>
         ))}
       </ul>
@@ -44,8 +44,8 @@ export function StructureAdvice({ structures }: { structures: Structure[] }) {
   return (
     <section className="mx-5 mt-10" aria-labelledby="structure-title">
       <p className="text-[13px] font-medium text-accent">What type of cover do I need?</p>
-      <h2 id="structure-title" className="display mt-2 text-[30px]">Smarter ways to build your cover</h2>
-      <p className="mt-3 max-w-[36ch] text-[15px] leading-relaxed text-ink-soft">One big plan is rarely the cheapest way to be well covered. Here's how advisors would layer it for your family.</p>
+      <h2 id="structure-title" className="display mt-2 text-[30px]">Smarter ways to get cover</h2>
+      <p className="mt-3 max-w-[36ch] text-[15px] leading-relaxed text-ink-soft">One big plan is rarely the cheapest way. Here are better ways for your family.</p>
 
       <div className="mt-6 space-y-3">
         {structures.map((s, i) => {
@@ -104,7 +104,7 @@ export function StructureAdvice({ structures }: { structures: Structure[] }) {
         })}
       </div>
       <p className="mt-4 px-1 text-[12px] leading-relaxed text-ink-soft">
-        A super top-up pays only after a year's hospital bills cross its deductible. {TOPUP.insurer} {TOPUP.name} ({TOPUP.docVersion}) is illustrative, priced with the same model as the plans above.
+        Extra cover on top pays only after a year's bills pass a set amount. {TOPUP.insurer} {TOPUP.name} ({TOPUP.docVersion}) is an example, priced like the plans above.
       </p>
     </section>
   );
@@ -112,7 +112,7 @@ export function StructureAdvice({ structures }: { structures: Structure[] }) {
 
 /** Compact flag under the plans header that jumps to the levers. */
 const budgetPhrase = (budget: number, source?: "you" | "income" | null) =>
-  source === "income" ? `the ${inrShort(budget)} a year your income can comfortably keep renewing` : `your ${inrShort(budget)} budget`;
+  source === "income" ? `the ${inrShort(budget)} a year your income can easily keep paying` : `your ${inrShort(budget)} budget`;
 
 export function OverBudgetFlag({ over, budget, source, onSee }: { over: number; budget: number; source?: "you" | "income" | null; onSee: () => void }) {
   return (
@@ -133,7 +133,7 @@ export function BudgetFix({ over, budget, source, levers, bestName, sentence }: 
       <h2 id="fit-title" className="display mt-2 text-[30px]">Make it fit your budget</h2>
       <p className="mt-3 max-w-[36ch] text-[15px] leading-relaxed text-ink-soft">
         {bestName} is {inrShort(over)} over {budgetPhrase(budget, source)}.{" "}
-        {anyFits ? "These options get you under it. Each one shows exactly what you'd give up." : "Nothing gets fully under it without big gaps, so here are the closest options and what each costs you."}
+        {anyFits ? "These options fit. Each one shows what you give up." : "Nothing fits without big gaps. Here are the closest options and what you give up."}
       </p>
       <ol className="mt-6 space-y-3">
         {levers.map((l) => (
@@ -152,7 +152,7 @@ export function BudgetFix({ over, budget, source, levers, bestName, sentence }: 
               </div>
               <div>
                 <Money value={l.extraYouPay} text={l.extraYouPay > 0 ? `+${inrShort(l.extraYouPay)}` : "No change"} className={`block text-[26px] ${l.extraYouPay > 0 ? "text-owe" : "text-paid"}`} />
-                <p className="mt-1 text-[12px] leading-snug text-ink-soft">out of pocket {sentence.replace(/^If /, "if ")}</p>
+                <p className="mt-1 text-[12px] leading-snug text-ink-soft">you pay yourself {sentence.replace(/^If /, "if ")}</p>
               </div>
             </div>
             <p className="mt-4 text-[13.5px] leading-relaxed text-ink-soft">

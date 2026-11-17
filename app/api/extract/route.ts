@@ -20,7 +20,7 @@ Return ONLY a JSON object: {"patch": {...}, "reply": "..."}.
 - savings: "covered"|"partly"|"no" (could savings absorb a ₹5 lakh bill)
 - tobacco: bool (anyone covered smokes or uses tobacco)
 - income: number, household income per YEAR in rupees (convert monthly to yearly; null if they decline)
-"reply" is ONE warm, plain-language sentence (max 25 words) acknowledging what they shared. No jargon, no recommendations, no questions.`;
+"reply" is ONE warm sentence in words a 5-year-old could follow (max 15 words) acknowledging what they shared. No jargon, no recommendations, no questions.`;
 
 export async function POST(req: Request) {
   const { text, profile, stepId, lang } = (await req.json()) as { text: string; profile: Profile; stepId?: string; lang?: Lang };

@@ -103,7 +103,7 @@ export default function Chat(props: Props) {
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
-      setVoiceError("Mic access is blocked. Allow it in your browser settings, or just type instead.");
+      setVoiceError("The mic is blocked. Turn it on in your browser, or type.");
       return;
     }
     const type = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"].find((t) => MediaRecorder.isTypeSupported(t));
@@ -115,7 +115,7 @@ export default function Chat(props: Props) {
       const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
       if (blob.size < 1200) {
         setVoice("idle");
-        setVoiceError("Didn't catch any audio. Tap the mic and try again.");
+        setVoiceError("I didn't hear anything. Tap the mic and try again.");
         return;
       }
       setVoice("transcribing");
@@ -127,7 +127,7 @@ export default function Chat(props: Props) {
         if (!res.ok || !data.text) throw new Error(data.error);
         send(data.text);
       } catch (e) {
-        setVoiceError((e as Error).message || "Couldn't transcribe that. Try again, or type it.");
+        setVoiceError((e as Error).message || "I couldn't catch that. Try again, or type it.");
       } finally {
         setVoice("idle");
       }
@@ -148,7 +148,7 @@ export default function Chat(props: Props) {
         {typing && (
           <div className="flex items-center gap-3 text-[13px] text-ink-faint" aria-label="PolicyLens is thinking">
             <Orb size={26} thinking />
-            {t(lang, "Reading the fine print…", "Fine print padh raha hoon…")}
+            {t(lang, "Reading the small print…", "Fine print padh raha hoon…")}
           </div>
         )}
 
@@ -237,7 +237,7 @@ export default function Chat(props: Props) {
               ) : (
                 <>
                   <Orb size={20} thinking />
-                  <span className="text-ink-soft">{t(lang, "Turning that into text…", "Text bana raha hoon…")}</span>
+                  <span className="text-ink-soft">{t(lang, "Writing down what you said…", "Text bana raha hoon…")}</span>
                 </>
               )}
             </p>
@@ -251,7 +251,7 @@ export default function Chat(props: Props) {
               type="button"
               onClick={mic}
               disabled={voice === "transcribing"}
-              aria-label={voice === "recording" ? "Stop recording" : "Speak your answer"}
+              aria-label={voice === "recording" ? "Stop recording" : "Say your answer"}
               className={`grid h-11 w-11 shrink-0 place-items-center rounded-full transition ${voice === "recording" ? "recording bg-owe text-white" : "bg-primary text-on-primary"} disabled:opacity-50`}
             >
               {voice === "recording" ? <span className="h-3.5 w-3.5 rounded-[3px] bg-white" /> : <Icon name="mic" size={18} />}
@@ -274,7 +274,7 @@ function Bubble({ m, lang, onCitation }: { m: Msg; lang: Lang; onCitation: (c: C
     return (
       <p className="rise flex items-start gap-2.5 text-[13px] leading-relaxed text-ink-soft">
         <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
-          <Icon name={m.text.startsWith("Why I'm asking") || m.text.startsWith("Kyun pooch") ? "info" : "lock"} size={13} />
+          <Icon name={m.text.startsWith("This stays private") || m.text.startsWith("Yeh sirf") ? "lock" : "info"} size={13} />
         </span>
         {m.text}
       </p>
@@ -285,7 +285,7 @@ function Bubble({ m, lang, onCitation }: { m: Msg; lang: Lang; onCitation: (c: C
         <div aria-hidden className="absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-60 blur-2xl" style={{ background: "radial-gradient(#ffb38a, #f49ac1 60%, transparent 70%)" }} />
         <p className="relative flex items-center gap-2 text-[13px] font-semibold text-accent">
           <Icon name="sparkle" size={15} />
-          {t(lang, "Most people miss this", "Zyaadatar log yeh miss karte hain")}
+          {t(lang, "Good to know", "Zyaadatar log yeh miss karte hain")}
         </p>
         <p className="relative mt-2 text-[15px] leading-relaxed">{m.text}</p>
       </div>
@@ -296,7 +296,7 @@ function Bubble({ m, lang, onCitation }: { m: Msg; lang: Lang; onCitation: (c: C
       {m.checked && !!m.citations?.length && (
         <p className="mt-3 flex items-center gap-1.5 text-[12px] text-ink-soft">
           <Icon name="check" size={13} stroke={2.4} className="text-paid" />
-          {t(lang, "Numbers checked against the policy wording", "Numbers policy wording se check kiye gaye")}
+          {t(lang, "Numbers checked against the plan's own words", "Numbers policy wording se check kiye gaye")}
         </p>
       )}
       {!!m.citations?.length && (

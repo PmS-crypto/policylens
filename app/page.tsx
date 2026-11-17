@@ -108,7 +108,7 @@ export default function Home() {
       const h = s.hint?.(p, langRef.current);
       if (h) push({ role: "ai", text: h, tone: "hint" });
     } else {
-      await aiSay(t(langRef.current, "That's everything I need. You've already done more homework than most people do before buying.", "Bas, itna kaafi hai. Aapne already zyaadatar logon se zyada homework kar liya hai."));
+      await aiSay(t(langRef.current, "That's all I need. Thanks!", "Bas, itna kaafi hai. Aapne already zyaadatar logon se zyada homework kar liya hai."));
     }
   }
 
@@ -160,8 +160,8 @@ export default function Home() {
         .then((r) => r.json())
         .catch(() => null);
       setTyping(false);
-      push({ role: "ai", text: help?.answer ?? t(langRef.current, "Hmm, didn't quite get that. Say it another way, or just tap an option.", "Hmm, samajh nahi aaya. Thoda alag tareeke se bolo, ya koi option tap kar do.") });
-      if (step) await aiSay(t(langRef.current, `Back to you: ${step.ask(p, langRef.current)}`, `Ab aap batao: ${step.ask(p, langRef.current)}`));
+      push({ role: "ai", text: help?.answer ?? t(langRef.current, "Sorry, I didn't get that. Try other words, or tap an answer.", "Hmm, samajh nahi aaya. Thoda alag tareeke se bolo, ya koi option tap kar do.") });
+      if (step) await aiSay(t(langRef.current, `Now, back to you: ${step.ask(p, langRef.current)}`, `Ab aap batao: ${step.ask(p, langRef.current)}`));
       return setBusy(false);
     }
     await aiSay(res.reply ?? summarize(p2, fresh, langRef.current));
@@ -189,7 +189,7 @@ export default function Home() {
     await aiSay(
       t(
         langRef.current,
-        "Hey, I'm PolicyLens. Tell me about your family and I'll show you what each plan would actually pay, before you spend a rupee. Type, tap or just talk.",
+        "Hi, I'm PolicyLens. Tell me about your family. I'll show you what each plan really pays. Type, tap or talk.",
         "Hey, main PolicyLens hoon. Apni family ke baare mein batao, main dikhaunga ki har plan asal mein kitna pay karega, ek rupaya kharch karne se pehle. Type karo, tap karo ya bol do.",
       ),
     );
@@ -217,7 +217,7 @@ export default function Home() {
       role: "ai",
       text: t(
         langRef.current,
-        `Read all ${POLICIES.length} policies so you don't have to. Here are the 3 that fit. Ask me anything about them, right here.`,
+        `I read all ${POLICIES.length} plans for you. Here are the 3 that fit best. Ask me anything about them.`,
         `${POLICIES.length} policies padh li, taaki aapko na padhni pade. Yeh rahe aapke 3 best plans. Kuch bhi poochna ho toh yahin poocho.`,
       ),
     });
@@ -233,7 +233,7 @@ export default function Home() {
     setSplitBase(base);
     update(next);
     loadNotes(next, langRef.current);
-    push({ role: "ai", text: group === "parents" ? "Here's cover for your parents on their own." : "Here's cover for your family, without your parents." });
+    push({ role: "ai", text: group === "parents" ? "Here's a plan just for your parents." : "Here's a plan for your family, without your parents." });
   }
 
   function onEdit(field: keyof Profile) {
@@ -258,9 +258,9 @@ export default function Home() {
     resultsReady && !busy
       ? [
           profile.conditions?.length
-            ? t(lang, `When does ${CONDITION_LABEL[profile.conditions[0]].toLowerCase()} get covered?`, `${CONDITION_LABEL[profile.conditions[0]]} kab se cover hoga?`)
-            : t(lang, "What's not covered?", "Kya cover nahi hota?"),
-          t(lang, "Best one for a private room?", "Private room ke liye best kaunsa?"),
+            ? t(lang, `When will it pay for ${CONDITION_LABEL[profile.conditions[0]].toLowerCase()}?`, `${CONDITION_LABEL[profile.conditions[0]]} kab se cover hoga?`)
+            : t(lang, "What won't it pay for?", "Kya cover nahi hota?"),
+          t(lang, "Best one for my own room?", "Private room ke liye best kaunsa?"),
           t(lang, "Which one would you pick for me?", "Aap mere liye kaunsa loge?"),
         ].map((q) => ({ label: q, value: q }))
       : [];
@@ -277,15 +277,15 @@ export default function Home() {
         <div className="absolute -right-20 -top-16 text-white opacity-70" aria-hidden>
           <SlicedOrb size={120} />
         </div>
-        <p className="relative text-[13px] font-medium opacity-85">{t(lang, "Profile done", "Profile ready")}</p>
-        <p className="title relative mt-2 max-w-[14ch] text-[24px] leading-tight">{profile.cover?.parents && !profile.cover.self && !profile.cover.partner ? "Let's find the right cover for your parents" : t(lang, "Let's find the right cover for your family", "Chalo, family ka plan dhoondte hain")}</p>
+        <p className="relative text-[13px] font-medium opacity-85">{t(lang, "All done", "Profile ready")}</p>
+        <p className="title relative mt-2 max-w-[14ch] text-[24px] leading-tight">{profile.cover?.parents && !profile.cover.self && !profile.cover.partner ? "Let's find cover for your parents" : t(lang, "Let's find cover for your family", "Chalo, family ka plan dhoondte hain")}</p>
         <div className="relative mt-8">
-          <p className="text-[12.5px] opacity-80">{t(lang, "Cover we'd go for", "Itna cover sahi rahega")}</p>
+          <p className="text-[12.5px] opacity-80">{t(lang, "Cover we suggest", "Itna cover sahi rahega")}</p>
           <p className="money mt-1 text-[64px]">₹{recommendSumInsured(profile).lakh}L</p>
         </div>
         <div className="relative mt-6 grid grid-cols-[auto_1fr] gap-2.5">
           <button onClick={() => setProfileOpen(true)} className="rounded-full bg-white/15 px-5 py-4 text-[14px] font-semibold backdrop-blur">
-            {t(lang, "Review", "Check karo")}
+            {t(lang, "Check", "Check karo")}
           </button>
           <button onClick={showPlans} className="flex items-center justify-center gap-2 rounded-full bg-white py-4 text-[14.5px] font-semibold text-[#16131d] shadow-e2">
             {t(lang, "Show my plans", "Plans dikhao")}
@@ -302,8 +302,8 @@ export default function Home() {
       <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 hidden h-[900px] w-[900px] -translate-x-1/4 -translate-y-1/2 rounded-full opacity-40 blur-3xl lg:block breathe" style={{ background: "radial-gradient(circle at 40% 40%, #b7a6ff, #f49ac1 40%, #ffc6a8 60%, transparent 70%)" }} />
       <aside className="relative hidden max-w-sm lg:block">
         <Logo />
-        <p className="display mt-10 text-[56px]">Health insurance that actually pays.</p>
-        <p className="mt-6 max-w-[34ch] text-[16px] leading-relaxed text-ink-soft">PolicyLens is designed for your phone. Open this page on mobile and add it to your home screen.</p>
+        <p className="display mt-10 text-[56px]">Health insurance that really pays.</p>
+        <p className="mt-6 max-w-[34ch] text-[16px] leading-relaxed text-ink-soft">PolicyLens is made for your phone. Open it there and add it to your home screen.</p>
       </aside>
 
       <div className="relative mx-auto flex h-dvh w-full max-w-[440px] flex-col overflow-hidden bg-canvas lg:mx-0 lg:h-[900px] lg:max-h-[94vh] lg:rounded-[56px] lg:shadow-e3 lg:ring-[10px] lg:ring-[#15121c]">
@@ -317,7 +317,7 @@ export default function Home() {
                   <Orb size={34} thinking={typing} />
                   <div>
                     <p className="title text-[16px] leading-none">PolicyLens</p>
-                    <p className="mt-1 text-[12px] leading-none text-ink-soft">{typing ? t(lang, "Thinking…", "Soch raha hoon…") : stage === "qa" ? t(lang, "Ask me anything", "Kuch bhi poocho") : t(lang, "Your insurance bestie", "Aapka insurance dost")}</p>
+                    <p className="mt-1 text-[12px] leading-none text-ink-soft">{typing ? t(lang, "Thinking…", "Soch raha hoon…") : stage === "qa" ? t(lang, "Ask me anything", "Kuch bhi poocho") : t(lang, "Your insurance friend", "Aapka insurance dost")}</p>
                   </div>
                 </div>
                 <ThemeToggle />
@@ -339,7 +339,7 @@ export default function Home() {
                   max={step?.max}
                   tiles={step?.layout === "tiles"}
                   preselected={step?.id === "priorities" ? prefill : undefined}
-                  placeholder={stage === "qa" ? t(lang, "Ask about your plans", "Plans ke baare mein poocho") : t(lang, "Type or say it", "Type karo ya bolo")}
+                  placeholder={stage === "qa" ? t(lang, "Ask about your plans", "Plans ke baare mein poocho") : t(lang, "Type or talk", "Type karo ya bolo")}
                   lang={lang}
                   footer={readyCard}
                   onChips={onChips}
@@ -424,23 +424,23 @@ function summarize(p: Profile, fresh: string[], l: Lang) {
   for (const id of fresh) {
     if (id === "goal") bits.push(hi ? `${coverSummary(p).replace(/ \(\d+\)/g, "")} ko cover karna hai` : `covering ${coverSummary(p).replace(/ \(\d+\)/g, "").toLowerCase()}`);
     if (id === "selfAge" && (p.cover?.self || p.cover?.partner)) bits.push(hi ? `aap ${p.selfAge} ke ho` : `you're ${p.selfAge}`);
-    if (id === "parentAge") bits.push(hi ? `elder parent ${p.parentAge} ke hain` : `your elder parent is ${p.parentAge}`);
+    if (id === "parentAge") bits.push(hi ? `elder parent ${p.parentAge} ke hain` : `your older parent is ${p.parentAge}`);
     if (id === "kids") bits.push(hi ? `${p.kidsCount} bachche` : `${p.kidsCount} kid${p.kidsCount === 1 ? "" : "s"}`);
-    if (id === "baby") bits.push(p.planningBaby ? (hi ? "baby plan hai" : "a baby is on the cards") : hi ? "abhi baby plan nahi" : "no baby plans");
-    if (id === "conditions") bits.push(p.conditions?.length ? p.conditions.map((c) => CONDITION_LABEL[c]).join(" & ") : hi ? "koi purani bimari nahi" : "no existing conditions");
+    if (id === "baby") bits.push(p.planningBaby ? (hi ? "baby plan hai" : "you may have a baby") : hi ? "abhi baby plan nahi" : "no baby plans");
+    if (id === "conditions") bits.push(p.conditions?.length ? p.conditions.map((c) => CONDITION_LABEL[c]).join(" & ") : hi ? "koi purani bimari nahi" : "no illnesses");
     if (id === "partnerAge") bits.push(hi ? `partner ${p.partnerAge} ke` : `your partner is ${p.partnerAge}`);
     if (id === "upcoming") bits.push(p.upcoming?.length ? (hi ? "surgery planned hai" : `${p.upcoming.map((u) => PLANNED_LABEL[u].toLowerCase()).join(" and ")} may be needed soon`) : hi ? "koi surgery planned nahi" : "nothing planned");
-    if (id === "existingCover") bits.push(p.existingCover ? (hi ? `apni ₹${p.existingCover}L policy` : `a ₹${p.existingCover}L policy already`) : hi ? "apni policy nahi" : "no policy of your own yet");
-    if (id === "tobacco") bits.push(p.tobacco ? (hi ? "tobacco hai" : "tobacco use") : hi ? "tobacco nahi" : "no tobacco");
+    if (id === "existingCover") bits.push(p.existingCover ? (hi ? `apni ₹${p.existingCover}L policy` : `your own ₹${p.existingCover}L plan`) : hi ? "apni policy nahi" : "no plan of your own yet");
+    if (id === "tobacco") bits.push(p.tobacco ? (hi ? "tobacco hai" : "uses tobacco") : hi ? "tobacco nahi" : "no tobacco");
     if (id === "city") bits.push(p.cityName ?? CITY_LABEL[p.city!].toLowerCase());
     if (id === "employer") bits.push(p.employerCover ? (hi ? `office se ₹${p.employerCover}L cover` : `₹${p.employerCover}L from work`) : hi ? "office cover nahi" : "no cover from work");
-    if (id === "budget") bits.push(p.budget ? (hi ? `budget ${inr(p.budget)} tak` : `budget up to ${inr(p.budget)} a year`) : hi ? "budget open hai" : "budget's open");
+    if (id === "budget") bits.push(p.budget ? (hi ? `budget ${inr(p.budget)} tak` : `up to ${inr(p.budget)} a year`) : hi ? "budget open hai" : "no set budget");
   }
   if (!bits.length) return hi ? "Samajh gaya." : "Got it.";
   const and = hi ? " aur " : " and ";
   const list = bits.length > 1 ? bits.slice(0, -1).join(", ") + and + bits[bits.length - 1] : bits[0];
   if (hi) return `Samajh gaya: ${list}.${bits.length >= 3 ? " Kaafi sawaal bach gaye." : ""}`;
-  return `Got it: ${list}.${bits.length >= 3 ? " That just saved us a few questions." : ""}`;
+  return `Got it: ${list}.${bits.length >= 3 ? " That saves a few questions." : ""}`;
 }
 
 function Landing({ onStart, lang }: { onStart: (text?: string) => void; lang: Lang }) {

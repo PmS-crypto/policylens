@@ -27,7 +27,7 @@ export function riskSnapshot(p: Profile, best: Match, l: Lang = "en") {
         : `Your ₹${p.employerCover}L cover from work doesn't include parents.`
       : hi
         ? `Office ka ₹${p.employerCover}L cover help karta hai, par job badli toh gaya.`
-        : `Your ₹${p.employerCover}L cover from work helps, but it's gone the day you switch jobs.`;
+        : `Your ₹${p.employerCover}L cover from work helps. But it ends the day you leave your job.`;
 
   const conditions = (p.conditions ?? []).map((c) => CONDITION_LABEL[c].toLowerCase().replace(/\bbp\b/, "BP"));
   return {
@@ -39,10 +39,10 @@ export function riskSnapshot(p: Profile, best: Match, l: Lang = "en") {
     waitLine: conditions.length
       ? hi
         ? `Waiting period tabhi shuru hota hai jab aap policy lete ho. Har mahina late matlab ${conditions.join(" aur ")} ka cover utna hi door.`
-        : `Waiting periods only start when you buy. Every month you wait pushes cover for ${conditions.join(" and ")} further out.`
+        : `Your waiting time starts only when you buy. Each month you delay, cover for ${conditions.join(" and ")} starts later.`
       : hi
         ? "Waiting period tabhi shuru hota hai jab aap policy lete ho. Jitna jaldi, utna jaldi full cover."
-        : "Waiting periods only start when you buy, so the sooner you start, the sooner you're fully covered.",
+        : "Your waiting time starts only when you buy. Buy sooner, get full cover sooner.",
   };
 }
 

@@ -4,24 +4,24 @@ export const CONDITION_LABEL: Record<Condition, string> = {
   diabetes: "Diabetes",
   bp: "High BP",
   thyroid: "Thyroid",
-  heart: "Heart condition",
+  heart: "Heart problem",
   asthma: "Asthma",
 };
 
 export const PRIORITY_LABEL: Record<Priority, string> = {
-  private_room: "Private room",
-  low_oop: "Minimal out-of-pocket",
-  ped_fast: "Existing conditions covered fast",
-  low_premium: "Low premium",
-  maternity: "Maternity cover",
+  private_room: "Own room",
+  low_oop: "Pay less yourself",
+  ped_fast: "Old illness paid soon",
+  low_premium: "Low price",
+  maternity: "Having a baby",
   restoration: "Cover that refills",
-  network: "Wide hospital network",
+  network: "Lots of hospitals",
 };
 
 export const CITY_LABEL: Record<CityTier, string> = {
-  metro: "Metro city",
-  tier2: "Tier-2 city",
-  tier3: "Smaller town",
+  metro: "Big city",
+  tier2: "Mid-size city",
+  tier3: "Small town",
 };
 
 // Typical single private room tariff per day, used to judge room-rent caps.
@@ -76,9 +76,9 @@ export const conditionHolder = (p: Profile): "parent" | "self" =>
   p.conditionWho ? (p.conditionWho === "parent" ? "parent" : "self") : p.cover?.parents ? "parent" : "self";
 
 export const PLANNED_LABEL: Record<"cataract" | "joint" | "heart", string> = {
-  cataract: "Cataract surgery",
-  joint: "Knee or hip replacement",
-  heart: "Heart procedure",
+  cataract: "Eye (cataract) surgery",
+  joint: "New knee or hip",
+  heart: "Heart surgery",
 };
 
 export function effectivePriorities(p: Profile): Priority[] {
@@ -93,31 +93,31 @@ export function recommendSumInsured(p: Profile): { lakh: number; why: string[] }
   let si = p.city === "tier3" ? 5 : 10;
   why.push(
     p.city === "metro"
-      ? "A major surgery in a metro hospital commonly costs ₹4–8L"
-      : `Base cover suited to treatment costs in a ${CITY_LABEL[p.city ?? "tier2"].toLowerCase()}`,
+      ? "A big surgery in a big-city hospital often costs ₹4–8L"
+      : `Enough for hospital costs in a ${CITY_LABEL[p.city ?? "tier2"].toLowerCase()}`,
   );
   const { adults, kids } = memberCounts(p);
   if (adults + kids >= 3) {
     si += 5;
-    why.push(`${adults + kids} people share one floater, so one big claim shouldn't wipe it out`);
+    why.push(`${adults + kids} people share one cover, so one big bill shouldn't use it all`);
   }
   if (p.cover?.parents) {
     si += 5;
-    why.push("Parents over 55 are far more likely to need hospitalisation");
+    why.push("Parents over 55 go to hospital much more often");
   }
   if (p.conditions?.length && !p.cover?.parents) {
     si += 5;
-    why.push("Existing conditions raise the odds of a large claim");
+    why.push("An illness you already have makes a big bill more likely");
   }
   if (p.savings === "no") {
     si += 5;
-    why.push("A big bill would hit your savings hard, so we've added headroom");
+    why.push("A big bill would hurt your savings, so we added extra");
   }
   if (p.existingCover && p.existingCover > 0) {
-    why.push(`Your ₹${p.existingCover}L personal policy can stay as the first layer; see the top-up option`);
+    why.push(`Keep your own ₹${p.existingCover}L plan and add extra cover on top`);
   }
   if (p.employerCover && p.employerCover > 0) {
-    why.push(`Your ${lakh(p.employerCover)} employer cover ends if you change jobs, so we don't count on it`);
+    why.push(`Your ${lakh(p.employerCover)} cover from work ends if you leave, so we don't count it`);
   }
   const options = [5, 10, 15, 25, 50];
   si = options.find((o) => o >= si) ?? 25;

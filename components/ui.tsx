@@ -219,9 +219,9 @@ export function Icon({ name, size = 18, className = "", stroke = 1.8 }: { name: 
 /* ───────────── Building blocks ───────────── */
 
 const TONE = {
-  good: { icon: "check" as const, cls: "bg-paid-soft text-paid", sr: "Strength" },
+  good: { icon: "check" as const, cls: "bg-paid-soft text-paid", sr: "Good" },
   caveat: { icon: "info" as const, cls: "bg-warn-soft text-warn", sr: "Check this" },
-  bad: { icon: "info" as const, cls: "bg-owe-soft text-owe", sr: "Trade-off" },
+  bad: { icon: "info" as const, cls: "bg-owe-soft text-owe", sr: "Watch out" },
 };
 
 export function ReasonRow({ r, onClause }: { r: Reason; onClause?: () => void }) {
@@ -238,7 +238,7 @@ export function ReasonRow({ r, onClause }: { r: Reason; onClause?: () => void })
         {r.clauseId && onClause && (
           <button onClick={onClause} className="mt-2 inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent">
             <Icon name="doc" size={14} />
-            Read the clause
+            See the plan's words
           </button>
         )}
       </div>

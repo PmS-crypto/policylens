@@ -27,10 +27,10 @@ export default function Thinking({ steps, onDone }: { steps: Inference[]; onDone
   }, [shown, steps.length, per]);
 
   return (
-    <div className="absolute inset-0 z-30 flex flex-col bg-canvas" role="status" aria-live="polite" aria-label="Working out your plans">
+    <div className="absolute inset-0 z-30 flex flex-col bg-canvas" role="status" aria-live="polite" aria-label="Finding your plans">
       <div className="px-6 pt-[max(env(safe-area-inset-top),28px)]">
         <Orb size={56} thinking />
-        <h2 className="display mt-5 text-[30px]">Working out what your family needs</h2>
+        <h2 className="display mt-5 text-[30px]">Finding what your family needs</h2>
         <div className="mt-4 h-1 overflow-hidden rounded-full bg-surface-2">
           <div className="h-full rounded-full bg-accent" style={{ width: "100%", animation: `fill ${DURATION + 500}ms linear both` }} />
         </div>

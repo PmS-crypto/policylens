@@ -72,23 +72,23 @@ export function coverageStructures(p: Profile, top: Match[]): Structure[] {
     const same = premiumFor(best.policy, p, closest);
     out.push({
       id: "topup",
-      title: "Base plan + super top-up",
+      title: "Smaller plan + extra cover on top",
       summary:
         total <= best.premium
-          ? `₹${ded + topCover} lakh of cover for ${fmt(total)} a year, less than ₹${best.sumInsured} lakh on one plan.`
-          : `₹${ded + topCover} lakh of cover for ${fmt(total)} a year: ${round1((ded + topCover) / best.sumInsured)}× the cover for ${fmt(total - best.premium)} more.`,
+          ? `₹${ded + topCover} lakh cover for ${fmt(total)} a year. Cheaper than ₹${best.sumInsured} lakh on one plan.`
+          : `₹${ded + topCover} lakh cover for ${fmt(total)} a year. That's ${round1((ded + topCover) / best.sumInsured)}× the cover for ${fmt(total - best.premium)} more.`,
       layers: [
-        { label: `${best.policy.name} base`, lakh: ded, premium: basePrem, kind: "base" },
+        { label: `${best.policy.name} (main plan)`, lakh: ded, premium: basePrem, kind: "base" },
         { label: TOPUP.name, lakh: topCover, premium: topPrem, kind: "topup" },
       ],
       totalCover: ded + topCover,
       totalPremium: total,
       compare: { label: `${best.policy.name}, ₹${closest}L on its own`, premium: same, cover: closest },
       pros: [
-        `The top-up only pays once a year's bills cross ₹${ded} lakh, which is why it's so cheap (${fmt(topPrem)} a year).`,
-        `Everyday claims still go through ${best.policy.name} exactly as before; the top-up is there for the rare, very large year.`,
+        `The extra cover pays only after a year's bills pass ₹${ded} lakh. That's why it costs just ${fmt(topPrem)} a year.`,
+        `${best.policy.name} still pays your everyday bills. The extra cover is for a rare, very big year.`,
       ],
-      cons: [`The top-up has its own ${TOPUP.pedWaitYears}-year wait for existing illnesses.`, "Two policies to renew, though one insurer keeps claims simple."],
+      cons: [`For an illness you already have, the extra cover pays only after ${TOPUP.pedWaitYears} years.`, "You pay for two plans each year."],
     });
   }
 
@@ -104,27 +104,27 @@ export function coverageStructures(p: Profile, top: Match[]): Structure[] {
       const total = ym.premium + em.premium;
       out.push({
         id: "split",
-        title: "Separate policy for your parents",
+        title: "A separate plan for your parents",
         summary:
           total <= best.premium
-            ? `Two policies for ${fmt(total)} a year, ${fmt(best.premium - total)} less than one shared floater.`
-            : `Two policies for ${fmt(total)} a year (${fmt(total - best.premium)} more), and nobody's claim can use up someone else's cover.`,
+            ? `Two plans for ${fmt(total)} a year. That's ${fmt(best.premium - total)} less than one shared plan.`
+            : `Two plans for ${fmt(total)} a year, ${fmt(total - best.premium)} more. But no one can use up someone else's cover.`,
         layers: [
           { label: `${ym.policy.name} for your family`, lakh: ym.sumInsured, premium: ym.premium, kind: "base" },
           { label: `${em.policy.name} for your parents`, lakh: em.sumInsured, premium: em.premium, kind: "topup" },
         ],
         totalCover: ym.sumInsured + em.sumInsured,
         totalPremium: total,
-        compare: { label: `One floater for everyone (${best.policy.name})`, premium: best.premium, cover: best.sumInsured },
+        compare: { label: `One shared plan for everyone (${best.policy.name})`, premium: best.premium, cover: best.sumInsured },
         pros: [
-          "A floater is priced on its eldest member, so your parents' age pushes up the premium for everyone.",
-          `A big claim for your parents can't use up the ₹${ym.sumInsured} lakh meant for your family.`,
-          `${em.policy.name} is designed for people over 55, with shorter waits for existing illnesses.`,
+          "A shared plan is priced by its oldest person. So your parents' age makes it cost more for everyone.",
+          `A big bill for your parents can't use up your family's ₹${ym.sumInsured} lakh.`,
+          `${em.policy.name} is made for people over 55. You wait less before it pays for illnesses they already have.`,
           ...(p.upcoming?.some((u) => u === "joint" || u === "cataract") && em.policy.specificWaitYears < best.policy.specificWaitYears
-            ? [`The surgery you're expecting is covered after ${em.policy.specificWaitYears} year${em.policy.specificWaitYears > 1 ? "s" : ""} on ${em.policy.name}, versus ${best.policy.specificWaitYears} on ${best.policy.name}.`]
+            ? [`${em.policy.name} pays for the surgery you expect after ${em.policy.specificWaitYears} year${em.policy.specificWaitYears > 1 ? "s" : ""}. ${best.policy.name} makes you wait ${best.policy.specificWaitYears} years.`]
             : []),
         ],
-        cons: [em.policy.copay.percent ? `${em.policy.name} has a ${em.policy.copay.percent}% co-pay on parents' claims.` : "Two renewals a year instead of one."],
+        cons: [em.policy.copay.percent ? `On ${em.policy.name}, you pay ${em.policy.copay.percent}% of every bill for your parents.` : "You pay for two plans each year, not one."],
       });
     }
   }
@@ -136,17 +136,17 @@ export function coverageStructures(p: Profile, top: Match[]): Structure[] {
     const prem = topupPremium(p, ded, 20);
     out.push({
       id: "own",
-      title: `Top up your existing ₹${own}L policy`,
-      summary: `Keep your current policy and add ₹20 lakh on top for ${fmt(prem)} a year, instead of starting over.`,
+      title: `Add extra cover to your ₹${own}L plan`,
+      summary: `Keep your plan and add ₹20 lakh on top for ${fmt(prem)} a year.`,
       layers: [
-        { label: "Your current policy", lakh: own, premium: 0, kind: "work" },
+        { label: "Your current plan", lakh: own, premium: 0, kind: "work" },
         { label: TOPUP.name, lakh: 20, premium: prem, kind: "topup" },
       ],
       totalCover: own + 20,
       totalPremium: prem,
-      compare: { label: `${best.policy.name}, ₹${best.sumInsured}L as a new policy`, premium: best.premium, cover: best.sumInsured },
-      pros: ["You keep the waiting periods you've already served on your current policy.", "Far cheaper than replacing it with a bigger plan."],
-      cons: ["Your current policy's own limits (room rent, co-pay) still apply to the first layer."],
+      compare: { label: `${best.policy.name}, ₹${best.sumInsured}L as a new plan`, premium: best.premium, cover: best.sumInsured },
+      pros: ["The waiting time you've already done on your plan still counts.", "Much cheaper than switching to a bigger plan."],
+      cons: ["Your current plan's own rules still apply, like its room limit or the share you pay."],
     });
   }
 
@@ -157,8 +157,8 @@ export function coverageStructures(p: Profile, top: Match[]): Structure[] {
     const prem = topupPremium(p, ded, 20);
     out.push({
       id: "work",
-      title: `Super top-up over your ₹${work}L work cover`,
-      summary: `₹${ded + 20} lakh of protection for ${fmt(prem)} a year, using your employer's cover as the first layer.`,
+      title: `Extra cover on top of your ₹${work}L work cover`,
+      summary: `₹${ded + 20} lakh cover for ${fmt(prem)} a year. Your work cover pays first.`,
       layers: [
         { label: "Your work cover", lakh: work, premium: 0, kind: "work" },
         { label: TOPUP.name, lakh: 20, premium: prem, kind: "topup" },
@@ -166,8 +166,8 @@ export function coverageStructures(p: Profile, top: Match[]): Structure[] {
       totalCover: ded + 20,
       totalPremium: prem,
       compare: { label: `${best.policy.name}, ₹${best.sumInsured}L on its own`, premium: best.premium, cover: best.sumInsured },
-      pros: ["The cheapest way to big cover while you're employed.", "Waiting periods start counting now, so they're done if you ever buy a base plan."],
-      cons: [`If you leave your job, you pay the first ₹${ded} lakh of every year's bills yourself. Pair it with a small personal plan before you switch.`],
+      pros: ["The cheapest way to get big cover while you have a job.", "Your waiting time starts now. It's done if you buy your own plan later."],
+      cons: [`If you leave your job, you pay the first ₹${ded} lakh of bills each year yourself. Get a small plan of your own before you switch.`],
     });
   }
 
@@ -211,7 +211,7 @@ export function budgetLevers(p: Profile, top: Match[], all: Match[]): { over: nu
       saving: best.premium - prem,
       youPay: pay(best.policy, lower),
       extraYouPay: pay(best.policy, lower) - bestPay,
-      giveUp: gap > 0 ? `Less headroom: a ${serious!.title.toLowerCase()} could cost you ${fmt(gap)} more.` : `Less headroom for a big year, but your likeliest hospital visit is still covered the same.`,
+      giveUp: gap > 0 ? `Less cover. A ${serious!.title.toLowerCase()} could cost you ${fmt(gap)} more.` : `Less cover for a big year. Your most likely hospital visit is paid the same.`,
     });
   }
 
@@ -224,13 +224,13 @@ export function budgetLevers(p: Profile, top: Match[], all: Match[]): { over: nu
     const yp = pay(cheapBase.policy, si);
     levers.push({
       id: "layer",
-      title: `${cheapBase.policy.name} ₹${si}L + ₹20L super top-up`,
+      title: `${cheapBase.policy.name} ₹${si}L + ₹20L extra cover`,
       premium: prem,
       fits: prem <= budget,
       saving: best.premium - prem,
       youPay: yp,
       extraYouPay: yp - bestPay,
-      giveUp: firstCatch(cheapBase) ?? `₹${ded + 20} lakh total cover, but the top-up only starts after ₹${ded} lakh of bills in a year.`,
+      giveUp: firstCatch(cheapBase) ?? `₹${ded + 20} lakh cover in all. But the extra part pays only after ₹${ded} lakh of bills a year.`,
     });
   }
 
@@ -256,7 +256,7 @@ export function budgetLevers(p: Profile, top: Match[], all: Match[]): { over: nu
         saving: best.premium - prem,
         youPay: yp,
         extraYouPay: yp - bestPay,
-        giveUp: "Two renewals instead of one, and each policy has its own cover limit.",
+        giveUp: "You pay for two plans each year. Each has its own cover limit.",
       });
     }
   }
@@ -273,7 +273,7 @@ export function budgetLevers(p: Profile, top: Match[], all: Match[]): { over: nu
       saving: best.premium - fitting.premium,
       youPay: yp,
       extraYouPay: yp - bestPay,
-      giveUp: firstCatch(fitting) ?? "Fewer extras than your best fit.",
+      giveUp: firstCatch(fitting) ?? "Fewer extras than your best plan.",
     });
   }
 

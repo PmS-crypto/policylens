@@ -22,8 +22,8 @@ export default function Decide({ lang, profile, match, top, onSwitch }: { lang: 
     { m: 0, what: t(lang, "Accidents covered", "Accident cover") },
     { m: 1, what: t(lang, "New illnesses covered", "Nayi bimariyan cover") },
     ...(conds.length ? [{ m: p.pedWaitYears * 12, what: t(lang, `${conds.join(" & ")} covered`, `${conds.join(" & ")} cover`) }] : []),
-    { m: p.specificWaitYears * 12, what: t(lang, "Planned surgeries like cataract or knee", "Cataract, knee jaisi planned surgery") },
-    ...(p.maternity.covered && (profile.planningBaby || profile.cover?.partner) ? [{ m: (p.maternity.waitYears ?? 0) * 12, what: t(lang, "Maternity covered", "Maternity cover") }] : []),
+    { m: p.specificWaitYears * 12, what: t(lang, "Planned surgery, like eye or knee", "Cataract, knee jaisi planned surgery") },
+    ...(p.maternity.covered && (profile.planningBaby || profile.cover?.partner) ? [{ m: (p.maternity.waitYears ?? 0) * 12, what: t(lang, "Having a baby covered", "Maternity cover") }] : []),
   ]
     .sort((a, b) => a.m - b.m)
     .map((x) => ({ ...x, when: x.m === 0 ? t(lang, "Day one", "Pehle din se") : addMonths(x.m) }));
@@ -35,20 +35,20 @@ export default function Decide({ lang, profile, match, top, onSwitch }: { lang: 
       body: conds.length || profile.tobacco
         ? t(
             lang,
-            `Mention ${[...conds, ...(profile.tobacco ? ["tobacco use"] : [])].join(", ")}. Hiding it is a top reason claims get rejected.`,
+            `Tell them about ${[...conds, ...(profile.tobacco ? ["tobacco use"] : [])].join(", ")}. Hiding it is a top reason plans refuse to pay.`,
             `${[...conds, ...(profile.tobacco ? ["tobacco"] : [])].join(", ")} zaroor likho. Chhupane se claims reject hote hain.`,
           )
         : t(lang, "Answer every health question, even the small ones.", "Har health sawaal ka jawaab do, chhote wale bhi."),
     },
     {
       title: t(lang, "Check your hospital", "Apna hospital check karo"),
-      body: t(lang, `Make sure your go-to hospital${profile.cityName ? ` in ${profile.cityName}` : ""} is cashless.`, `Dekh lo ki aapka hospital${profile.cityName ? ` ${profile.cityName} mein` : ""} cashless hai.`),
+      body: t(lang, `Make sure you won't pay first at your usual hospital${profile.cityName ? ` in ${profile.cityName}` : ""}.`, `Dekh lo ki aapka hospital${profile.cityName ? ` ${profile.cityName} mein` : ""} cashless hai.`),
     },
     {
       title: t(lang, "Get room rules in writing", "Room rules likhwa lo"),
-      body: t(lang, `Ask the insurer to confirm §${p.clauses.find((c) => c.id === "room")?.section} in writing.`, `Insurer se §${p.clauses.find((c) => c.id === "room")?.section} likhit mein confirm karwa lo.`),
+      body: t(lang, "Ask the insurance company to write down which rooms they pay for.", `Insurer se §${p.clauses.find((c) => c.id === "room")?.section} likhit mein confirm karwa lo.`),
     },
-    { title: t(lang, "Know your free look", "Free look yaad rakho"), body: t(lang, "You get 30 days to cancel for a full refund.", "30 din mein cancel karke poora refund le sakte ho.") },
+    { title: t(lang, "You can change your mind", "Free look yaad rakho"), body: t(lang, "Cancel within 30 days to get all your money back.", "30 din mein cancel karke poora refund le sakte ho.") },
   ];
   const doneCount = checklist.filter((_, i) => checked[i]).length;
 
@@ -67,10 +67,10 @@ export default function Decide({ lang, profile, match, top, onSwitch }: { lang: 
         const ratio = dClaim / dPremium; // years of extra premium that one such stay saves
         verdict =
           ratio >= 1
-            ? t(lang, `One trip like this covers ${ratio.toFixed(1)} years of the extra premium.`, `Aisa ek trip extra premium ke ${ratio.toFixed(1)} saal cover kar deta hai.`)
-            : t(lang, `The extra premium only pays off if this happens about ${Math.max(2, Math.round(1 / ratio))} times a year.`, `Extra premium tabhi vasool hoga jab yeh saal mein lagbhag ${Math.max(2, Math.round(1 / ratio))} baar ho.`);
-      } else if (dPremium < 0 && dClaim < 0) verdict = t(lang, `Cheaper premium, but you'd pay ${inrShort(-dClaim)} more if that trip happens.`, `Premium sasta hai, par woh trip hua toh ${inrShort(-dClaim)} zyada doge.`);
-      else verdict = t(lang, "Costs more and pays less on that trip. Only pick it for its other perks.", "Mehenga bhi, aur us trip pe kam bhi deta hai. Sirf baaki fayde ke liye lo.");
+            ? t(lang, ratio >= 2 ? `One trip like this saves more than ${Math.floor(ratio)} years of the extra cost.` : `One trip like this saves more than the extra cost of a year.`, `Aisa ek trip extra premium ke ${ratio.toFixed(1)} saal cover kar deta hai.`)
+            : t(lang, `The extra cost pays off only if this happens about ${Math.max(2, Math.round(1 / ratio))} times a year.`, `Extra premium tabhi vasool hoga jab yeh saal mein lagbhag ${Math.max(2, Math.round(1 / ratio))} baar ho.`);
+      } else if (dPremium < 0 && dClaim < 0) verdict = t(lang, `Costs less a year. But you'd pay ${inrShort(-dClaim)} more on that trip.`, `Premium sasta hai, par woh trip hua toh ${inrShort(-dClaim)} zyada doge.`);
+      else verdict = t(lang, "Costs more and pays less on that trip. Pick it only for its other perks.", "Mehenga bhi, aur us trip pe kam bhi deta hai. Sirf baaki fayde ke liye lo.");
       return { o, dPremium, dClaim, verdict };
     });
   // The proud moment: what the user has now secured, in their family's words.
@@ -80,13 +80,13 @@ export default function Decide({ lang, profile, match, top, onSwitch }: { lang: 
   const headPay = simulate(match.policy, match.sumInsured, profile, head.scenario, { year: head.year, room: "private" });
   const proudLine = pedDate
     ? `${who === "Your" ? "Your" : who === "your parents" ? "Your parents'" : `${who}'s`} ${conds.join(" and ").toLowerCase().replace(/\bbp\b/, "BP")} covered from ${pedDate}.`
-    : "You now understand this plan better than most people understand their own.";
+    : "You now know this plan better than most people know their own.";
 
   const [shared, setShared] = useState<string | null>(null);
   const share = async () => {
     const text = t(
       lang,
-      `Found a plan for ${forParents ? "Mum and Dad" : "us"}: ${p.insurer} ${p.name}, ₹${match.sumInsured} lakh cover for about ${inr(match.premium)} a year. ${pedDate ? proudLine + " " : ""}${headlineSentence(profile, "en")}, it pays ${inr(headPay.insurerPays)} of the ${inr(headPay.bill)} bill. Compared clause by clause on PolicyLens. What do you think?`,
+      `Found a plan for ${forParents ? "Mum and Dad" : "us"}: ${p.insurer} ${p.name}, ₹${match.sumInsured} lakh cover for about ${inr(match.premium)} a year. ${pedDate ? proudLine + " " : ""}${headlineSentence(profile, "en")}, it pays ${inr(headPay.insurerPays)} of the ${inr(headPay.bill)} bill. Compared line by line on PolicyLens. What do you think?`,
       `${p.insurer} ${p.name} soch raha hoon apne liye: ₹${match.sumInsured} lakh cover, lagbhag ${inr(match.premium)} saal ka. ${headlineSentence(profile, "hi")}, toh hum ${inr(mine)} denge. PolicyLens pe compare kiya. Kya bolte ho?`,
     );
     try {
@@ -170,7 +170,7 @@ export default function Decide({ lang, profile, match, top, onSwitch }: { lang: 
       <section className="mx-5 mt-5 rounded-[32px] bg-surface p-6 shadow-e1 ring-1 ring-line">
         <h2 className="title text-[20px]">{t(lang, "What you get", "Kya milega")}</h2>
         <ul className="mt-5 space-y-6">{goods.map((r) => <ReasonRow key={r.title} r={r} />)}</ul>
-        <h2 className="title mt-10 text-[20px]">{t(lang, "What you're signing up for", "Kya compromise hai")}</h2>
+        <h2 className="title mt-10 text-[20px]">{t(lang, "What to watch out for", "Kya compromise hai")}</h2>
         <ul className="mt-5 space-y-6">{caveats.length ? caveats.map((r) => <ReasonRow key={r.title} r={r} />) : <p className="text-[14px] text-ink-soft">{t(lang, "Nothing big for your family.", "Aapki family ke liye kuch bada nahi.")}</p>}</ul>
       </section>
 
@@ -184,7 +184,7 @@ export default function Decide({ lang, profile, match, top, onSwitch }: { lang: 
             </li>
           ))}
         </ol>
-        <p className="mt-6 text-[13px] leading-relaxed opacity-85">{t(lang, "Waiting periods only start the day you buy. Every month you wait moves these dates back.", "Waiting period usi din se shuru hota hai jis din policy lete ho. Har mahina late matlab yeh dates aage khisak jaati hain.")}</p>
+        <p className="mt-6 text-[13px] leading-relaxed opacity-85">{t(lang, "Your waiting time starts the day you buy. Each month you delay pushes these dates later.", "Waiting period usi din se shuru hota hai jis din policy lete ho. Har mahina late matlab yeh dates aage khisak jaati hain.")}</p>
       </Aura>
 
       <section className="mt-10 px-6">
@@ -230,7 +230,7 @@ export default function Decide({ lang, profile, match, top, onSwitch }: { lang: 
           <p className="rise rounded-[24px] bg-surface p-5 text-[14px] leading-relaxed shadow-e1 ring-1 ring-line">
             {t(
               lang,
-              `In the live app this opens ${p.insurer}'s buy page through an IRDAI-authorised partner, details pre-filled. You just do the medical declaration and pay.`,
+              `In the real app, this opens ${p.insurer}'s buy page through a licensed partner. Your details are filled in. You just answer the health questions and pay.`,
               `Live app mein yeh IRDAI-authorised partner ke through ${p.insurer} ka buy page kholega, details pehle se bhari hongi. Aapko bas medical declaration aur payment karna hai.`,
             )}
           </p>
@@ -248,7 +248,7 @@ export default function Decide({ lang, profile, match, top, onSwitch }: { lang: 
       <p className="mt-8 px-6 text-[12.5px] leading-relaxed text-ink-soft">
         {t(
           lang,
-          "PolicyLens explains policy wording to help you decide. It isn't underwriting advice or a promise that a claim will be paid. Plans and prices here are illustrative.",
+          "PolicyLens explains plan rules to help you decide. It isn't expert advice or a promise the plan will pay. Plans and prices here are examples.",
           "PolicyLens policy wording samjhata hai taaki aap decide kar sako. Yeh underwriting advice ya claim ki guarantee nahi hai. Yahan ke plans aur prices sirf example hain.",
         )}
       </p>
